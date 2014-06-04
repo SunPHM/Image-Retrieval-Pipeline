@@ -1,5 +1,7 @@
 package ir.index;
 
+import ir.cluster.Frequency;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -72,7 +74,7 @@ public class Indexing {
 	
 		//String[] features = SIFTExtractor.extract(image);
 		//System.out.println("query: " + image);
-		double[][] clusters = FrequencyExtractor.FEMap.readClusters(Search.clusterFile);
+		double[][] clusters = Frequency.FEMap.readClusters(Search.clusterFile);
 		int[] marks = new int[Search.clusterNum];
 		
 		for(int i = 0; i < features.length; i++){
@@ -80,7 +82,7 @@ public class Indexing {
 			String[] args = features[i].split(" ");
 			for (int j = 0; j < Search.featureSize; j++)
 				feature[j] = Double.parseDouble(args[j + 10]);
-			int index = FrequencyExtractor.FEMap.findBestCluster(feature, clusters);
+			int index = Frequency.FEMap.findBestCluster(feature, clusters);
 			marks[index]++;
 		}
 		
