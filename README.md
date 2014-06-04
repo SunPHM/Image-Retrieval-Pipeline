@@ -5,4 +5,11 @@ An image retrieval pipeline on top of OpenCV, Hadoop, Mahout and Solr.
 
 Development language: Java
 
-Build tool: SBT or Maven
+Setup
+	Java: 1.6
+	Hadoop: 1.2.1
+	Mahout: 0.9
+	Solr: 4.6.1
+
+Build tool: Eclipse, Maven
+

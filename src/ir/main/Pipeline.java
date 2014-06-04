@@ -7,7 +7,7 @@ public class Pipeline {
 	 * @Java: 1.6
 	 * @Hadoop: 1.2.1
 	 * @Mahout: 0.9
-	 * @Solr: 4.8.1
+	 * @Solr: 4.6.1
 	 */
 	
 	public static void main(String[] args) {
@@ -23,6 +23,7 @@ public class Pipeline {
 		//TODO: call the main entry point of the Clustering
 		
 		//TODO: call the main entry point of the Indexing and Searching
+		
 	}
 
 }
