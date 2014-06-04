@@ -26,7 +26,10 @@ import org.apache.solr.common.SolrInputDocument;
 public class Indexing {
 	
 	public static void main(String[] args) throws IOException, SolrServerException{
-		index("data/index/visual-word-frequency.txt");
+		//index("data/index/visual-word-frequency.txt");
+		String[] files=query("all_souls_000013");
+		getF1Score(files, "data/index/gt/all_souls_1");
+		
 	}
 	
 	
@@ -99,7 +102,7 @@ public class Indexing {
 	}
 	
 	
-	public static F1Score query(String s, String gt) throws SolrServerException{//query and output results
+	public static String[] query(String s) throws SolrServerException{//query and output results
 		
 		//query a numeric vector as a string
 		String urlString = "http://localhost:8983/solr";
@@ -118,7 +121,8 @@ public class Indexing {
 	    	files[i] = list.get(i).getFieldValue("id").toString();
 	    }
 	    
-	    return getF1Score(files, gt);
+	   // return getF1Score(files, gt);
+	    return files;
 	}
 	
 	

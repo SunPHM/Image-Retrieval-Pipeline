@@ -16,7 +16,9 @@ public class Evaluate {
 		// get query from a set of images and measure the mean F1 score
 		String query = Indexing.createQuery(features);
 		// run query
-		return Indexing.query(query, gt);
+		String[] files=Indexing.query(query);
+		
+		return Indexing.getF1Score(files, gt);
 	}
 	
 	public static void evaluate(String folder) throws IOException, SolrServerException{
@@ -85,5 +87,8 @@ public class Evaluate {
 		}
 		reader.close();
 		return list.toArray(new String[list.size()]);
+	}
+	public static void main(String[] args) throws IOException, SolrServerException{
+		evaluate("data/index/gt");
 	}
 }

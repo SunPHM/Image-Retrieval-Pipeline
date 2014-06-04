@@ -28,9 +28,13 @@ public class Transform {
 	 * @throws IOException */
 	
 	public static void main(String[] args) throws IOException{
-		runCleanMR("features", "temp/seq");
-		HadoopUtil.copyMerge("temp/seq", "data/fs.seq");
-		HadoopUtil.delete("temp/seq");
+		runCleanMR("data/features", "data/temp/seq");
+		HadoopUtil.copyMerge("temp/seq", "data/cluster/fs.seq");
+		HadoopUtil.delete("data/temp/seq");
+	}
+	
+	public static void run(){
+		
 	}
 	
 	public static void runCleanMR(String infolder, String outfile) throws IOException{
@@ -54,7 +58,7 @@ public class Transform {
 		
 		JobClient.runJob(conf);
 		
-		System.out.println("postprocessing for feature extraction is done");
+		System.out.println("transformation from a folder of features to a sequence file is done");
 	}
 	
 	public static class PPMap extends MapReduceBase implements Mapper<LongWritable, Text, LongWritable, VectorWritable> {
@@ -77,7 +81,7 @@ public class Transform {
 			System.out.println(args.length);
 			double[] points = new double[size];
 			for (int i = 0; i < size; i++)
-				points[i] = Double.parseDouble(args[i + 10]);
+				points[i] = Double.parseDouble(args[i + 4]);
 			return points;
 		}
 	}

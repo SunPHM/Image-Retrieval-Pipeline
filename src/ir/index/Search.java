@@ -9,7 +9,7 @@ import ir.util.HadoopUtil;
 
 public class Search {
 	
-	public static String featureFolder = "/home/hadoop/bovw/code/resources/features_new/";
+	public static String featureFolder = "data/index/gt/";
 	public static String fnames = "data/fnames.txt";
 	
 	public static String clusterFile = "data/clusters-30-60.txt";
