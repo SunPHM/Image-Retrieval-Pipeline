@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.apache.solr.client.solrj.SolrServerException;
 
+import ir.cluster.Frequency;
 import ir.util.HadoopUtil;
 
 public class Search {
@@ -36,7 +37,7 @@ public class Search {
 	
 	public static void getWordFrequence(String fnames,String bw, String termFile) throws IOException{
 		HadoopUtil.delete(bw);
-		FrequencyExtractor.run(fnames, bw);
+		Frequency.run(fnames, bw);
 		HadoopUtil.copyMerge(bw, termFile);
 	}
 	
