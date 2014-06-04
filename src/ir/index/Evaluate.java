@@ -1,6 +1,6 @@
 package ir.index;
 
-package bovw.pipeline.index;
+
 
 import java.io.BufferedReader;
 import java.io.File;
