@@ -25,8 +25,8 @@ import org.apache.solr.common.SolrInputDocument;
 
 public class Indexing {
 	
-	public static void main(String[] args){
-		
+	public static void main(String[] args) throws IOException, SolrServerException{
+		index("data/index/visual-word-frequency.txt");
 	}
 	
 	
@@ -48,6 +48,7 @@ public class Indexing {
 		
 		System.out.println(docs.toArray()[0]);
 		System.out.println(docs.toArray()[1]);
+		System.out.println("number of docs indexed:"+docs.size());
 		
 		server.add(docs);
 	    server.commit();
