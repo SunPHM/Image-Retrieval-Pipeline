@@ -40,12 +40,15 @@ public class Frequency {
 		
 	}
 	
-	public static void runJob (String features, int clusterNum, String clusters, String temp, String output){
-		
+	public static void init(String features, int clusterNum, String clusters){
 		Frequency.clusterNum = clusterNum;
 		Frequency.clusters = clusters;
 		Frequency.features = features;
+	}
+	
+	public static void runJob (String features, int clusterNum, String clusters, String temp, String output){
 		
+		Frequency.init(features, clusterNum, clusters);
 		getNames(features, temp + "/fn.txt");
 		HadoopUtil.delete(output);
 		runMR(temp + "/fn.txt", temp + "/freq");
