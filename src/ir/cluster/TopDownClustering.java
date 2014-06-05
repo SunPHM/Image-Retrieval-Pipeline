@@ -18,6 +18,7 @@ import org.apache.mahout.clustering.kmeans.KMeansDriver;
 import org.apache.mahout.clustering.kmeans.Kluster;
 import org.apache.mahout.common.distance.CosineDistanceMeasure;
 import org.apache.mahout.math.Vector;
+import org.apache.mahout.math.VectorWritable;
 
 public class TopDownClustering {
 	
@@ -179,7 +180,7 @@ public class TopDownClustering {
 		org.apache.hadoop.conf.Configuration conf=new Configuration();
 		FileSystem fs = FileSystem.get(conf);
 		 Path input_path = new Path(input);
-		 Path clusters_path=new Path(clusters);
+		 Path clusters_path=new Path(clusters+"/part-r-00000");
 		 Path output_path=new Path(output);
 		 HadoopUtil.delete(output);
 		 double clusterClassificationThreshold=0;//////???	 
@@ -187,15 +188,17 @@ public class TopDownClustering {
 		 //read first K points from input folder as initial K clusters
 		 SequenceFile.Reader reader = new SequenceFile.Reader(FileSystem.get(conf), input_path, conf);
 		 WritableComparable key = (WritableComparable) reader.getKeyClass().newInstance();
-		 Writable value = (Writable) reader.getValueClass().newInstance();
+		 VectorWritable value = (VectorWritable) reader.getValueClass().newInstance();
 		 SequenceFile.Writer writer=new SequenceFile.Writer(FileSystem.get(conf), conf, clusters_path, Text.class,Kluster.class);
 		 for (int i=0;i<k;i++){
 			 reader.next(key, value);
-			 Vector vec =new Vector(value);
-			 Kluster cluster=new Kluster(,i,distance_measure );
+			 
+			 Vector vec =value.get();
+			 Kluster cluster=new Kluster(vec,i,distance_measure );
 			 writer.append(new Text(cluster.getIdentifier()), cluster);
 		 }
 		 reader.close();writer.close();
+		 System.out.println("initial "+k+"  clusters written to file: " + clusters);
 /* public static void run(org.apache.hadoop.conf.Configuration conf,
                        org.apache.hadoop.fs.Path input,
                        org.apache.hadoop.fs.Path clustersIn,
