@@ -78,8 +78,8 @@ public class Indexing {
 	
 		//String[] features = SIFTExtractor.extract(image);
 		//System.out.println("query: " + image);
-		double[][] clusters = Frequency.FEMap.readClusters(Search.clusterFile);
-		int[] marks = new int[Search.clusterNum];
+		double[][] clusters = Frequency.FEMap.readClusters(Frequency.clusters);
+		int[] marks = new int[Frequency.clusterNum];
 		
 		for(int i = 0; i < features.length; i++){
 			double[] feature = new double[Search.featureSize];
@@ -91,7 +91,7 @@ public class Indexing {
 		}
 		
 		String result = "";
-		for(int i = 0; i < Search.clusterNum; i++){
+		for(int i = 0; i < Frequency.clusterNum; i++){
 			for(int j = 0; j < marks[i]; j++){
 				if(result.length() == 0) result += i;
 				else result += " " + i;
@@ -121,7 +121,6 @@ public class Indexing {
 	    	files[i] = list.get(i).getFieldValue("id").toString();
 	    }
 	    
-	   // return getF1Score(files, gt);
 	    return files;
 	}
 	
@@ -145,6 +144,7 @@ public class Indexing {
 		double recall = (double)(goodNum + okNum) / totalNum;
 		System.out.println("query precision is " + precision);
 		System.out.println("query recall is " + recall);
+		
 		return new F1Score(precision, recall);
 	}
 	
