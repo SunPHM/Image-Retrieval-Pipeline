@@ -28,13 +28,13 @@ public class Transform {
 	 * @throws IOException */
 	
 	public static void main(String[] args) throws IOException{
+		run();
+	}
+	
+	public static void run() throws IOException{
 		runCleanMR("data/features", "data/temp/seq");
 		HadoopUtil.copyMerge("data/temp/seq", "data/cluster/fs.seq");
 		HadoopUtil.delete("data/temp/seq");
-	}
-	
-	public static void run(){
-		
 	}
 	
 	public static void runCleanMR(String infolder, String outfile) throws IOException{
