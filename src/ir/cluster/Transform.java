@@ -29,7 +29,7 @@ public class Transform {
 	
 	public static void main(String[] args) throws IOException{
 		runCleanMR("data/features", "data/temp/seq");
-		HadoopUtil.copyMerge("temp/seq", "data/cluster/fs.seq");
+		HadoopUtil.copyMerge("data/temp/seq", "data/cluster/fs.seq");
 		HadoopUtil.delete("data/temp/seq");
 	}
 	
