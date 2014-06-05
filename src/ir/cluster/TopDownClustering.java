@@ -68,8 +68,43 @@ public class TopDownClustering {
 		Thread[] ts = new Thread[topK];
 		
 		for(int i = 0; i < folders.length; i++){
-			ts[i] = parrelBotProcess(folders[i] + "/part-m-0", bot + "/" + i + "/cls", bot + "/" + i, botK, delta, x, 
-					bot + "/" + i + "/clusters-*-final/*", res + "/" + i, i);		
+			
+			//ts[i] = parrelBotProcess(folders[i] + "/part-m-0", 	bot + "/" + i + "/cls", 	bot + "/" + i, 	botK, 	delta, 	x, 
+			//		bot + "/" + i + "/clusters-*-final/*", 	res + "/" + i, 	i);
+			//change to serially processing
+			
+			//parrelBotProcess(String input, String clusters, String output, int k, double cd, int x, 
+			//			String src, String dst, int num)
+			String input=folders[i] + "/part-m-0";
+			String clusters=bot + "/" + i + "/cls";
+			String output=bot + "/" + i;
+			int k=botK;
+			double cd = delta;
+			//int x=x;
+			
+			String src=bot + "/" + i + "/clusters-*-final/*";
+			String dst=res + "/" + i;
+			int num=i;
+			
+			String cmd0 = "mahout kmeans -i " + input + " -c " + clusters + " -o " + output + " -k " + k + " "
+					+ "-dm " + dm + " -cd " + cd + " -x " + x + " -ow -cl";
+			//String cmd0 = "mahout kmeans -i " + input + " -c " + clusters + " -o " + output + " -k " + k + " "
+			//		+ "-dm " + dm + " -cd " + cd + " -x " + x + " -ow -cl -xm sequential";
+			String cmd1 = "hadoop fs -mkdir " + dst;
+			String cmd2 = "hadoop fs -cp " + src + " " + dst;
+			//String cmd = cmd0 + "\n\r" + cmd1 + "\n\r" + cmd2;
+			
+			//Thread t = new Thread(new BotThread(cmd0, cmd1, cmd2, num));
+			//t.start();
+			
+			log(cmd0);
+			run(cmd0);
+			log(cmd1);
+			run(cmd1);
+			log(cmd2);
+			run(cmd2);
+			log("thread" + num + "> ends");
+			
 		}
 		
 		for(int i = 0; i < ts.length; i++){
