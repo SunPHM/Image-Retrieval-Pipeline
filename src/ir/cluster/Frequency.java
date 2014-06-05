@@ -1,13 +1,13 @@
 package ir.cluster;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Iterator;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
@@ -24,7 +24,6 @@ import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapred.TextInputFormat;
 import org.apache.hadoop.mapred.TextOutputFormat;
 
-import ir.index.Search;
 import ir.util.HadoopUtil;
 
 
@@ -32,30 +31,54 @@ public class Frequency {
 	//input: clusters.txt, feature texts
 	//output: a file containing both the name of file and the cluster id
 	
+	public static int featureSize = 128;
+	public static int clusterNum = 0;
+	public static String clusters = "";
+	public static String features = "";
+	
 	public static void main(String[] args) throws IOException{
-		//getNames("/home/hadoop/bovw/code/resources/features_new", "data/fnames.txt");
-		//clusters = args[0];
-		String data = "data/tf.txt";
-		HadoopUtil.delete("bw");
-		run(Search.fnames, "bw");
-		HadoopUtil.copyMerge("bw", data);
-		//readClusters("/home/hadoop/Desktop/clusters.txt");
+		
 	}
 	
-	public static void getNames(String features, String file) throws FileNotFoundException{
-		File folder = new File(features);
-		String[] list = folder.list();
-		PrintWriter pw = new PrintWriter(file);
-		for(int i = 0; i < list.length; i++){
-			pw.println(list[i]);
-		}
-		pw.close();
+	public static void runJob (String features, int clusterNum, String clusters, String temp, String output){
+		
+		Frequency.clusterNum = clusterNum;
+		Frequency.clusters = clusters;
+		Frequency.features = features;
+		
+		getNames(features, temp + "/fn.txt");
+		HadoopUtil.delete(output);
+		runMR(temp + "/fn.txt", temp + "/freq");
+		HadoopUtil.copyMerge(temp + "/freq", output);
+		HadoopUtil.delete(temp + "/freq");
+		
 	}
 	
-	public static void run(String infile, String outfile) throws IOException{
+	// read a folder of images from HDFS and store their names into a file on HDFS
+	public static void getNames(String features, String file){
+        try{
+            FileSystem fs = FileSystem.get(new Configuration()); // open the image folder
+            FileStatus[] status = fs.listStatus(new Path(features)); // get the list of images
+            FSDataOutputStream out = fs.create(new Path(file)); // create output stream
+            PrintWriter pw = new PrintWriter(out.getWrappedStream()); // create writer
+            for (int i=0;i<status.length;i++){
+            		//System.out.println(status[i].getPath().getName());
+            		pw.println(status[i].getPath().getName());
+            		//pw.flush();
+            }
+            pw.close();
+            out.close();
+            fs.close();
+            System.out.println("feature filenames extraction is done");
+        }catch(Exception e){
+            System.out.println("File not found");
+        }
+	}
+	
+	public static void runMR(String infile, String outfile){
 
 		JobConf conf = new JobConf(Frequency.class);
-		conf.setJobName("FrequencyExtractor");
+		conf.setJobName("Frequency");
 		
 		conf.setOutputKeyClass(Text.class);
 		conf.setOutputValueClass(Text.class);
@@ -70,7 +93,12 @@ public class Frequency {
 		FileInputFormat.setInputPaths(conf, new Path(infile));
 		FileOutputFormat.setOutputPath(conf, new Path(outfile));
 		
-		JobClient.runJob(conf);
+		try {
+			JobClient.runJob(conf);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public static class FEMap extends MapReduceBase implements Mapper<LongWritable, Text, Text, Text> {
@@ -78,12 +106,12 @@ public class Frequency {
 		@Override
 		public void map(LongWritable key, Text value, OutputCollector<Text, Text> output, Reporter reporter) throws IOException {
 			
-			double[][] cs = readClusters(Search.clusterFile);//read clusters
-			int[] marks = new int[Search.clusterNum];
+			double[][] cs = readClusters(Frequency.clusters);//read clusters
+			int[] marks = new int[Frequency.clusterNum];
 			// read the features and 
 			String file = value.toString();
 			
-			String data = Search.featureFolder + file;
+			String data = Frequency.features + file;
 			//read the file line by line
 			Path dp = new Path(data);
 			Configuration conf = new Configuration();
@@ -91,9 +119,9 @@ public class Frequency {
 			FSDataInputStream input = fs.open(dp);
 			String line;
 			while((line = input.readLine()) != null){
-				double[] feature = new double[Search.featureSize];
+				double[] feature = new double[Frequency.featureSize];
 				String[] args = line.split(" ");
-				for (int i = 0; i < Search.featureSize; i++)
+				for (int i = 0; i < Frequency.featureSize; i++)
 					feature[i] = Double.parseDouble(args[i + 10]);
 				int index = findBestCluster(feature, cs);
 				marks[index]++;
@@ -101,7 +129,7 @@ public class Frequency {
 			
 			String result = "";
 			int num = 0;
-			for(int i = 0; i < Search.clusterNum; i++){
+			for(int i = 0; i < Frequency.clusterNum; i++){
 				for(int j = 0; j < marks[i]; j++){
 					if(result.length() == 0) result += i;
 					else result += " " + i;
@@ -120,14 +148,14 @@ public class Frequency {
 			FileSystem fs = FileSystem.get(conf);
 			Path path = new Path(clusters);
 			FSDataInputStream input = fs.open(path);
-			double[][] cs = new double[Search.clusterNum][Search.featureSize];
+			double[][] cs = new double[Frequency.clusterNum][Frequency.featureSize];
 			String line;
-			for(int i = 0; i < Search.clusterNum; i ++){
+			for(int i = 0; i < Frequency.clusterNum; i ++){
 				line = input.readLine();
 				//System.out.println(line);
 				String center = line.split("\\]")[0].split("c=\\[")[1];
 				String[] array = center.split(", ");
-				for(int j = 0; j < Search.featureSize; j++)
+				for(int j = 0; j < Frequency.featureSize; j++)
 					cs[i][j] = Double.parseDouble(array[j]);
 			}
 			
