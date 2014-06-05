@@ -83,7 +83,8 @@ public class TopDownClustering {
 		run(command);
 	}
 	
-	public static void botLevelProcess(String mid, String bot, int topK, int botK, String res) throws IOException, InterruptedException{
+	public static void botLevelProcess(String mid, String bot, int topK, int botK, String res) 
+			throws IOException, InterruptedException, ClassNotFoundException, InstantiationException, IllegalAccessException{
 		String[] folders = getFolders(mid);
 		//String cmd = "hadoop fs -mkdir " + res;
 		//run(cmd)
@@ -92,7 +93,7 @@ public class TopDownClustering {
 		
 		//Thread[] ts = new Thread[topK];
 		
-		for(int i = 0; i < folders.length; i++){
+		for(int i = 9; i < folders.length; i++){
 			
 			//ts[i] = parrelBotProcess(folders[i] + "/part-m-0", 	bot + "/" + i + "/cls", 	bot + "/" + i, 	botK, 	delta, 	x, 
 			//		bot + "/" + i + "/clusters-*-final/*", 	res + "/" + i, 	i);
@@ -111,23 +112,29 @@ public class TopDownClustering {
 			String dst=res + "/" + i;
 			int num=i;
 			
-			String cmd0 = "mahout kmeans -i " + input + " -c " + clusters + " -o " + output + " -k " + k + " "
-					+ "-dm " + dm + " -cd " + cd + " -x " + x + " -ow -cl";
 			//String cmd0 = "mahout kmeans -i " + input + " -c " + clusters + " -o " + output + " -k " + k + " "
-			//		+ "-dm " + dm + " -cd " + cd + " -x " + x + " -ow -cl -xm sequential";
-			String cmd1 = "hadoop fs -mkdir " + dst;
-			String cmd2 = "hadoop fs -cp " + src + " " + dst;
+			//		+ "-dm " + dm + " -cd " + cd + " -x " + x + " -ow -cl";
+			
+			//public static void kmeans(String input, String clusters, String output, int k, double cd, int x) 
+			kmeans(input,clusters,output,k,cd,x);
+			
+			//String cmd1 = "hadoop fs -mkdir " + dst;
+			HadoopUtil.mkdir(dst);
+			
+			//String cmd2 = "hadoop fs -cp " + src + " " + dst;
+			HadoopUtil.cp(src, dst);
 			//String cmd = cmd0 + "\n\r" + cmd1 + "\n\r" + cmd2;
 			
 			//Thread t = new Thread(new BotThread(cmd0, cmd1, cmd2, num));
 			//t.start();
 			
-			log(cmd0);
+		/*	log(cmd0);
 			run(cmd0);
 			log(cmd1);
 			run(cmd1);
 			log(cmd2);
 			run(cmd2);
+			*/
 			log("botlevel clustering " + num + "> ends");
 			
 		}
@@ -142,18 +149,28 @@ public class TopDownClustering {
 		// HadoopUtil.copyMerge(src, dst + "/tmp/tmp.txt");
 		// mahout clusterdump
 		String temp = "temptemptemp";
+	/*	
 		String cmd0 = "mkdir " + temp;
 		log(cmd0);
 		run(cmd0);
+	*/
+		HadoopUtil.mkdir(temp);
+	///////////////how to change this
 		String cmd1 = "mahout clusterdump -i " + src + "/*/" + " -o " + temp + "/clusters.txt";
 		log(cmd1);
 		run(cmd1);
+	/*
 		String cmd2 = "hadoop fs -put " + temp + "/clusters.txt" + " " + dst;
 		log(cmd2);
 		run(cmd2);
+	*/
+		HadoopUtil.cp(temp+"/clusters.txt", dst);
+	/*	
 		String cmd3 = "rm -r " + temp;
 		log(cmd3);
 		run(cmd3);
+	*/
+		HadoopUtil.delete(temp);
 		//HadoopUtil.delete(dst + "/tmp/tmp.txt");
 	}
 	
@@ -188,9 +205,9 @@ public class TopDownClustering {
 		        System.out.println("File " + listOfFiles[i].getName());
 		        //do nothing
 		      } else if (listOfFiles[i].isDirectory()) {
-		        System.out.println("Directory " + listOfFiles[i].getName());
+		        System.out.println("Directory " + listOfFiles[i].getPath());
 		        //
-		        folders[i]=listOfFiles[i].getName();
+		        folders[i]=listOfFiles[i].getPath();
 		      }
 		    }
 		return folders;

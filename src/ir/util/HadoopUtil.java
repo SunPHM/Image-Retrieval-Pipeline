@@ -43,4 +43,14 @@ public class HadoopUtil {
 			e.printStackTrace();
 		}
 	}
+	public static void cp(String srcPath, String dstPath){
+		
+		try {
+			FileUtils.copyDirectory(new File(srcPath), new File(dstPath));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			System.out.println("Failed to cp directory : "+srcPath + " to "+dstPath);
+			e.printStackTrace();
+		}
+	}
 }
