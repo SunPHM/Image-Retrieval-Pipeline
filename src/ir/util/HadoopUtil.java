@@ -1,7 +1,9 @@
 package ir.util;
 
+import java.io.File;
 import java.io.IOException;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
@@ -27,6 +29,17 @@ public class HadoopUtil {
 			FileUtil.fullyDelete(path.getFileSystem(conf), path);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	public static void mkdir(String dirPath){
+		File p=new File(dirPath);
+		
+		try {
+			FileUtils.forceMkdir(p);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			System.out.println("Failed to create directory : "+dirPath);
 			e.printStackTrace();
 		}
 	}

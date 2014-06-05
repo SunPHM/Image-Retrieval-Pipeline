@@ -3,8 +3,12 @@ package ir.cluster;
 import ir.util.HadoopUtil;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.DirectoryNotEmptyException;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.util.Date;
 
 import org.apache.hadoop.conf.Configuration;
@@ -12,7 +16,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.mahout.clustering.kmeans.KMeansDriver;
 import org.apache.mahout.clustering.kmeans.Kluster;
@@ -52,10 +55,10 @@ public class TopDownClustering {
 		
 		// execute pipeline
 		//clean(prefix);
-		topLevelProcess(data, top + "/cls", top, topK);
+		//topLevelProcess(data, top + "/cls", top, topK);
 		//midLevelProcess(top, mid);
-		// parallel bottom level clustering
-		//botLevelProcess(mid, bot, topK, botK, res);
+		// non-parallel bottom level clustering
+		botLevelProcess(mid, bot, topK, botK, res);
 		// merge the clusters into a single file
 		//merge(res, prefix);
 		
@@ -64,8 +67,10 @@ public class TopDownClustering {
 	}
 	
 	public static void clean(String prefix) throws IOException, InterruptedException{
-		String cmd = "hadoop fs -rm -R " + prefix;
-		run(cmd);
+		//delete all files in folder "prefix"
+		//String cmd = "hadoop fs -rm -R " + prefix;
+		//run(cmd);
+		HadoopUtil.delete(prefix);
 	}
 	
 	public static void topLevelProcess(String input, String cls, String top, int topK) throws IOException, InterruptedException, ClassNotFoundException, InstantiationException, IllegalAccessException{
@@ -80,8 +85,10 @@ public class TopDownClustering {
 	
 	public static void botLevelProcess(String mid, String bot, int topK, int botK, String res) throws IOException, InterruptedException{
 		String[] folders = getFolders(mid);
-		String cmd = "hadoop fs -mkdir " + res;
-		run(cmd);
+		//String cmd = "hadoop fs -mkdir " + res;
+		//run(cmd)
+		//make dir for results
+		HadoopUtil.mkdir(res);
 		
 		//Thread[] ts = new Thread[topK];
 		
@@ -153,12 +160,14 @@ public class TopDownClustering {
 	public static String[] getFolders(String mid) throws IOException, InterruptedException{
 		
 		String[] folders = new String[topK];
+		/*
 		int i = -1;
 		String cmd = "hadoop fs -ls " + mid;
 		log(cmd);
 		
 		Runtime rt = Runtime.getRuntime();
 		Process p = rt.exec(cmd);
+				
 		String line;
 		BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()) );
 	    while ((line = in.readLine()) != null) {
@@ -170,6 +179,20 @@ public class TopDownClustering {
 	    }
 	    in.close();
 		p.waitFor();
+		*/
+		File folder = new File(mid);
+		File[] listOfFiles = folder.listFiles();
+
+		    for (int i = 0; i < listOfFiles.length; i++) {
+		      if (listOfFiles[i].isFile()) {
+		        System.out.println("File " + listOfFiles[i].getName());
+		        //do nothing
+		      } else if (listOfFiles[i].isDirectory()) {
+		        System.out.println("Directory " + listOfFiles[i].getName());
+		        //
+		        folders[i]=listOfFiles[i].getName();
+		      }
+		    }
 		return folders;
 	}
 	
