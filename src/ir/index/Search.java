@@ -1,28 +1,50 @@
 package ir.index;
 
+import ir.feature.SIFTExtraction;
+
+import java.io.File;
 import java.io.IOException;
+
+import javax.imageio.ImageIO;
 
 import org.apache.solr.client.solrj.SolrServerException;
 
-import ir.cluster.Frequency;
-import ir.util.HadoopUtil;
+/**
+ * Indexing and Searching runs locally using Solr
+ *
+ */
 
 public class Search {
 	
-	public static String featureFolder = "data/index/gt/";
-	public static String fnames = "data/fnames.txt";
-	
-	public static String clusterFile = "data/clusters-30-60.txt";
-	//public static String clusterFile = "data/clusters.txt";
-	public static int clusterNum = 1800;
-	//public static int clusterNum = 900;
-	public static String termFile = "data/tf-1800.txt";
-	//public static String termFile = "data/tf.txt";
 	public static int featureSize = 128;
 	
 	
 	//TODO: code cleaning and add an entry point function
-	public static void run(){
+	public static void runIndexing(String terms){
+		try {
+			Indexing.index(terms);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SolrServerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public static void search(String image){
+		try {
+			String[] features = SIFTExtraction.getFeatures(ImageIO.read(new File(image)));
+			String qs = Indexing.createQuery(features);
+			String[] results = Indexing.query(qs);
+			System.out.println("results length = " + results.length);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SolrServerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 	}
 	
@@ -34,12 +56,5 @@ public class Search {
 		// evaluate the search system pipeline
 		Evaluate.evaluate("gt");
 	}
-	
-	public static void getWordFrequence(String fnames,String bw, String termFile) throws IOException{
-		HadoopUtil.delete(bw);
-		Frequency.run(fnames, bw);
-		HadoopUtil.copyMerge(bw, termFile);
-	}
-	
-	
+		
 }

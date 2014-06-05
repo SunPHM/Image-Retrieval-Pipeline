@@ -2,6 +2,8 @@ package ir.index;
 
 
 
+import ir.cluster.Frequency;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -42,7 +44,7 @@ public class Evaluate {
 				double highY = Double.parseDouble(array[4]);
 				//System.out.println(line);
 				//System.out.println(query + " " + lowX + " " + lowY + " " + highX + " " + highY);
-				String[] features = getImageFeatures(Search.featureFolder + "/" + queryImage, lowX, lowY, highX, highY);
+				String[] features = getImageFeatures(Frequency.features + "/" + queryImage, lowX, lowY, highX, highY);
 				// search the image features
 				System.out.println("query image " + queryImage);
 				F1Score fs = search(features, folder + "/" + file.substring(0, file.length() - "_query.txt".length()));
