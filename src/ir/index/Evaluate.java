@@ -14,9 +14,13 @@ import org.apache.solr.client.solrj.SolrServerException;
 
 public class Evaluate {
 	
-	public static F1Score search(String[] features, String gt) throws IOException, SolrServerException{
+	public static void main(String[] args) throws IOException, SolrServerException{
+		evaluate("data/index/gt");
+	}
+	
+	public static F1Score searchFeatures(String[] features, String gt) throws IOException, SolrServerException{
 		// get query from a set of images and measure the mean F1 score
-		String query = Indexing.createQuery(features);
+		String query = Search.createQuery(features);
 		// run query
 		String[] files=Indexing.query(query);
 		
@@ -47,7 +51,7 @@ public class Evaluate {
 				String[] features = getImageFeatures(Frequency.features + "/" + queryImage, lowX, lowY, highX, highY);
 				// search the image features
 				System.out.println("query image " + queryImage);
-				F1Score fs = search(features, folder + "/" + file.substring(0, file.length() - "_query.txt".length()));
+				F1Score fs = searchFeatures(features, folder + "/" + file.substring(0, file.length() - "_query.txt".length()));
 				list.add(fs);
 			}
 		}
@@ -90,7 +94,6 @@ public class Evaluate {
 		reader.close();
 		return list.toArray(new String[list.size()]);
 	}
-	public static void main(String[] args) throws IOException, SolrServerException{
-		evaluate("data/index/gt");
-	}
+	
+	
 }

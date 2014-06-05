@@ -1,5 +1,6 @@
 package ir.index;
 
+import ir.cluster.Frequency;
 import ir.feature.SIFTExtraction;
 
 import java.io.File;
@@ -18,9 +19,27 @@ public class Search {
 	
 	public static int featureSize = 128;
 	
+	public static int clusterNum;
+	public static String clusters;
+	public static String terms;
+	
+	public static void main(String[] args) throws IOException, SolrServerException{
+		// transform files of features into files of cluster ids
+		//getWordFrequence(fnames, "bw", termFile);
+		// index the cluster ids files
+		//InvertedIndexing.index(termFile);
+		// evaluate the search system pipeline
+		//Evaluate.evaluate("gt");
+	}
+	
+	public static void init(String terms, int clusterNum, String clusters){
+		Search.terms = terms;
+		Search.clusterNum = clusterNum;
+		Search.clusters = clusters;
+	}
 	
 	//TODO: code cleaning and add an entry point function
-	public static void runIndexing(String terms){
+	public static void runIndexing(String terms, int clusterNum, String clusters){
 		try {
 			Indexing.index(terms);
 		} catch (IOException e) {
@@ -35,7 +54,7 @@ public class Search {
 	public static void search(String image){
 		try {
 			String[] features = SIFTExtraction.getFeatures(ImageIO.read(new File(image)));
-			String qs = Indexing.createQuery(features);
+			String qs = Search.createQuery(features);
 			String[] results = Indexing.query(qs);
 			System.out.println("results length = " + results.length);
 		} catch (IOException e) {
@@ -48,13 +67,31 @@ public class Search {
 		
 	}
 	
-	public static void main(String[] args) throws IOException, SolrServerException{
-		// transform files of features into files of cluster ids
-		//getWordFrequence(fnames, "bw", termFile);
-		// index the cluster ids files
-		//InvertedIndexing.index(termFile);
-		// evaluate the search system pipeline
-		Evaluate.evaluate("gt");
+	public static String createQuery(String[] features) throws IOException{//transform an image into a Solr document or a field
+		
+		//String[] features = SIFTExtractor.extract(image);
+		//System.out.println("query: " + image);
+		double[][] clusters = Frequency.FEMap.readClusters(Search.clusters);
+		int[] marks = new int[Search.clusterNum];
+		
+		for(int i = 0; i < features.length; i++){
+			double[] feature = new double[Search.featureSize];
+			String[] args = features[i].split(" ");
+			for (int j = 0; j < Search.featureSize; j++)
+				feature[j] = Double.parseDouble(args[j + 10]);
+			int index = Frequency.FEMap.findBestCluster(feature, clusters);
+			marks[index]++;
+		}
+		
+		String result = "";
+		for(int i = 0; i < Search.clusterNum; i++){
+			for(int j = 0; j < marks[i]; j++){
+				if(result.length() == 0) result += i;
+				else result += " " + i;
+			}	
+		}
+		System.out.println("query string: " + result);
+		return result;
 	}
 		
 }

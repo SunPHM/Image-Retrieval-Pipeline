@@ -1,7 +1,5 @@
 package ir.index;
 
-import ir.cluster.Frequency;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -31,7 +29,6 @@ public class Indexing {
 		getF1Score(files, "data/index/gt/all_souls_1");
 		
 	}
-	
 	
 	public static void index(String filename) throws IOException, SolrServerException{//indexing existing index matrix
 		
@@ -73,35 +70,6 @@ public class Indexing {
 		return doc;
 	}
 	
-	
-	public static String createQuery(String[] features) throws IOException{//transform an image into a Solr document or a field
-	
-		//String[] features = SIFTExtractor.extract(image);
-		//System.out.println("query: " + image);
-		double[][] clusters = Frequency.FEMap.readClusters(Frequency.clusters);
-		int[] marks = new int[Frequency.clusterNum];
-		
-		for(int i = 0; i < features.length; i++){
-			double[] feature = new double[Search.featureSize];
-			String[] args = features[i].split(" ");
-			for (int j = 0; j < Search.featureSize; j++)
-				feature[j] = Double.parseDouble(args[j + 10]);
-			int index = Frequency.FEMap.findBestCluster(feature, clusters);
-			marks[index]++;
-		}
-		
-		String result = "";
-		for(int i = 0; i < Frequency.clusterNum; i++){
-			for(int j = 0; j < marks[i]; j++){
-				if(result.length() == 0) result += i;
-				else result += " " + i;
-			}	
-		}
-		System.out.println("query string: " + result);
-		return result;
-	}
-	
-	
 	public static String[] query(String s) throws SolrServerException{//query and output results
 		
 		//query a numeric vector as a string
@@ -123,8 +91,6 @@ public class Indexing {
 	    
 	    return files;
 	}
-	
-	
 	
 	public static F1Score getF1Score(String[] files, String gt){
 		
