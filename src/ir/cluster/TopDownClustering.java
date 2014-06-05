@@ -35,11 +35,11 @@ public class TopDownClustering {
 		// execute pipeline
 		clean(prefix);
 		topLevelProcess(data, top + "/cls", top, topK);
-		midLevelProcess(top, mid);
+		//midLevelProcess(top, mid);
 		// parallel bottom level clustering
-		botLevelProcess(mid, bot, topK, botK, res);
+		//botLevelProcess(mid, bot, topK, botK, res);
 		// merge the clusters into a single file
-		merge(res, prefix);
+		//merge(res, prefix);
 		
 		long ts1 = new Date().getTime();
 		log("top-down clustering pipeline ends with total process time: " + (double)(ts1 - ts0) / (60 * 1000) + " min");
@@ -65,7 +65,7 @@ public class TopDownClustering {
 		String cmd = "hadoop fs -mkdir " + res;
 		run(cmd);
 		
-		Thread[] ts = new Thread[topK];
+		//Thread[] ts = new Thread[topK];
 		
 		for(int i = 0; i < folders.length; i++){
 			
@@ -103,13 +103,13 @@ public class TopDownClustering {
 			run(cmd1);
 			log(cmd2);
 			run(cmd2);
-			log("thread" + num + "> ends");
+			log("botlevel clustering " + num + "> ends");
 			
 		}
 		
-		for(int i = 0; i < ts.length; i++){
-			ts[i].join();
-		}
+		//for(int i = 0; i < ts.length; i++){
+		//	ts[i].join();
+		//}
 	}
 	
 	public static void merge(String src, String dst) throws IOException, InterruptedException{

@@ -32,6 +32,7 @@ public class Transform {
 	}
 	
 	public static void run() throws IOException{
+		HadoopUtil.delete("data/cluster/fs.seq");
 		runCleanMR("data/features", "data/temp/seq");
 		HadoopUtil.copyMerge("data/temp/seq", "data/cluster/fs.seq");
 		HadoopUtil.delete("data/temp/seq");
@@ -78,7 +79,7 @@ public class Transform {
 		}
 		
 		public static double[] getPoints(String[] args, int size){// get the feature vector from the 
-			System.out.println(args.length);
+			//System.out.println(args.length);
 			double[] points = new double[size];
 			for (int i = 0; i < size; i++)
 				points[i] = Double.parseDouble(args[i + 4]);
