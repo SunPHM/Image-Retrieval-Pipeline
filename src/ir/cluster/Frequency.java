@@ -24,6 +24,7 @@ import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapred.TextInputFormat;
 import org.apache.hadoop.mapred.TextOutputFormat;
 
+import ir.index.Search;
 import ir.util.HadoopUtil;
 
 
@@ -53,7 +54,7 @@ public class Frequency {
 	
 	public static void run(String infile, String outfile) throws IOException{
 
-		JobConf conf = new JobConf(FrequencyExtractor.class);
+		JobConf conf = new JobConf(Frequency.class);
 		conf.setJobName("FrequencyExtractor");
 		
 		conf.setOutputKeyClass(Text.class);
