@@ -72,7 +72,7 @@ public class HadoopUtil {
 		File path=new File(folder_path);
 		Configuration conf = new Configuration();
 		File[] tmp_files=null;
-		ArrayList<String> ListOfFiles=null;
+		ArrayList<String> ListOfFiles=new ArrayList<String>();
 		try {
 			tmp_files=FileUtil.listFiles(path);
 			for(File f:tmp_files){
@@ -85,13 +85,15 @@ public class HadoopUtil {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return (String[]) ListOfFiles.toArray();
+		String[] res=new String[ListOfFiles.size()];
+		res=ListOfFiles.toArray(res);
+		return res;
 	}
 	public static String[] getListOfFolders(String folder_path){
 		File path=new File(folder_path);
 		Configuration conf = new Configuration();
 		File[] tmp_files=null;
-		ArrayList<String> ListOfFiles=null;
+		ArrayList<String> ListOfFiles=new ArrayList<String>();
 		try {
 			tmp_files=FileUtil.listFiles(path);
 			for(File f:tmp_files){
@@ -104,7 +106,9 @@ public class HadoopUtil {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return (String[]) ListOfFiles.toArray();
+		String[] res=new String[ListOfFiles.size()];
+		res=ListOfFiles.toArray(res);
+		return res;
 	}
 	
 }

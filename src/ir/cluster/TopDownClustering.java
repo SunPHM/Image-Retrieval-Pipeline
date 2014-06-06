@@ -30,7 +30,7 @@ public class TopDownClustering {
 	private static int maxIterations=100;
 	private static final CosineDistanceMeasure distance_measure=new CosineDistanceMeasure();
 	
-	//sample args: data/cluster/fs.seq data/cluster/level  10 10
+	//example args: data/cluster/fs.seq data/cluster/level  10 10
 	public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException, InstantiationException, IllegalAccessException{
 		run(args);
 	}
@@ -53,7 +53,7 @@ public class TopDownClustering {
 		HadoopUtil.delete(prefix);
 		topLevelProcess(data, top + "/cls", top, topK);
 		midLevelProcess(top, mid);
-		// non-parallel bottom level clustering
+		//non-parallel bottom level clustering
 		botLevelProcess(mid, bot, topK, botK, res);
 		// merge the clusters into a single file
 		merge(res, prefix);
@@ -90,17 +90,15 @@ public class TopDownClustering {
 			String src=bot + "/" + i ;//+ "/clusters-*-final/*";
 			String dst=res + "/" + i;
 			
-			//get the name of the final folder
-			File folder = new File(src);
-			File[] listOfFiles = folder.listFiles();
+			//get the name of the final folder -- dont know which i in clusters-i-final
+			String[] listOfFiles = HadoopUtil.getListOfFiles(src);
 
 			for (int j = 0; j < listOfFiles.length; j++) {
-				if (listOfFiles[j].isDirectory()) {
-			        System.out.println("Directory " + listOfFiles[j].getPath());
-			        if(listOfFiles[j].getName().endsWith("final")){
-			        	src=src+"/"+listOfFiles[j].getName();
-			        }
-				}
+			       // System.out.println("Directory " + listOfFiles[j].getPath());
+			    if(listOfFiles[j].endsWith("final")){
+			        	src=src+"/"+listOfFiles[j];
+			    }
+				
 			}
 			
 			HadoopUtil.mkdir(dst);
@@ -133,21 +131,17 @@ public class TopDownClustering {
 	
 	public static String[] getFolders(String mid){
 		
-		String[] folders = new String[topK];
-		File folder = new File(mid);
-		File[] listOfFiles = folder.listFiles();
-
-		    for (int i = 0; i < listOfFiles.length; i++) {
-		      if (listOfFiles[i].isFile()) {
-		        System.out.println("File " + listOfFiles[i].getName());
-		        //do nothing
-		      } else if (listOfFiles[i].isDirectory()) {
-		        System.out.println("Directory " + listOfFiles[i].getPath());
-		        //
-		        folders[i]=listOfFiles[i].getPath();
-		      }
-		    }
-		return folders;
+		//String[] folders = new String[topK];
+		String[] tmp_folders=HadoopUtil.getListOfFolders(mid);
+		if(tmp_folders==null||tmp_folders.length!=topK){
+			System.out.println("Error: number of folders in dir:  "+mid+"   does not equal to "+topK+", please check!!!");
+			return tmp_folders;
+		}
+		else{
+			return tmp_folders;
+		}
+		
+		//return folders;
 	}
 	
 	public static void kmeans(String input, String clusters, String output, int k, double cd, int x) {
