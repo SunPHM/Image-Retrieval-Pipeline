@@ -2,13 +2,8 @@ package ir.cluster;
 
 import ir.util.HadoopUtil;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.file.DirectoryNotEmptyException;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.util.Date;
 
 import org.apache.hadoop.conf.Configuration;
@@ -55,7 +50,7 @@ public class TopDownClustering {
 		botK = Integer.parseInt(args[3]);
 		
 		// execute pipeline
-		clean(prefix);
+		HadoopUtil.delete(prefix);
 		topLevelProcess(data, top + "/cls", top, topK);
 		midLevelProcess(top, mid);
 		// non-parallel bottom level clustering
@@ -67,55 +62,29 @@ public class TopDownClustering {
 		log("top-down clustering pipeline ends with total process time: " + (double)(ts1 - ts0) / (60 * 1000) + " min");
 	}
 	
-	public static void clean(String prefix) throws IOException, InterruptedException{
-		//delete all files in folder "prefix"
-		//String cmd = "hadoop fs -rm -R " + prefix;
-		//run(cmd);
-		HadoopUtil.delete(prefix);
-	}
-	
-	public static void topLevelProcess(String input, String cls, String top, int topK) throws IOException, InterruptedException, ClassNotFoundException, InstantiationException, IllegalAccessException{
+	public static void topLevelProcess(String input, String cls, String top, int topK) {
 		kmeans(input, cls, top, topK, delta, x);
 	}
 	
-	public static void midLevelProcess(String top, String mid) throws IOException, InterruptedException{
+	public static void midLevelProcess(String top, String mid) throws IOException, InterruptedException {
 		String command = "mahout clusterpp -i " + top + " -o " + mid + " -xm sequential";
 		log(command);
 		run(command);
 	}
 	
-	public static void botLevelProcess(String mid, String bot, int topK, int botK, String res) 
-			throws IOException, InterruptedException, ClassNotFoundException, InstantiationException, IllegalAccessException{
+	public static void botLevelProcess(String mid, String bot, int topK, int botK, String res) {
+		
 		String[] folders = getFolders(mid);
-		//String cmd = "hadoop fs -mkdir " + res;
-		//run(cmd)
-		//make dir for results
 		HadoopUtil.mkdir(res);
 		
-		//Thread[] ts = new Thread[topK];
-		
 		for(int i = 0; i < folders.length; i++){
-			
-			//ts[i] = parrelBotProcess(folders[i] + "/part-m-0", 	bot + "/" + i + "/cls", 	bot + "/" + i, 	botK, 	delta, 	x, 
-			//		bot + "/" + i + "/clusters-*-final/*", 	res + "/" + i, 	i);
-			//change to serially processing
-			
-			//parrelBotProcess(String input, String clusters, String output, int k, double cd, int x, 
-			//			String src, String dst, int num)
 			String input=folders[i] + "/part-m-0";
 			String clusters=bot + "/" + i + "/cls";
 			String output=bot + "/" + i;
-			int k=botK;
+			int k = botK;
 			double cd = delta;
-			//int x=x;
-			
-			
 			int num=i;
-			
-			//String cmd0 = "mahout kmeans -i " + input + " -c " + clusters + " -o " + output + " -k " + k + " "
-			//		+ "-dm " + dm + " -cd " + cd + " -x " + x + " -ow -cl";
-			
-			//public static void kmeans(String input, String clusters, String output, int k, double cd, int x) 
+
 			kmeans(input,clusters,output,k,cd,x);
 			
 			String src=bot + "/" + i ;//+ "/clusters-*-final/*";
@@ -125,99 +94,46 @@ public class TopDownClustering {
 			File folder = new File(src);
 			File[] listOfFiles = folder.listFiles();
 
-			    for (int j = 0; j < listOfFiles.length; j++) {
-			      if (listOfFiles[j].isFile()) {
-			        //do nothing
-			      } else if (listOfFiles[j].isDirectory()) {
+			for (int j = 0; j < listOfFiles.length; j++) {
+				if (listOfFiles[j].isDirectory()) {
 			        System.out.println("Directory " + listOfFiles[j].getPath());
-			        //
 			        if(listOfFiles[j].getName().endsWith("final")){
 			        	src=src+"/"+listOfFiles[j].getName();
 			        }
-			      }
-			    }
+				}
+			}
 			
-			
-			//String cmd1 = "hadoop fs -mkdir " + dst;
 			HadoopUtil.mkdir(dst);
-			
-			//String cmd2 = "hadoop fs -cp " + src + " " + dst;
-			//System.out.println("src folder "+src);
 			HadoopUtil.cpdir(src, dst);
-			//String cmd = cmd0 + "\n\r" + cmd1 + "\n\r" + cmd2;
 			
-			//Thread t = new Thread(new BotThread(cmd0, cmd1, cmd2, num));
-			//t.start();
-			
-		/*	log(cmd0);
-			run(cmd0);
-			log(cmd1);
-			run(cmd1);
-			log(cmd2);
-			run(cmd2);
-			*/
 			log("botlevel clustering " + num + "> ends");
 			
 		}
-		
-		//for(int i = 0; i < ts.length; i++){
-		//	ts[i].join();
-		//}
 	}
 	
 	public static void merge(String src, String dst) throws IOException, InterruptedException{
 		// copy and merge files
-		// HadoopUtil.copyMerge(src, dst + "/tmp/tmp.txt");
-		// mahout clusterdump
 		String temp = "temptemptemp";
-	/*	
-		String cmd0 = "mkdir " + temp;
-		log(cmd0);
-		run(cmd0);
-	*/
 		HadoopUtil.mkdir(temp);
-	///////////////how to change this
+	
+		///////////////how to change this
 		String cmd1 = "mahout clusterdump -i " + src + "/*/" + " -o " + temp + "/clusters.txt";
 		log(cmd1);
 		run(cmd1);
-	/*
-		String cmd2 = "hadoop fs -put " + temp + "/clusters.txt" + " " + dst;
-		log(cmd2);
-		run(cmd2);
-	*/
+		
 		HadoopUtil.cpFile(temp+"/clusters.txt", dst+"/clusters.txt");
-	/*	
+		/*	
 		String cmd3 = "rm -r " + temp;
 		log(cmd3);
 		run(cmd3);
-	*/
+		 */
 		HadoopUtil.delete(temp);
 		//HadoopUtil.delete(dst + "/tmp/tmp.txt");
 	}
 	
-	public static String[] getFolders(String mid) throws IOException, InterruptedException{
+	public static String[] getFolders(String mid){
 		
 		String[] folders = new String[topK];
-		/*
-		int i = -1;
-		String cmd = "hadoop fs -ls " + mid;
-		log(cmd);
-		
-		Runtime rt = Runtime.getRuntime();
-		Process p = rt.exec(cmd);
-				
-		String line;
-		BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()) );
-	    while ((line = in.readLine()) != null) {
-	    	if(i == -1) i = 0;
-	    	else{
-	    		folders[i] = line.split(" +")[7];
-	    		i++;
-	    	}
-	    }
-	    in.close();
-		p.waitFor();
-		*/
 		File folder = new File(mid);
 		File[] listOfFiles = folder.listFiles();
 
@@ -234,79 +150,56 @@ public class TopDownClustering {
 		return folders;
 	}
 	
-	public static void kmeans(String input, String clusters, String output, int k, double cd, int x) 
-			throws IOException, InterruptedException, ClassNotFoundException, InstantiationException, IllegalAccessException{
-		String command = "mahout kmeans -i " + input + " -c " + clusters + " -o " + output + " -k " + k + " "
-				+ "-dm " + dm + " -cd " + cd + " -x " + x + " -ow -cl -xm sequential"  ;
+	public static void kmeans(String input, String clusters, String output, int k, double cd, int x) {
+		
 		org.apache.hadoop.conf.Configuration conf=new Configuration();
-		FileSystem fs = FileSystem.get(conf);
-		 Path input_path = new Path(input);
-		 Path clusters_path=new Path(clusters+"/part-r-00000");
-		 Path output_path=new Path(output);
-		 HadoopUtil.delete(output);
-		 double clusterClassificationThreshold=0;//////???	 
-		 
-		 //read first K points from input folder as initial K clusters
-		 SequenceFile.Reader reader = new SequenceFile.Reader(FileSystem.get(conf), input_path, conf);
-		 WritableComparable key = (WritableComparable) reader.getKeyClass().newInstance();
-		 VectorWritable value = (VectorWritable) reader.getValueClass().newInstance();
-		 SequenceFile.Writer writer=new SequenceFile.Writer(FileSystem.get(conf), conf, clusters_path, Text.class,Kluster.class);
-		 for (int i=0;i<k;i++){
-			 reader.next(key, value);
+		try {
+			FileSystem fs = FileSystem.get(conf);
+			Path input_path = new Path(input);
+			Path clusters_path=new Path(clusters+"/part-r-00000");
+			Path output_path=new Path(output);
+			HadoopUtil.delete(output);
+			double clusterClassificationThreshold=0;//////???	 
 			 
-			 Vector vec =value.get();
-			 Kluster cluster=new Kluster(vec,i,distance_measure );
-			 writer.append(new Text(cluster.getIdentifier()), cluster);
-		 }
-		 reader.close();writer.close();
-		 System.out.println("initial "+k+"  clusters written to file: " + clusters);
-/* public static void run(org.apache.hadoop.conf.Configuration conf,
-                       org.apache.hadoop.fs.Path input,
-                       org.apache.hadoop.fs.Path clustersIn,
-                       org.apache.hadoop.fs.Path output,
-                       double convergenceDelta,
-                       int maxIterations,
-                       boolean runClustering,
-                       double clusterClassificationThreshold,
-                       boolean runSequential)
-                throws IOException,
-                       InterruptedException,
-                       ClassNotFoundException
-			Iterate over the input vectors to produce clusters and, if requested, use the results of the final iteration to cluster the input vectors.
-					Parameters:
-						input - the directory pathname for input points
-						clustersIn - the directory pathname for initial & computed clusters
-						output - the directory pathname for output points
-						convergenceDelta - the convergence delta value
-						maxIterations - the maximum number of iterations
-						runClustering - true if points are to be clustered after iterations are completed
-						clusterClassificationThreshold - Is a clustering strictness / outlier removal parameter. Its value should be between 0 and 1. Vectors having pdf below this value will not be clustered.
-						runSequential - if true execute sequential algorithm
- */
-		KMeansDriver.run(conf, input_path, clusters_path, output_path, 
-				distance_measure ,
-				 cd,  maxIterations, true, clusterClassificationThreshold, false);
+			//read first K points from input folder as initial K clusters
+			SequenceFile.Reader reader = new SequenceFile.Reader(FileSystem.get(conf), input_path, conf);
+			WritableComparable key = (WritableComparable) reader.getKeyClass().newInstance();
+			VectorWritable value = (VectorWritable) reader.getValueClass().newInstance();
+			SequenceFile.Writer writer=new SequenceFile.Writer(FileSystem.get(conf), conf, clusters_path, Text.class,Kluster.class);
+			for (int i=0;i<k;i++){
+				reader.next(key, value);
+				 
+				Vector vec =value.get();
+				Kluster cluster=new Kluster(vec,i,distance_measure );
+				writer.append(new Text(cluster.getIdentifier()), cluster);
+			}
+			reader.close();writer.close();
+			System.out.println("initial "+k+"  clusters written to file: " + clusters);
+			 
+			KMeansDriver.run(conf, input_path, clusters_path, output_path, 
+					distance_measure ,
+					 cd,  maxIterations, true, clusterClassificationThreshold, false);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InstantiationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 		
-		
-	//	log(command);
-	//	run(command);
 	}
 	
-	/*public static Thread parrelBotProcess(String input, String clusters, String output, int k, double cd, int x, String src, String dst, int num) throws IOException, InterruptedException{
-		
-		String cmd0 = "mahout kmeans -i " + input + " -c " + clusters + " -o " + output + " -k " + k + " "
-				+ "-dm " + dm + " -cd " + cd + " -x " + x + " -ow -cl";
-		//String cmd0 = "mahout kmeans -i " + input + " -c " + clusters + " -o " + output + " -k " + k + " "
-		//		+ "-dm " + dm + " -cd " + cd + " -x " + x + " -ow -cl -xm sequential";
-		String cmd1 = "hadoop fs -mkdir " + dst;
-		String cmd2 = "hadoop fs -cp " + src + " " + dst;
-		//String cmd = cmd0 + "\n\r" + cmd1 + "\n\r" + cmd2;
-		
-		Thread t = new Thread(new BotThread(cmd0, cmd1, cmd2, num));
-		t.start();
-		return t;
-	}
-	*/
+	
 	public static void copyResults(String cs, String res) throws IOException, InterruptedException{
 		String cmd0 = "hadoop fs -mkdir " + res;
 		run(cmd0);
