@@ -2,11 +2,12 @@ package ir.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
-import org.apache.commons.io.FileUtils;
+
+//import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileUtil;
-import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.*;
 
 public class HadoopUtil {
 	
@@ -33,10 +34,10 @@ public class HadoopUtil {
 		}
 	}
 	public static void mkdir(String dirPath){
-		File p=new File(dirPath);
-		
+		Path path=new Path(dirPath);
+		Configuration conf = new Configuration();
 		try {
-			FileUtils.forceMkdir(p);
+			path.getFileSystem(conf).mkdirs(path);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			System.out.println("Failed to create directory : "+dirPath);
@@ -44,9 +45,11 @@ public class HadoopUtil {
 		}
 	}
 	public static void cpdir(String srcPath, String dstPath){
-		
+		Path src=new Path(srcPath);
+		Path dst=new Path(dstPath);
+		Configuration conf = new Configuration();
 		try {
-			FileUtils.copyDirectory(new File(srcPath), new File(dstPath));
+			FileUtil.copy(src.getFileSystem(conf), src, dst.getFileSystem(conf), dst,false, true, conf);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			System.out.println("Failed to cp directory : "+srcPath + " to "+dstPath);
@@ -54,14 +57,54 @@ public class HadoopUtil {
 		}
 	}
 	public static void cpFile(String srcFile, String dstFile){
-		
+		Path src=new Path(srcFile);
+		Path dst=new Path(dstFile);
+		Configuration conf = new Configuration();
 		try {
-			FileUtils.copyFile(new File(srcFile), new File(dstFile));
+			FileUtil.copy(src.getFileSystem(conf), src, dst.getFileSystem(conf), dst,false, true, conf);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			System.out.println("Failed to cp File : "+srcFile + " to "+dstFile);
 			e.printStackTrace();
 		}
+	}
+	public static String[] getListOfFiles(String folder_path){
+		File path=new File(folder_path);
+		Configuration conf = new Configuration();
+		File[] tmp_files=null;
+		ArrayList<String> ListOfFiles=null;
+		try {
+			tmp_files=FileUtil.listFiles(path);
+			for(File f:tmp_files){
+				if(f.isDirectory()==false){
+					ListOfFiles.add(f.getPath());
+				}
+			}
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return (String[]) ListOfFiles.toArray();
+	}
+	public static String[] getListOfFolders(String folder_path){
+		File path=new File(folder_path);
+		Configuration conf = new Configuration();
+		File[] tmp_files=null;
+		ArrayList<String> ListOfFiles=null;
+		try {
+			tmp_files=FileUtil.listFiles(path);
+			for(File f:tmp_files){
+				if(f.isDirectory()==true){
+					ListOfFiles.add(f.getPath());
+				}
+			}
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return (String[]) ListOfFiles.toArray();
 	}
 	
 }
