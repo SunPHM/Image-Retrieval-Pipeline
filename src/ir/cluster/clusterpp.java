@@ -42,7 +42,7 @@ public class clusterpp {
 	}
 	static class MultiFileOutput extends MultipleSequenceFileOutputFormat<LongWritable, VectorWritable> {
         protected String generateFileNameForKeyValue(LongWritable key, VectorWritable value,String name) {
-                return key.toString();
+                return key.toString()+"/"+key.toString();
         }
 	}
 	public static void run_clusterpp(String input, String output){
