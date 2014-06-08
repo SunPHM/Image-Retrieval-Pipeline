@@ -45,7 +45,8 @@ public class HadoopUtil {
 		}
 	}
 	public static void cpdir(String srcPath, String dstPath){
-		Path src=new Path(srcPath);
+		//minor fix on this line
+		Path src=new Path(srcPath+"/");
 		Path dst=new Path(dstPath);
 		Configuration conf = new Configuration();
 		try {

@@ -4,6 +4,7 @@ import ir.util.HadoopUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 
 import org.apache.hadoop.conf.Configuration;
@@ -67,9 +68,12 @@ public class TopDownClustering {
 	}
 	
 	public static void midLevelProcess(String top, String mid) throws IOException, InterruptedException {
-		String command = "mahout clusterpp -i " + top + " -o " + mid + " -xm sequential";
-		log(command);
-		run(command);
+		
+		//String command = "mahout clusterpp -i " + top + " -o " + mid + " -xm sequential";
+		//log(command);
+		//run(command);
+		
+		clusterpp.run_clusterpp(top+"/clusteredPoints", mid);
 	}
 	
 	public static void botLevelProcess(String mid, String bot, int topK, int botK, String res) {
@@ -109,24 +113,35 @@ public class TopDownClustering {
 		}
 	}
 	
-	public static void merge(String src, String dst) throws IOException, InterruptedException{
+	public static void merge(String src, String dst) throws IOException, InterruptedException{	
 		// copy and merge files
 		String temp = "temptemptemp";
 		HadoopUtil.mkdir(temp);
-	
-		///////////////how to change this
-		String cmd1 = "mahout clusterdump -i " + src + "/*/" + " -o " + temp + "/clusters.txt";
-		log(cmd1);
-		run(cmd1);
+		//gather all the clustered points in result directory and merge them.
+		//those files should be in data/cluster/res/i/i/clusteredPoints/part-m-00000 (i=1,2,3,.....), need to get the exact paths of the files
+		ArrayList<String> inputs=new ArrayList<String>();
+		String[] res_folders=HadoopUtil.getListOfFolders(src);
+		for (String res_folder:res_folders){
+			String[] res_i_folders=HadoopUtil.getListOfFolders(res_folder);
+			if(res_i_folders.length==1){
+				res_i_folders=HadoopUtil.getListOfFolders(res_i_folders[0]);
+			}
+			for(String folder:res_i_folders){
+				if(folder.endsWith("clusteredPoints")){
+					inputs.add(folder);
+				}
+			}
+		}
+		String[] inputs_files=new String[inputs.size()];
+		int index=0;
+		for(String input:inputs){
+			inputs_files[index++]=input+"/part-m-00000";
+			System.out.println(inputs_files);
+		}
 		
-		HadoopUtil.cpFile(temp+"/clusters.txt", dst+"/clusters.txt");
-		/*	
-		String cmd3 = "rm -r " + temp;
-		log(cmd3);
-		run(cmd3);
-		 */
+		clusterpp.run_clusterdump(inputs_files, temp);
+		HadoopUtil.cpFile(temp+"/part-00000", dst+"/clusters.txt");
 		HadoopUtil.delete(temp);
-		//HadoopUtil.delete(dst + "/tmp/tmp.txt");
 	}
 	
 	public static String[] getFolders(String mid){
