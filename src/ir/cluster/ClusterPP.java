@@ -5,7 +5,6 @@ import ir.util.HadoopUtil;
 import java.io.IOException;
 import java.util.Iterator;
 
-
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.*;
 import org.apache.hadoop.mapred.FileInputFormat;
@@ -25,8 +24,9 @@ import org.apache.mahout.math.VectorWritable;
 
 
 public class ClusterPP {
-	public static void main(String args[]){
-		run_clusterpp("data/cluster/top/clusteredPoints", "data/cluster/tmpmid/");
+	public static void main(String args[]) throws IOException, InterruptedException{
+		//run_clusterpp("data/cluster/top/clusteredPoints", "data/cluster/tmpmid/");
+		TopDownClustering.merge("data/cluster/level/res", "temptemp");
 	}
 	
 	static class MultiFileOutput extends MultipleSequenceFileOutputFormat<LongWritable, VectorWritable> {
@@ -85,64 +85,6 @@ public class ClusterPP {
 		@Override
 		public void reduce(LongWritable key, Iterator<VectorWritable> values,
 				OutputCollector<LongWritable, VectorWritable> output,
-				Reporter reporter) throws IOException {
-			// TODO Auto-generated method stub
-				while (values.hasNext()) {
-					output.collect(key, values.next());
-				}
-			   
-		}	
-	}
-	
-	//read in the classified points in multiple locations  and output them to a single file
-	public static void run_clusterdump(String[] inputs, String output){
-		HadoopUtil.delete(output);
-
-		JobConf conf = new JobConf(ClusterPP.class);
-		//conf.set("outputDir", output);
-		conf.setJobName("clusterdump");
-
-		conf.setOutputKeyClass(LongWritable.class);
-		conf.setOutputValueClass(WeightedVectorWritable.class);
-
-		conf.setMapperClass(ClusterPP.ClusterdumpMap.class);
-		conf.setReducerClass(ClusterPP.ClusterdumpReduce.class);
-
-		conf.setInputFormat(SequenceFileInputFormat.class);
-	    conf.setOutputFormat(TextOutputFormat.class);
-	    conf.setNumReduceTasks(1);
-
-		//FileInputFormat.setInputPaths(conf, new Path(input));
-		for(String input:inputs){
-			FileInputFormat.addInputPath(conf, new Path(input));
-		}
-		
-		FileOutputFormat.setOutputPath(conf, new Path(output));
-
-		try {
-			JobClient.runJob(conf);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		System.out.println("clusterdump is done");
-		
-	}
-	
-	public static class ClusterdumpMap extends MapReduceBase implements Mapper<IntWritable, WeightedVectorWritable, LongWritable,  WeightedVectorWritable> {
-		@Override
-		public void map(IntWritable key, WeightedVectorWritable value, OutputCollector<LongWritable,  WeightedVectorWritable> output, Reporter reporter) 
-				throws IOException {
-			output.collect(new LongWritable(key.get()),value );
-		}
-
-	}
-	//foreach key output to a seperate file
-	public static class ClusterdumpReduce extends MapReduceBase implements Reducer<LongWritable,  WeightedVectorWritable, LongWritable,  WeightedVectorWritable> {
-		@Override
-		public void reduce(LongWritable key, Iterator< WeightedVectorWritable> values,
-				OutputCollector<LongWritable,  WeightedVectorWritable> output,
 				Reporter reporter) throws IOException {
 			// TODO Auto-generated method stub
 				while (values.hasNext()) {

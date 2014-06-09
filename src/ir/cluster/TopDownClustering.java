@@ -111,7 +111,7 @@ public class TopDownClustering {
 		String temp = "temptemptemp";
 		HadoopUtil.mkdir(temp);
 		//gather all the clustered points in result directory and merge them.
-		//those files should be in data/cluster/res/i/i/clusteredPoints/part-m-00000 (i=1,2,3,.....), need to get the exact paths of the files
+		//those files should be in data/cluster/res/i/i/cluster-j-final/part-r-00000 (i=1,2,3,.....,j=1,2,...), need to get the exact paths of the files
 		ArrayList<String> inputs=new ArrayList<String>();
 		String[] res_folders=HadoopUtil.getListOfFolders(src);
 		for (String res_folder:res_folders){
@@ -120,7 +120,7 @@ public class TopDownClustering {
 				res_i_folders=HadoopUtil.getListOfFolders(res_i_folders[0]);
 			}
 			for(String folder:res_i_folders){
-				if(folder.endsWith("clusteredPoints")){
+				if(folder.endsWith("final")){
 					inputs.add(folder);
 				}
 			}
@@ -128,11 +128,11 @@ public class TopDownClustering {
 		String[] inputs_files=new String[inputs.size()];
 		int index=0;
 		for(String input:inputs){
-			inputs_files[index++]=input+"/part-m-00000";
+			inputs_files[index++]=input+"/part-r-00000";
 			System.out.println(inputs_files[index-1]);
 		}
 		
-		ClusterPP.run_clusterdump(inputs_files, temp);
+		ClusterDump.run_clusterdump(inputs_files, temp);
 		HadoopUtil.cpFile(temp+"/part-00000", dst+"/clusters.txt");
 		HadoopUtil.delete(temp);
 	}
