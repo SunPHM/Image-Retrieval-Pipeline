@@ -83,7 +83,7 @@ public class ClusterDump {
 				Reporter reporter) throws IOException {
 			// TODO Auto-generated method stub
 				while (values.hasNext()) {
-					output.collect(key, new Text(values.next().getValue().toString()));
+					output.collect(null, new Text(values.next().getValue().toString()));
 				}
 			   
 		}	
