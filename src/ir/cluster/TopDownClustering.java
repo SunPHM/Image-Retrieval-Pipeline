@@ -2,7 +2,6 @@ package ir.cluster;
 
 import ir.util.HadoopUtil;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -21,15 +20,14 @@ import org.apache.mahout.math.VectorWritable;
 
 public class TopDownClustering {
 	
-	private static String dm = "org.apache.mahout.common.distance.CosineDistanceMeasure";
 	private static double delta = 0.001;
 	private static int x = 100;
 	
 	private static int topK = 0;
 	private static int botK = 0;
 	
-	private static int maxIterations=100;
-	private static final CosineDistanceMeasure distance_measure=new CosineDistanceMeasure();
+	private static int maxIterations = 100;
+	private static final CosineDistanceMeasure distance_measure = new CosineDistanceMeasure();
 	
 	//example args: data/cluster/fs.seq data/cluster/level  10 10
 	public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException, InstantiationException, IllegalAccessException{
@@ -68,11 +66,6 @@ public class TopDownClustering {
 	}
 	
 	public static void midLevelProcess(String top, String mid) throws IOException, InterruptedException {
-		
-		//String command = "mahout clusterpp -i " + top + " -o " + mid + " -xm sequential";
-		//log(command);
-		//run(command);
-		
 		clusterpp.run_clusterpp(top+"/clusteredPoints", mid);
 	}
 	
@@ -149,7 +142,7 @@ public class TopDownClustering {
 		//String[] folders = new String[topK];
 		String[] tmp_folders=HadoopUtil.getListOfFolders(mid);
 		if(tmp_folders==null||tmp_folders.length!=topK){
-			System.out.println("Error: number of folders in dir:  "+mid+"   does not equal to "+topK+", please check!!!");
+			System.out.println("Error: number of folders in dir:  " + mid + "   does not equal to " + topK + ", please check!!!");
 			return tmp_folders;
 		}
 		else{
@@ -165,21 +158,21 @@ public class TopDownClustering {
 		try {
 			FileSystem fs = FileSystem.get(conf);
 			Path input_path = new Path(input);
-			Path clusters_path=new Path(clusters+"/part-r-00000");
-			Path output_path=new Path(output);
+			Path clusters_path = new Path(clusters+"/part-r-00000");
+			Path output_path = new Path(output);
 			HadoopUtil.delete(output);
-			double clusterClassificationThreshold=0;//////???	 
+			double clusterClassificationThreshold = 0;//////???	 
 			 
 			//read first K points from input folder as initial K clusters
 			SequenceFile.Reader reader = new SequenceFile.Reader(FileSystem.get(conf), input_path, conf);
 			WritableComparable key = (WritableComparable) reader.getKeyClass().newInstance();
 			VectorWritable value = (VectorWritable) reader.getValueClass().newInstance();
-			SequenceFile.Writer writer=new SequenceFile.Writer(FileSystem.get(conf), conf, clusters_path, Text.class,Kluster.class);
-			for (int i=0;i<k;i++){
+			SequenceFile.Writer writer = new SequenceFile.Writer(FileSystem.get(conf), conf, clusters_path, Text.class,Kluster.class);
+			for (int i = 0;i < k;i++){
 				reader.next(key, value);
 				 
-				Vector vec =value.get();
-				Kluster cluster=new Kluster(vec,i,distance_measure );
+				Vector vec = value.get();
+				Kluster cluster = new Kluster(vec,i,distance_measure );
 				writer.append(new Text(cluster.getIdentifier()), cluster);
 			}
 			reader.close();writer.close();
@@ -209,14 +202,6 @@ public class TopDownClustering {
 	}
 	
 	
-	public static void copyResults(String cs, String res) throws IOException, InterruptedException{
-		String cmd0 = "hadoop fs -mkdir " + res;
-		run(cmd0);
-		
-		String cmd = "hadoop fs -cp " + cs + " " + res;
-		log(cmd);
-		run(cmd);
-	}
 	
 	public static void log(String msg){
 		Date now = new Date();
@@ -224,9 +209,4 @@ public class TopDownClustering {
 				now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds() + ": " + msg);
 	}
 	
-	public static void run(String command) throws IOException, InterruptedException{
-		Runtime rt = Runtime.getRuntime();
-		Process p = rt.exec(command);
-	    p.waitFor();
-	}
 }
