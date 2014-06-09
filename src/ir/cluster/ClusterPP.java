@@ -24,7 +24,7 @@ import org.apache.mahout.clustering.classify.WeightedVectorWritable;
 import org.apache.mahout.math.VectorWritable;
 
 
-public class clusterpp {
+public class ClusterPP {
 	public static void main(String args[]){
 		run_clusterpp("data/cluster/top/clusteredPoints", "data/cluster/tmpmid/");
 	}
@@ -38,14 +38,14 @@ public class clusterpp {
 	public static void run_clusterpp(String input, String output){
 		HadoopUtil.delete(output);
 
-		JobConf conf = new JobConf(clusterpp.class);
+		JobConf conf = new JobConf(ClusterPP.class);
 		conf.set("outputDir", output);
 		conf.setJobName("clusterpp");
 
 		conf.setOutputKeyClass(LongWritable.class);
 		conf.setOutputValueClass(VectorWritable.class);
 
-		conf.setMapperClass(clusterppMap.class);
+		conf.setMapperClass(ClusterPPMap.class);
 
 		conf.setInputFormat(SequenceFileInputFormat.class);
 	    conf.setOutputFormat(MultiFileOutput.class);
@@ -64,7 +64,7 @@ public class clusterpp {
 		
 	}
 
-	public static class clusterppMap extends MapReduceBase implements Mapper<IntWritable, WeightedVectorWritable, LongWritable, VectorWritable> {
+	public static class ClusterPPMap extends MapReduceBase implements Mapper<IntWritable, WeightedVectorWritable, LongWritable, VectorWritable> {
 		LongWritable out_key=new LongWritable();
 		VectorWritable vw=new VectorWritable();
 		@Override
@@ -76,7 +76,7 @@ public class clusterpp {
 
 	}
 	//foreach key output to a seperate file
-	public static class clusterppReduce extends MapReduceBase implements Reducer<LongWritable, VectorWritable, LongWritable, VectorWritable> {
+	public static class ClusterPPReduce extends MapReduceBase implements Reducer<LongWritable, VectorWritable, LongWritable, VectorWritable> {
 		private static String outputDir;
 		public void configure(JobConf job) {
 		    outputDir=job.get("outputDir");
@@ -105,7 +105,7 @@ public class clusterpp {
 		conf.setOutputKeyClass(LongWritable.class);
 		conf.setOutputValueClass(VectorWritable.class);
 
-		conf.setMapperClass(clusterppMap.class);
+		conf.setMapperClass(ClusterPPMap.class); //???
 
 		conf.setInputFormat(SequenceFileInputFormat.class);
 	    conf.setOutputFormat(TextOutputFormat.class);
@@ -128,7 +128,8 @@ public class clusterpp {
 		System.out.println("clusterdump is done");
 		
 	}
-	public static class clusterdumpMap extends MapReduceBase implements Mapper<IntWritable, WeightedVectorWritable, LongWritable,  WeightedVectorWritable> {
+	
+	public static class ClusterdumpMap extends MapReduceBase implements Mapper<IntWritable, WeightedVectorWritable, LongWritable,  WeightedVectorWritable> {
 		@Override
 		public void map(IntWritable key, WeightedVectorWritable value, OutputCollector<LongWritable,  WeightedVectorWritable> output, Reporter reporter) 
 				throws IOException {
@@ -137,7 +138,7 @@ public class clusterpp {
 
 	}
 	//foreach key output to a seperate file
-	public static class clusterdumpReduce extends MapReduceBase implements Reducer<LongWritable,  WeightedVectorWritable, LongWritable,  WeightedVectorWritable> {
+	public static class ClusterdumpReduce extends MapReduceBase implements Reducer<LongWritable,  WeightedVectorWritable, LongWritable,  WeightedVectorWritable> {
 		@Override
 		public void reduce(LongWritable key, Iterator< WeightedVectorWritable> values,
 				OutputCollector<LongWritable,  WeightedVectorWritable> output,
