@@ -14,7 +14,6 @@ all_souls_000005.jpg.txt
 all_souls_000105.jpg.txt
 all_souls_000064.jpg.txt
 all_souls_000120.jpg.txt
-part-00000
 all_souls_000148.jpg.txt
 all_souls_000060.jpg.txt
 all_souls_000017.jpg.txt
@@ -52,7 +51,6 @@ all_souls_000007.jpg.txt
 all_souls_000144.jpg.txt
 all_souls_000029.jpg.txt
 all_souls_000132.jpg.txt
-_SUCCESS
 all_souls_000075.jpg.txt
 all_souls_000091.jpg.txt
 all_souls_000153.jpg.txt
