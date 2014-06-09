@@ -24,12 +24,8 @@ public class Search {
 	public static String terms;
 	
 	public static void main(String[] args) throws IOException, SolrServerException{
-		// transform files of features into files of cluster ids
-		//getWordFrequence(fnames, "bw", termFile);
-		// index the cluster ids files
-		//InvertedIndexing.index(termFile);
-		// evaluate the search system pipeline
-		//Evaluate.evaluate("gt");
+		// run indexing
+		runIndexing("data/index/frequency.txt", 100, "data/cluster/level/clusters.txt");
 	}
 	
 	public static void init(String terms, int clusterNum, String clusters){
