@@ -37,7 +37,7 @@ public class Frequency {
 	public static String features = "";
 	
 	public static void main(String[] args) throws IOException{
-		
+		runJob("data/features/", 100, "data/cluster/level/clusters.txt", "data/temp/", "data/index/frequency.txt");
 	}
 	
 	public static void init(String features, int clusterNum, String clusters){
@@ -125,7 +125,7 @@ public class Frequency {
 				double[] feature = new double[Frequency.featureSize];
 				String[] args = line.split(" ");
 				for (int i = 0; i < Frequency.featureSize; i++)
-					feature[i] = Double.parseDouble(args[i + 10]);
+					feature[i] = Double.parseDouble(args[i + 4]);
 				int index = findBestCluster(feature, cs);
 				marks[index]++;
 			}
