@@ -34,7 +34,6 @@ public class ClusterDump {
 		HadoopUtil.delete(output);
 
 		JobConf conf = new JobConf(ClusterDump.class);
-		//conf.set("outputDir", output);
 		conf.setJobName("clusterdump");
 
 		conf.setOutputKeyClass(IntWritable.class);
