@@ -66,7 +66,7 @@ public class TopDownClustering {
 	}
 	
 	public static void midLevelProcess(String top, String mid) throws IOException, InterruptedException {
-		clusterpp.run_clusterpp(top+"/clusteredPoints", mid);
+		ClusterPP.run_clusterpp(top+"/clusteredPoints", mid);
 	}
 	
 	public static void botLevelProcess(String mid, String bot, int topK, int botK, String res) {
@@ -132,7 +132,7 @@ public class TopDownClustering {
 			System.out.println(inputs_files[index-1]);
 		}
 		
-		clusterpp.run_clusterdump(inputs_files, temp);
+		ClusterPP.run_clusterdump(inputs_files, temp);
 		HadoopUtil.cpFile(temp+"/part-00000", dst+"/clusters.txt");
 		HadoopUtil.delete(temp);
 	}

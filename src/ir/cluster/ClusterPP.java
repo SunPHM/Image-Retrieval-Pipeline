@@ -24,17 +24,9 @@ import org.apache.mahout.clustering.classify.WeightedVectorWritable;
 import org.apache.mahout.math.VectorWritable;
 
 
-<<<<<<< HEAD:src/ir/cluster/clusterpp.java
-public class clusterpp {
-	public static void main(String args[]) throws IOException, InterruptedException{
-		//run_clusterpp("data/cluster/top/clusteredPoints", "data/cluster/tmpmid/");
-		//run_clusterdump("data/cluster/level/res","data/level/clusterdumptmp/");
-		TopDownClustering.merge("data/cluster/level/res", "temptemp");
-=======
 public class ClusterPP {
 	public static void main(String args[]){
 		run_clusterpp("data/cluster/top/clusteredPoints", "data/cluster/tmpmid/");
->>>>>>> 5f049aeeb2a56c70484ecc6330239b69b66cf7ee:src/ir/cluster/ClusterPP.java
 	}
 	
 	static class MultiFileOutput extends MultipleSequenceFileOutputFormat<LongWritable, VectorWritable> {
@@ -106,19 +98,15 @@ public class ClusterPP {
 	public static void run_clusterdump(String[] inputs, String output){
 		HadoopUtil.delete(output);
 
-		JobConf conf = new JobConf(clusterpp.class);
+		JobConf conf = new JobConf(ClusterPP.class);
 		//conf.set("outputDir", output);
 		conf.setJobName("clusterdump");
 
 		conf.setOutputKeyClass(LongWritable.class);
 		conf.setOutputValueClass(WeightedVectorWritable.class);
 
-<<<<<<< HEAD:src/ir/cluster/clusterpp.java
-		conf.setMapperClass(clusterdumpMap.class);
-		conf.setReducerClass(clusterpp.clusterdumpReduce.class);
-=======
-		conf.setMapperClass(ClusterPPMap.class); //???
->>>>>>> 5f049aeeb2a56c70484ecc6330239b69b66cf7ee:src/ir/cluster/ClusterPP.java
+		conf.setMapperClass(ClusterPP.ClusterdumpMap.class);
+		conf.setReducerClass(ClusterPP.ClusterdumpReduce.class);
 
 		conf.setInputFormat(SequenceFileInputFormat.class);
 	    conf.setOutputFormat(TextOutputFormat.class);
