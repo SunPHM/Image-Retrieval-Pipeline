@@ -37,8 +37,10 @@ import org.apache.mahout.math.VectorWritable;
 
 
 public class clusterpp {
-	public static void main(String args[]){
-		run_clusterpp("data/cluster/top/clusteredPoints", "data/cluster/tmpmid/");
+	public static void main(String args[]) throws IOException, InterruptedException{
+		//run_clusterpp("data/cluster/top/clusteredPoints", "data/cluster/tmpmid/");
+		//run_clusterdump("data/cluster/level/res","data/level/clusterdumptmp/");
+		TopDownClustering.merge("data/cluster/level/res", "temptemp");
 	}
 	
 	static class MultiFileOutput extends MultipleSequenceFileOutputFormat<LongWritable, VectorWritable> {
@@ -115,9 +117,10 @@ public class clusterpp {
 		conf.setJobName("clusterdump");
 
 		conf.setOutputKeyClass(LongWritable.class);
-		conf.setOutputValueClass(VectorWritable.class);
+		conf.setOutputValueClass(WeightedVectorWritable.class);
 
-		conf.setMapperClass(clusterppMap.class);
+		conf.setMapperClass(clusterdumpMap.class);
+		conf.setReducerClass(clusterpp.clusterdumpReduce.class);
 
 		conf.setInputFormat(SequenceFileInputFormat.class);
 	    conf.setOutputFormat(TextOutputFormat.class);

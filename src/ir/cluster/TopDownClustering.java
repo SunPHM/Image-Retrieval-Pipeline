@@ -136,7 +136,7 @@ public class TopDownClustering {
 		int index=0;
 		for(String input:inputs){
 			inputs_files[index++]=input+"/part-m-00000";
-			System.out.println(inputs_files);
+			System.out.println(inputs_files[index-1]);
 		}
 		
 		clusterpp.run_clusterdump(inputs_files, temp);
