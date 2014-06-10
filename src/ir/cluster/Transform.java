@@ -27,15 +27,20 @@ public class Transform {
 	/**run a map-reduce job to transfer a folder of features into a single Sequence File 
 	 * @throws IOException */
 	
-	public static void main(String[] args) throws IOException{
-		run();
+	public static void main(String[] args) {
+		//run();
 	}
 	
-	public static void run() throws IOException{
-		HadoopUtil.delete("data/cluster/fs.seq");
-		runCleanMR("data/features", "data/temp/seq");
-		HadoopUtil.copyMerge("data/temp/seq", "data/cluster/fs.seq");
-		HadoopUtil.delete("data/temp/seq");
+	public static void run(String features, String fs, String temp) {
+		HadoopUtil.delete(fs);
+		try {
+			runCleanMR(features, temp);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		HadoopUtil.copyMerge(temp, fs);
+		HadoopUtil.delete(temp);
 	}
 	
 	public static void runCleanMR(String infolder, String outfile) throws IOException{

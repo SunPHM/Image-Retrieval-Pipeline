@@ -30,35 +30,43 @@ public class TopDownClustering {
 	private static final CosineDistanceMeasure distance_measure = new CosineDistanceMeasure();
 	
 	//example args: data/cluster/fs.seq data/cluster/level  10 10
-	public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException, InstantiationException, IllegalAccessException{
+	public static void main(String[] args){
 		run(args);
 	}
 	
-	public static void run(String[] args) throws IOException, InterruptedException, ClassNotFoundException, InstantiationException, IllegalAccessException{
-		
-		long ts0 = new Date().getTime();
-		
-		// parse parameters
-		String data = args[0];
-		String prefix = args[1];
-		String top = prefix + "/top";
-		String mid = prefix + "/mid";
-		String bot = prefix + "/bot";
-		String res = prefix + "/res";
-		topK = Integer.parseInt(args[2]);
-		botK = Integer.parseInt(args[3]);
-		
-		// execute pipeline
-		HadoopUtil.delete(prefix);
-		topLevelProcess(data, top + "/cls", top, topK);
-		midLevelProcess(top, mid);
-		//non-parallel bottom level clustering
-		botLevelProcess(mid, bot, topK, botK, res);
-		// merge the clusters into a single file
-		merge(res, prefix);
-		
-		long ts1 = new Date().getTime();
-		log("top-down clustering pipeline ends with total process time: " + (double)(ts1 - ts0) / (60 * 1000) + " min");
+	public static void run(String[] args) {
+		try {
+			long ts0 = new Date().getTime();
+			
+			// parse parameters
+			String data = args[0];
+			String prefix = args[1];
+			String top = prefix + "/top";
+			String mid = prefix + "/mid";
+			String bot = prefix + "/bot";
+			String res = prefix + "/res";
+			topK = Integer.parseInt(args[2]);
+			botK = Integer.parseInt(args[3]);
+			
+			// execute pipeline
+			HadoopUtil.delete(prefix);
+			topLevelProcess(data, top + "/cls", top, topK);
+			midLevelProcess(top, mid);
+			//non-parallel bottom level clustering
+			botLevelProcess(mid, bot, topK, botK, res);
+			// merge the clusters into a single file
+			merge(res, prefix);
+			
+			long ts1 = new Date().getTime();
+			log("top-down clustering pipeline ends with total process time: " + (double)(ts1 - ts0) / (60 * 1000) + " min");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 	}
 	
 	public static void topLevelProcess(String input, String cls, String top, int topK) {

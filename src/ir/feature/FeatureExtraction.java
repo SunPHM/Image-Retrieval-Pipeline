@@ -36,9 +36,9 @@ public class FeatureExtraction {
 		extractMR(fn, "data/temp/temp");
 	}
 	
-	public static void extractFeatures(String images, String fn, String features){ // the main entry point for Feature Extraction to be called
+	public static void extractFeatures(String images, String fn, String features, String temp){ // the main entry point for Feature Extraction to be called
 		SIFTExtraction.getNames(images, fn);
-		extractMR(fn, feature_folder);
+		extractMR(fn, temp);
 	}
 	
 	// extract features using Map-Reduce
