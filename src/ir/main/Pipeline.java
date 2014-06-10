@@ -26,7 +26,7 @@ public class Pipeline {
 		
 		//TODO: call the main entry point of the Feature Extraction
 		String features = dst + "/data/features";// the feature folder
-		FeatureExtraction.extractFeatures(src, dst + "/data/fn.txt", dst + "/data/features", dst + "/temp/fe/");
+		FeatureExtraction.extractFeatures(src, dst + "/data/fn.txt", features, dst + "/temp/fe/");
 		//TODO: call the main entry point of the vocabulary construction and frequency generation
 		String fs = dst + "/data/fs.seq";
 		String[] args = {features, fs, dst, "" + topK, "" + botK};
@@ -34,6 +34,7 @@ public class Pipeline {
 		//TODO: call the main entry point of the Indexing and Searching
 		int clusterNum = topK * botK;
 		Search.runIndexing(dst + "/data/frequency.txt", clusterNum, dst + "/cluster/clusters.txt");
+		//TODO: to test or evaluate here
 	}
 
 }

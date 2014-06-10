@@ -114,7 +114,7 @@ public class Frequency {
 			// read the features and 
 			String file = value.toString();
 			
-			String data = Frequency.features + file;
+			String data = Frequency.features + "/" + file;
 			//read the file line by line
 			Path dp = new Path(data);
 			Configuration conf = new Configuration();

@@ -36,7 +36,10 @@ public class FeatureExtraction {
 		extractMR(fn, "data/temp/temp");
 	}
 	
-	public static void extractFeatures(String images, String fn, String features, String temp){ // the main entry point for Feature Extraction to be called
+	public static void extractFeatures(String images, String fn0, String features, String temp){ // the main entry point for Feature Extraction to be called
+		img_folder = images;
+		feature_folder = features;
+		fn = fn0;
 		SIFTExtraction.getNames(images, fn);
 		extractMR(fn, temp);
 	}
