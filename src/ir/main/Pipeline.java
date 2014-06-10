@@ -19,6 +19,7 @@ public class Pipeline {
 		//args[1]: the path of the output on HDFS or local file system
 		//args[2]: the number of top-level clusters
 		//args[3]: the number of bot-level clusters
+		// test arguments: data/images/ test/ 10 10
 		run(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]));
 	}
 	
