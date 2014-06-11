@@ -17,3 +17,5 @@ Setup
 
 Build tool: Eclipse, Maven
 
+Notes:
+1. To run with Hadoop 1.2.1, you need to replace the Hadoop library slf4j-api-1.4.x, slf4j-log4j12-1.4.x with the latest libs in this project libs folder.
