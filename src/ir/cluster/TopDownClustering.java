@@ -149,6 +149,14 @@ public class TopDownClustering {
 		
 		//String[] folders = new String[topK];
 		String[] tmp_folders=HadoopUtil.getListOfFolders(mid);
+		//debug
+		System.out.println("In path:"+ mid);
+		for(String str:tmp_folders)
+		{
+			System.out.println("folder: "+str);
+		}
+		//enddebug
+		
 		if(tmp_folders==null||tmp_folders.length!=topK){
 			System.out.println("Error: number of folders in dir:  " + mid + "   does not equal to " + topK + ", please check!!!");
 			return tmp_folders;

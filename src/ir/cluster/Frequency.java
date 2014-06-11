@@ -31,6 +31,8 @@ public class Frequency {
 	//input: clusters.txt, feature texts
 	//output: a file containing both the name of file and the cluster id
 	
+	
+	//these four static variables won't be shared between mappers????
 	public static int featureSize = 128;
 	public static int clusterNum = 0;
 	public static String clusters = "";
@@ -49,9 +51,13 @@ public class Frequency {
 	public static void runJob (String features, int clusterNum, String clusters, String temp, String output){
 		
 		Frequency.init(features, clusterNum, clusters);
+		
+		//debug
+		//System.out.println("clusters:: "+Frequency.clusters);
+		//end debug
 		getNames(features, temp + "/fn.txt");
 		HadoopUtil.delete(output);
-		runMR(temp + "/fn.txt", temp + "/freq");
+		runMR(temp + "/fn.txt", temp + "/freq",features, clusterNum, clusters);
 		HadoopUtil.copyMerge(temp + "/freq", output);
 		HadoopUtil.delete(temp + "/freq");
 		
@@ -78,10 +84,16 @@ public class Frequency {
         }
 	}
 	
-	public static void runMR(String infile, String outfile){
+	public static void runMR(String infile, String outfile,String features, int clusterNum, String clusters){
 
 		JobConf conf = new JobConf(Frequency.class);
 		conf.setJobName("Frequency");
+		
+		//
+		conf.set("features", features);
+		conf.set("clusterNum", new Integer(clusterNum).toString());
+		conf.set("clusters", clusters);
+		//
 		
 		conf.setOutputKeyClass(Text.class);
 		conf.setOutputValueClass(Text.class);
@@ -105,16 +117,25 @@ public class Frequency {
 	}
 	
 	public static class FEMap extends MapReduceBase implements Mapper<LongWritable, Text, Text, Text> {
+		public static int featureSize = 128;
+		public static int clusterNum = 0;
+		public static String clusters = "";
+		public static String features = "";
 		
+		public void configure(JobConf job) {
+		   clusterNum=Integer.parseInt(job.get("clusterNum"));
+		   clusters=job.get("clusters");
+		   features=job.get("features");
+		}
 		@Override
 		public void map(LongWritable key, Text value, OutputCollector<Text, Text> output, Reporter reporter) throws IOException {
 			
-			double[][] cs = readClusters(Frequency.clusters);//read clusters
-			int[] marks = new int[Frequency.clusterNum];
+			double[][] cs = readClusters(clusters);//read clusters
+			int[] marks = new int[clusterNum];
 			// read the features and 
 			String file = value.toString();
 			
-			String data = Frequency.features + "/" + file;
+			String data = features + "/" + file;
 			//read the file line by line
 			Path dp = new Path(data);
 			Configuration conf = new Configuration();
@@ -122,9 +143,9 @@ public class Frequency {
 			FSDataInputStream input = fs.open(dp);
 			String line;
 			while((line = input.readLine()) != null){
-				double[] feature = new double[Frequency.featureSize];
+				double[] feature = new double[featureSize];
 				String[] args = line.split(" ");
-				for (int i = 0; i < Frequency.featureSize; i++)
+				for (int i = 0; i < featureSize; i++)
 					feature[i] = Double.parseDouble(args[i + 4]);
 				int index = findBestCluster(feature, cs);
 				marks[index]++;
@@ -132,7 +153,7 @@ public class Frequency {
 			
 			String result = "";
 			int num = 0;
-			for(int i = 0; i < Frequency.clusterNum; i++){
+			for(int i = 0; i < clusterNum; i++){
 				for(int j = 0; j < marks[i]; j++){
 					if(result.length() == 0) result += i;
 					else result += " " + i;
@@ -151,14 +172,14 @@ public class Frequency {
 			FileSystem fs = FileSystem.get(conf);
 			Path path = new Path(clusters);
 			FSDataInputStream input = fs.open(path);
-			double[][] cs = new double[Frequency.clusterNum][Frequency.featureSize];
+			double[][] cs = new double[clusterNum][featureSize];
 			String line;
-			for(int i = 0; i < Frequency.clusterNum; i ++){
+			for(int i = 0; i < clusterNum; i ++){
 				line = input.readLine();
 				//System.out.println(line);
 				String center = line.split("\\]")[0].split("c=\\[")[1];
 				String[] array = center.split(", ");
-				for(int j = 0; j < Frequency.featureSize; j++)
+				for(int j = 0; j < featureSize; j++)
 					cs[i][j] = Double.parseDouble(array[j]);
 			}
 			

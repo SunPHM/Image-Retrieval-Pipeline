@@ -5,10 +5,15 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
@@ -37,7 +42,12 @@ public class Indexing {
 		server.deleteByQuery( "*:*" );//clean the data in server
 		
 		//read index matrix from file
-		BufferedReader br = new BufferedReader(new FileReader(new File(filename)));
+		
+		//BufferedReader br = new BufferedReader(new FileReader(new File(filename)));
+		Configuration conf = new Configuration();
+		FileSystem fs = FileSystem.get(conf);
+		Path infile=new Path(filename);
+		BufferedReader br=new BufferedReader(new InputStreamReader(fs.open(infile)));
 		Collection<SolrInputDocument> docs = new ArrayList<SolrInputDocument>();
 		String line;
 		while((line = br.readLine()) != null){
