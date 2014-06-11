@@ -70,31 +70,29 @@ public class HadoopUtil {
 		}
 	}
 	public static String[] getListOfFiles(String folder_path){
-		File path=new File(folder_path);
-		Configuration conf = new Configuration();
-		File[] tmp_files=null;
-		ArrayList<String> ListOfFiles=new ArrayList<String>();
+		ArrayList<String> ListOfFolders=new ArrayList<String>();
+		 FileSystem fs;
 		try {
-			tmp_files=FileUtil.listFiles(path);
-			for(File f:tmp_files){
-				if(f.isDirectory()==false){
-					ListOfFiles.add(f.getPath());
+			fs = FileSystem.get(new Configuration());
+			FileStatus[] status = fs.listStatus(new Path(folder_path));
+			for (FileStatus filestatus:status){
+				if(filestatus.isDir()==false&&filestatus.getPath().getName().startsWith("_")==false){
+					ListOfFolders.add(folder_path+"/"+filestatus.getPath().getName());
 				}
 			}
-			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		String[] res=new String[ListOfFiles.size()];
-		res=ListOfFiles.toArray(res);
+		String[] res=new String[ListOfFolders.size()];
+		res=ListOfFolders.toArray(res);
 		return res;
 	}
 	public static String[] getListOfFolders(String folder_path){
-		File path=new File(folder_path);
+		/*File path=new File(folder_path);
 		Configuration conf = new Configuration();
 		File[] tmp_files=null;
-		ArrayList<String> ListOfFiles=new ArrayList<String>();
+		
 		try {
 			tmp_files=FileUtil.listFiles(path);
 			for(File f:tmp_files){
@@ -110,6 +108,25 @@ public class HadoopUtil {
 		String[] res=new String[ListOfFiles.size()];
 		res=ListOfFiles.toArray(res);
 		return res;
+		*/
+		ArrayList<String> ListOfFolders=new ArrayList<String>();
+		 FileSystem fs;
+		try {
+			fs = FileSystem.get(new Configuration());
+			FileStatus[] status = fs.listStatus(new Path(folder_path));
+			for (FileStatus filestatus:status){
+				if(filestatus.isDir()==true&&filestatus.getPath().getName().startsWith("_")==false){
+					ListOfFolders.add(folder_path+"/"+filestatus.getPath().getName());
+				}
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		String[] res=new String[ListOfFolders.size()];
+		res=ListOfFolders.toArray(res);
+		return res;
+		 
 	}
 	
 }
