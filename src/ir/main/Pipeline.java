@@ -37,7 +37,7 @@ public class Pipeline {
 		//TODO: call the main entry point of the vocabulary construction and frequency generation
 		String fs = dst + "/data/fs.seq";
 		//On HDFS features are in data/features instead of test/data/features ???????
-		features="data/features"; //-------comment this when running on localfilesystem!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//		features="data/features"; //-------comment this when running on localfilesystem!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		String[] args = {features, fs, dst, "" + topK, "" + botK};
 		VWDriver.run(args);
 		

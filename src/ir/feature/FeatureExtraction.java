@@ -51,6 +51,12 @@ public class FeatureExtraction {
 
 		JobConf conf = new JobConf(FeatureExtraction.class);
 		conf.setJobName("FeatureExtraction");
+		
+		//pass the parameters
+		conf.set("img_folder", img_folder);
+		conf.set("fn", fn);
+		conf.set("feature_folder", feature_folder);
+		//
 
 		conf.setOutputKeyClass(Text.class);
 		conf.setOutputValueClass(Text.class);
@@ -74,6 +80,16 @@ public class FeatureExtraction {
 	}
 	
 	public static class FEMap extends MapReduceBase implements Mapper<LongWritable, Text, Text, Text> {
+		public static String img_folder = null;
+		public static String fn = null;
+		public static String feature_folder =null;
+		
+		@Override
+		public void configure(JobConf job) {
+		   img_folder=job.get("img_folder");
+		   fn=job.get("fn");
+		   feature_folder=job.get("feature_folder");
+		}
 
 		@Override
 		public void map(LongWritable key, Text value, OutputCollector<Text, Text> output, Reporter reporter) throws IOException {

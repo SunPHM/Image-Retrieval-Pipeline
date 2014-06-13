@@ -121,7 +121,7 @@ public class Frequency {
 		public static int clusterNum = 0;
 		public static String clusters = "";
 		public static String features = "";
-		
+		@Override
 		public void configure(JobConf job) {
 		   clusterNum=Integer.parseInt(job.get("clusterNum"));
 		   clusters=job.get("clusters");
