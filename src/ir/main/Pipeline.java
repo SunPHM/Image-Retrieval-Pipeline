@@ -10,7 +10,7 @@ public class Pipeline {
 	/** Setup
 	 * @Java: 1.6
 	 * @Hadoop: 1.2.1
-	 * @Mahout: 0.9
+	 * @Mahout: 0.8
 	 * @Solr: 4.6.1
 	 */
 	
