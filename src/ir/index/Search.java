@@ -25,7 +25,7 @@ public class Search {
 	
 	public static void main(String[] args) throws IOException, SolrServerException{
 		// run indexing
-		runIndexing("data/index/frequency.txt", 100, "data/cluster/level/clusters.txt");
+		runIndexing("data/index/frequency.txt");
 	}
 	
 	public static void init(String terms, int clusterNum, String clusters){
@@ -35,7 +35,7 @@ public class Search {
 	}
 	
 	//TODO: code cleaning and add an entry point function
-	public static void runIndexing(String terms, int clusterNum, String clusters){
+	public static void runIndexing(String terms){
 		try {
 			Indexing.index(terms);
 		} catch (IOException e) {
@@ -49,6 +49,7 @@ public class Search {
 	
 	public static void search(String image){
 		try {
+			System.out.println("test image: " + image);
 			String[] features = SIFTExtraction.getFeatures(ImageIO.read(new File(image)));
 			String qs = Search.createQuery(features);
 			String[] results = Indexing.query(qs);
@@ -74,7 +75,7 @@ public class Search {
 			double[] feature = new double[Search.featureSize];
 			String[] args = features[i].split(" ");
 			for (int j = 0; j < Search.featureSize; j++)
-				feature[j] = Double.parseDouble(args[j + 10]);
+				feature[j] = Double.parseDouble(args[j + 4]);
 			int index = Frequency.FEMap.findBestCluster(feature, clusters);
 			marks[index]++;
 		}
@@ -86,7 +87,7 @@ public class Search {
 				else result += " " + i;
 			}	
 		}
-		System.out.println("query string: " + result);
+		//System.out.println("query string: " + result);
 		return result;
 	}
 		

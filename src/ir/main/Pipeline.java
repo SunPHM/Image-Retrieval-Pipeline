@@ -46,8 +46,10 @@ public class Pipeline {
 		//TODO: call the main entry point of the Indexing and Searching
 		//before run indexing, need to copy the frequency.txt file to local filesystem(index part reads from localfilesystem)---done 
 		int clusterNum = topK * botK;
-		Search.runIndexing(dst + "/data/frequency.txt", clusterNum, dst + "/cluster/clusters.txt");
-		//TODO: to test or evaluate here
+		Search.init(dst + "/data/frequency.txt", clusterNum, dst + "/cluster/clusters.txt");
+		Search.runIndexing(dst + "/data/frequency.txt");
+		//TODO: to test or evaluate here	
+		Search.search(src + "/all_souls_000000.jpg");
 		
 		long EndTime3 = System.nanoTime();
 		

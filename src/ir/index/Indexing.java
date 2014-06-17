@@ -56,8 +56,8 @@ public class Indexing {
 		}
 		br.close();
 		
-		System.out.println(docs.toArray()[0]);
-		System.out.println(docs.toArray()[1]);
+		//System.out.println(docs.toArray()[0]);
+		//System.out.println(docs.toArray()[1]);
 		System.out.println("number of docs indexed:"+docs.size());
 		
 		server.add(docs);
