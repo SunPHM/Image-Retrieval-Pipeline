@@ -6,6 +6,7 @@ import ir.cluster.Frequency;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ import org.apache.solr.client.solrj.SolrServerException;
 public class Evaluate {
 	
 	public static void main(String[] args) throws IOException, SolrServerException{
-		evaluate("data/index/gt");
+		evaluate("data/gt");
 	}
 	
 	public static F1Score searchFeatures(String[] features, String gt) throws IOException, SolrServerException{
@@ -27,7 +28,7 @@ public class Evaluate {
 		return Indexing.getF1Score(files, gt);
 	}
 	
-	public static void evaluate(String folder) throws IOException, SolrServerException{
+	public static void evaluate(String folder){
 		//TODO: compare the word occurrence and TF-IDF
 		// read all the files with "query"
 		File fd = new File(folder);
@@ -37,22 +38,35 @@ public class Evaluate {
 		
 		for(String file : files){
 			if(file.contains("query")){
-				BufferedReader reader = new BufferedReader(new FileReader(new File(folder + "/" + file)));
-				String line = reader.readLine();
-				reader.close();
-				String[] array = line.split(" ");
-				String queryImage = array[0].substring("oxc1_".length()) + ".jpg.txt" ;
-				double lowX = Double.parseDouble(array[1]);
-				double lowY = Double.parseDouble(array[2]);
-				double highX = Double.parseDouble(array[3]);
-				double highY = Double.parseDouble(array[4]);
-				//System.out.println(line);
-				//System.out.println(query + " " + lowX + " " + lowY + " " + highX + " " + highY);
-				String[] features = getImageFeatures(Frequency.features + "/" + queryImage, lowX, lowY, highX, highY);
-				// search the image features
-				System.out.println("query image " + queryImage);
-				F1Score fs = searchFeatures(features, folder + "/" + file.substring(0, file.length() - "_query.txt".length()));
-				list.add(fs);
+				BufferedReader reader;
+				try {
+					reader = new BufferedReader(new FileReader(new File(folder + "/" + file)));
+					String line = reader.readLine();
+					reader.close();
+					String[] array = line.split(" ");
+					String queryImage = array[0].substring("oxc1_".length()) + ".jpg.txt" ;
+					double lowX = Double.parseDouble(array[1]);
+					double lowY = Double.parseDouble(array[2]);
+					double highX = Double.parseDouble(array[3]);
+					double highY = Double.parseDouble(array[4]);
+					//System.out.println(line);
+					//System.out.println(query + " " + lowX + " " + lowY + " " + highX + " " + highY);
+					String[] features = getImageFeatures(Frequency.features + "/" + queryImage, lowX, lowY, highX, highY);
+					// search the image features
+					System.out.println("query image " + queryImage);
+					F1Score fs = searchFeatures(features, folder + "/" + file.substring(0, file.length() - "_query.txt".length()));
+					list.add(fs);
+				} catch (FileNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (SolrServerException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
 			}
 		}
 		

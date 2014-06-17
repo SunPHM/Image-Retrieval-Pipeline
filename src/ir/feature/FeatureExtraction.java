@@ -40,6 +40,7 @@ public class FeatureExtraction {
 		img_folder = images;
 		feature_folder = features;
 		fn = fn0;
+		HadoopUtil.delete(feature_folder);
 		SIFTExtraction.getNames(images, fn);
 		extractMR(fn, temp);
 	}
@@ -93,16 +94,19 @@ public class FeatureExtraction {
 
 		@Override
 		public void map(LongWritable key, Text value, OutputCollector<Text, Text> output, Reporter reporter) throws IOException {
-
+				
 			// get the image path
 			String file = img_folder + "/" + value.toString();
 			// extract the SIFT features
 			FileSystem fs = FileSystem.get(new Configuration());
-			BufferedImage img = ImageIO.read(fs.open(new Path(file)));
-			String[] features = SIFTExtraction.getFeatures(img);
-			// store them into a file
-			store(features, feature_folder + "/" + value.toString() + ".txt");
-
+			try{
+				BufferedImage img = ImageIO.read(fs.open(new Path(file)));
+				String[] features = SIFTExtraction.getFeatures(img);
+				// store them into a file
+				store(features, feature_folder + "/" + value.toString() + ".txt");
+			} catch (java.lang.IllegalArgumentException e){
+				System.out.println("the image causing exception: " + file);
+			}
 			//System.out.println(file + " processed");
 		}
 
