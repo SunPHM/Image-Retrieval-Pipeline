@@ -3,11 +3,15 @@ package ir.index;
 import ir.cluster.Frequency;
 import ir.feature.SIFTExtraction;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.solr.client.solrj.SolrServerException;
 
 /**
@@ -50,7 +54,9 @@ public class Search {
 	public static void search(String image){
 		try {
 			System.out.println("test image: " + image);
-			String[] features = SIFTExtraction.getFeatures(ImageIO.read(new File(image)));
+			FileSystem fs = FileSystem.get(new Configuration());
+			BufferedImage img = ImageIO.read(fs.open(new Path(image)));
+			String[] features = SIFTExtraction.getFeatures(img);
 			String qs = Search.createQuery(features);
 			String[] results = Indexing.query(qs);
 			System.out.println("results length = " + results.length);
