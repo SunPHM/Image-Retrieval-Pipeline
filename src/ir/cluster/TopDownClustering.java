@@ -34,9 +34,11 @@ public class TopDownClustering {
 		run(args);
 	}
 	
-	public static void run(String[] args) {
+	public static String run(String[] args) {
+		
+		long ts0 = 0, ts1 = 0, ts2 = 0, ts3 = 0;
 		try {
-			long ts0 = new Date().getTime();
+			ts0 = new Date().getTime();
 			
 			// parse parameters
 			String data = args[0];
@@ -51,14 +53,15 @@ public class TopDownClustering {
 			// execute pipeline
 			HadoopUtil.delete(prefix);
 			topLevelProcess(data, top + "/cls", top, topK);
+			ts1 = new Date().getTime();
 			midLevelProcess(top, mid);
 			//non-parallel bottom level clustering
+			ts2 = new Date().getTime();
 			botLevelProcess(mid, bot, topK, botK, res);
 			// merge the clusters into a single file
 			merge(res, prefix);
-			
-			long ts1 = new Date().getTime();
-			log("top-down clustering pipeline ends with total process time: " + (double)(ts1 - ts0) / (60 * 1000) + " min");
+			ts3 = new Date().getTime();
+			log("top-down clustering pipeline ends with total process time: " + (double)(ts3 - ts0) / (60 * 1000) + " min");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -66,7 +69,9 @@ public class TopDownClustering {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
+		return "top-level clustering time = " +  (double)(ts1 - ts0) / (60 * 1000) + "\n" +
+		"mid-level processing time = " + (double)(ts2 - ts1) / (60 * 1000) + "\n" +
+		"bot-level clustering time = " + (double)(ts3 - ts2) / (60 * 1000) + "\n";
 	}
 	
 	public static void topLevelProcess(String input, String cls, String top, int topK) {

@@ -1,5 +1,7 @@
 package ir.main;
 
+import java.util.Date;
+
 import ir.cluster.VWDriver;
 import ir.feature.FeatureExtraction;
 import ir.index.Search;
@@ -24,24 +26,22 @@ public class Pipeline {
 	}
 	
 	public static void run(String src, String dst, int topK, int botK){
-		long N=1000000000;
-		long startTime = System.nanoTime();
+		long N = 1000 * 60;
+		long startTime = new Date().getTime();
 		
 		//TODO: call the main entry point of the Feature Extraction
 		String features = dst + "/data/features";// the feature folder
 		FeatureExtraction.extractFeatures(src, dst + "/data/fn.txt", dst+"/data/features/", dst + "/temp/fe/");
 		System.out.println("Features folder:"+features);
 		
-		long EndTime1 = System.nanoTime();
+		long EndTime1 = new Date().getTime();
 		
 		//TODO: call the main entry point of the vocabulary construction and frequency generation
 		String fs = dst + "/data/fs.seq";
-		//On HDFS features are in data/features instead of test/data/features ???????
-//		features="data/features"; //-------comment this when running on localfilesystem!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		String[] args = {features, fs, dst, "" + topK, "" + botK};
-		VWDriver.run(args);
+		String s = VWDriver.run(args);
 		
-		long EndTime2 = System.nanoTime();
+		long EndTime2 = new Date().getTime();
 		
 		//TODO: call the main entry point of the Indexing and Searching
 		//before run indexing, need to copy the frequency.txt file to local filesystem(index part reads from localfilesystem)---done 
@@ -51,14 +51,13 @@ public class Pipeline {
 		//TODO: to test or evaluate here	
 		Search.search(src + "/all_souls_000000.jpg");
 		
-		long EndTime3 = System.nanoTime();
+		long EndTime3 = new Date().getTime();
 		
-		System.out.println("\n\n*******************************************  Running Time********************************************");
-		System.out.println("Total Running Time :"+(EndTime3-startTime)/N 
-				+"\nFeature Extraction: "+(EndTime1-startTime)/N
-				+"\nVVWDriver: "+(EndTime2-EndTime1)/N
-				+"\nIndexing: "+(EndTime3-EndTime2)/N);
-	 
+		System.out.println("\n\n*******************************************  Running Time in minutes ********************************************");
+		System.out.println("Total Running Time: "+ (double)(EndTime3 - startTime) / N 
+				+"\nFeature Extraction: "+ (double)(EndTime1 - startTime) / N
+				+"\nVVWDriver: "+ (double)(EndTime2 - EndTime1) / N + "\n" + s
+				+"Indexing and Searching: "+ (double)(EndTime3 - EndTime2) / N);
 	}
 
 }

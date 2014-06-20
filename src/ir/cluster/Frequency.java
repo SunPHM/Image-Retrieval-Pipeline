@@ -163,7 +163,7 @@ public class Frequency {
 			
 			output.collect(new Text(file), new Text(num + "\t" + result));
 			
-			System.out.println(file + " processed");
+			//System.out.println(file + " processed");
 		}
 		
 		public static double[][] readClusters(String clusters) throws IOException{
