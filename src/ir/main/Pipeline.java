@@ -48,16 +48,18 @@ public class Pipeline {
 		int clusterNum = topK * botK;
 		Search.init(dst + "/data/frequency.txt", clusterNum, dst + "/cluster/clusters.txt");
 		Search.runIndexing(dst + "/data/frequency.txt");
+		long EndTime3 = new Date().getTime();
 		//TODO: to test or evaluate here	
 		Search.search(src + "/all_souls_000000.jpg");
+		long EndTime4 = new Date().getTime();
 		
-		long EndTime3 = new Date().getTime();
 		
 		System.out.println("\n\n*******************************************  Running Time in minutes ********************************************");
 		System.out.println("Total Running Time: "+ (double)(EndTime3 - startTime) / N 
 				+"\nFeature Extraction: "+ (double)(EndTime1 - startTime) / N
 				+"\nVVWDriver: "+ (double)(EndTime2 - EndTime1) / N + "\n" + s
-				+"Indexing and Searching: "+ (double)(EndTime3 - EndTime2) / N);
+				+"Indexing: "+ (double)(EndTime3 - EndTime2) / N * 60 + " seconds\n" +
+				"Searching: " + (double)(EndTime4 - EndTime3) / N * 60 + " seconds");
 	}
 
 }
