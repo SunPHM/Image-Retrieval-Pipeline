@@ -9,9 +9,21 @@ import java.util.Date;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
+import org.apache.hadoop.mapred.FileInputFormat;
+import org.apache.hadoop.mapred.FileOutputFormat;
+import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.MapReduceBase;
+import org.apache.hadoop.mapred.Mapper;
+import org.apache.hadoop.mapred.OutputCollector;
+import org.apache.hadoop.mapred.Reporter;
+import org.apache.hadoop.mapred.SequenceFileInputFormat;
+import org.apache.hadoop.mapred.TextOutputFormat;
+import org.apache.mahout.clustering.iterator.ClusterWritable;
 import org.apache.mahout.clustering.kmeans.KMeansDriver;
 import org.apache.mahout.clustering.kmeans.Kluster;
 import org.apache.mahout.common.distance.CosineDistanceMeasure;
@@ -57,7 +69,7 @@ public class TopDownClustering {
 			midLevelProcess(top, mid);
 			//non-parallel bottom level clustering
 			ts2 = new Date().getTime();
-			botLevelProcess(mid, bot, topK, botK, res);
+			botLevelProcess_Parrallel(mid, bot, topK, botK, res);
 			// merge the clusters into a single file
 			merge(res, prefix);
 			ts3 = new Date().getTime();
@@ -119,6 +131,64 @@ public class TopDownClustering {
 		}
 	}
 	
+	
+	
+	public static void botLevelProcess_Parrallel(String mid, String bot, int topK, int botK, String res) {
+		
+		String[] folders = getFolders(mid);
+		HadoopUtil.mkdir(res);
+		
+		org.apache.hadoop.conf.Configuration conf=new Configuration();
+		String output_string=bot+"/temp";
+		Path output_path = new Path(output_string);
+//		HadoopUtil.delete(output);
+		double clusterClassificationThreshold = 0;//////???	 
+		SequenceFile.Writer writer=null;
+		try {
+			writer = new SequenceFile.Writer(FileSystem.get(conf), conf, output_path, Text.class,Text.class);
+			for(int i = 0; i < folders.length; i++){
+				String input=folders[i] + "/part-m-0";
+				String clusters=bot + "/" + i + "/cls";
+				String output=bot + "/" + i;
+				int k = botK;
+				double cd = delta;
+	
+				//kmeans(input,clusters,output,k,cd,x);
+				//write the args to file. run kmeans in mappers
+				writer.append(new Text(""+i), new Text(input+" "+clusters+" "+output+" "+k+" "+cd+" "+x));
+			}
+			writer.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		runBotLevelClustering.run(output_string,bot+"/whatever");
+		for(int i = 0; i < folders.length; i++){
+			String src=bot + "/" + i ;//+ "/clusters-*-final/*";
+			String dst=res + "/" + i;
+			
+			//get the name of the final folder -- dont know which i in clusters-i-final
+			String[] listOfFiles = HadoopUtil.getListOfFolders(src);
+
+			for (int j = 0; j < listOfFiles.length; j++) {
+			       // System.out.println("Directory " + listOfFiles[j].getPath());
+			    if(listOfFiles[j].endsWith("final")){
+			        	src=listOfFiles[j];
+			    }
+				
+			}
+			
+			HadoopUtil.mkdir(dst);
+			HadoopUtil.cpdir(src, dst);
+			log("botlevel clustering " +  i+ "> ends");
+		}
+		
+		
+		
+	}
+	
+	
 	public static void merge(String src, String dst) throws IOException, InterruptedException{	
 		// copy and merge files
 		String temp = "temptemptemp";
@@ -129,7 +199,7 @@ public class TopDownClustering {
 		String[] res_folders=HadoopUtil.getListOfFolders(src);
 		for (String res_folder:res_folders){
 			String[] res_i_folders=HadoopUtil.getListOfFolders(res_folder);
-			if(res_i_folders.length==1){
+			if(res_i_folders.length==1&&res_i_folders[0].endsWith("final")==false){
 				res_i_folders=HadoopUtil.getListOfFolders(res_i_folders[0]);
 			}
 			for(String folder:res_i_folders){
@@ -243,3 +313,50 @@ public class TopDownClustering {
 	}
 	
 }
+class runBotLevelClustering{
+	public static void run(String input,String whatever_output){
+		//HadoopUtil.delete(output);
+
+		JobConf conf = new JobConf(runBotLevelClustering.class);
+		conf.setJobName("botlevelclustering");
+
+		conf.setOutputKeyClass(Text.class);
+		conf.setOutputValueClass(Text.class);
+		
+		conf.setMapOutputKeyClass(IntWritable.class);
+		conf.setMapOutputValueClass(ClusterWritable.class);
+
+		conf.setMapperClass(runBotLevelClustering.KmeansMap.class);
+
+		conf.setInputFormat(SequenceFileInputFormat.class);
+	    conf.setOutputFormat(TextOutputFormat.class);
+	    conf.setNumReduceTasks(1);
+
+		FileInputFormat.setInputPaths(conf, new Path(input));
+		
+		FileOutputFormat.setOutputPath(conf, new Path(whatever_output));
+
+		try {
+			JobClient.runJob(conf);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		System.out.println("botlevel clustering is done");
+		
+	}
+	
+	public static class KmeansMap extends MapReduceBase implements Mapper<Text, Text, IntWritable,  ClusterWritable> {
+		@Override
+		public void map(Text key, Text value, OutputCollector<IntWritable,  ClusterWritable> output, Reporter reporter) 
+				throws IOException {
+			String args=value.toString();
+			//String input, String clusters, String output, int k, double cd, int x
+			String[] splits=args.split(" ");
+			TopDownClustering.kmeans(splits[0], splits[1], splits[2], Integer.parseInt(splits[3]), Double.parseDouble(splits[4]), Integer.parseInt(splits[5]));
+		}
+
+	}
+}
+

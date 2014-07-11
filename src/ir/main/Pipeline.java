@@ -57,7 +57,7 @@ public class Pipeline {
 		System.out.println("\n\n*******************************************  Running Time in minutes ********************************************");
 		System.out.println("Total Running Time: "+ (double)(EndTime3 - startTime) / N 
 				+"\nFeature Extraction: "+ (double)(EndTime1 - startTime) / N
-				+"\nVVWDriver: "+ (double)(EndTime2 - EndTime1) / N + "\n" + s
+//			+"\nVVWDriver: "+ (double)(EndTime2 - EndTime1) / N + "\n" + s
 				+"Indexing: "+ (double)(EndTime3 - EndTime2) / N * 60 + " seconds\n" +
 				"Searching: " + (double)(EndTime4 - EndTime3) / N * 60 + " seconds");
 	}
