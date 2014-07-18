@@ -34,7 +34,7 @@ public class Frequency {
 	
 	//these four static variables won't be shared between mappers????
 	public static int featureSize = 128;
-	public static int clusterNum = 0;
+	public static int clusterNum = 100;
 	public static String clusters = "";
 	public static String features = "";
 	
@@ -118,7 +118,7 @@ public class Frequency {
 	
 	public static class FEMap extends MapReduceBase implements Mapper<LongWritable, Text, Text, Text> {
 		public static int featureSize = 128;
-		public static int clusterNum = 0;
+		public static int clusterNum = 100;
 		public static String clusters = "";
 		public static String features = "";
 		@Override
@@ -176,7 +176,7 @@ public class Frequency {
 			String line;
 			for(int i = 0; i < clusterNum; i ++){
 				line = input.readLine();
-				//System.out.println(line);
+				System.out.println(line);
 				String center = line.split("\\]")[0].split("c=\\[")[1];
 				String[] array = center.split(", ");
 				for(int j = 0; j < featureSize; j++)

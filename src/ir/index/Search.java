@@ -23,13 +23,14 @@ public class Search {
 	
 	public static int featureSize = 128;
 	
-	public static int clusterNum;
-	public static String clusters;
-	public static String terms;
+	public static int clusterNum=100;
+	public static String clusters="test/cluster/clusters.txt";
+	public static String terms="data/features/frequency.txt";
 	
 	public static void main(String[] args) throws IOException, SolrServerException{
 		// run indexing
-		runIndexing("data/index/frequency.txt");
+		runIndexing("test/data/frequency.txt");
+		Search.search("data/images/all_souls_000000.jpg");
 	}
 	
 	public static void init(String terms, int clusterNum, String clusters){

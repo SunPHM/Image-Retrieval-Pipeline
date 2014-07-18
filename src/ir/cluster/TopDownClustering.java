@@ -69,7 +69,8 @@ public class TopDownClustering {
 			midLevelProcess(top, mid);
 			//non-parallel bottom level clustering
 			ts2 = new Date().getTime();
-			botLevelProcess_Parrallel(mid, bot, topK, botK, res);
+			botLevelProcess(mid, bot, topK, botK, res);
+//			botLevelProcess_Parrallel(mid, bot, topK, botK, res);
 			// merge the clusters into a single file
 			merge(res, prefix);
 			ts3 = new Date().getTime();
