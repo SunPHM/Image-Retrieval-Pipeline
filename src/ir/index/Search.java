@@ -28,6 +28,8 @@ public class Search {
 	public static String clusters="test/cluster/clusters.txt";
 	public static String terms="data/features/frequency.txt";
 	
+	public static String urlString = "http://localhost:8983/solr";
+	
 	public static void main(String[] args) throws IOException, SolrServerException{
 		// run indexing
 		runIndexing("test/data/frequency.txt");
@@ -98,11 +100,11 @@ public class Search {
 		//System.out.println("query string: " + result);
 		return result;
 	}
-	
+
 	public static String[] query(String s) throws SolrServerException{//query and output results
 		
 		//query a numeric vector as a string
-		String urlString = "http://localhost:8983/solr";
+		String urlString = Search.urlString;
 		HttpSolrServer server = new HttpSolrServer(urlString);
 		// search
 	    SolrQuery query = new SolrQuery();
@@ -120,5 +122,4 @@ public class Search {
 	    
 	    return files;
 	}
-
 }

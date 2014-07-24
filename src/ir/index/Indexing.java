@@ -25,7 +25,7 @@ public class Indexing {
 	
 	public static void index(String filename) throws IOException, SolrServerException{//indexing existing index matrix
 		
-		String urlString = "http://localhost:8983/solr";
+		String urlString = Search.urlString;
 		HttpSolrServer server = new HttpSolrServer(urlString);
 		server.deleteByQuery( "*:*" );//clean the data in server
 		
