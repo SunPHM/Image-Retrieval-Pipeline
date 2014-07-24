@@ -4,19 +4,20 @@ import ir.cluster.Frequency;
 import ir.feature.SIFTExtraction;
 
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
-
 import javax.imageio.ImageIO;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.common.SolrDocumentList;
 
 /**
  * Indexing and Searching runs locally using Solr
- *
  */
 
 public class Search {
@@ -30,7 +31,7 @@ public class Search {
 	public static void main(String[] args) throws IOException, SolrServerException{
 		// run indexing
 		runIndexing("test/data/frequency.txt");
-		Search.search("data/images/all_souls_000000.jpg");
+		search("data/images/all_souls_000000.jpg");
 	}
 	
 	public static void init(String terms, int clusterNum, String clusters){
@@ -59,7 +60,7 @@ public class Search {
 			BufferedImage img = ImageIO.read(fs.open(new Path(image)));
 			String[] features = SIFTExtraction.getFeatures(img);
 			String qs = Search.createQuery(features);
-			String[] results = Indexing.query(qs);
+			String[] results = query(qs);
 			System.out.println("results length = " + results.length);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -97,5 +98,27 @@ public class Search {
 		//System.out.println("query string: " + result);
 		return result;
 	}
+	
+	public static String[] query(String s) throws SolrServerException{//query and output results
 		
+		//query a numeric vector as a string
+		String urlString = "http://localhost:8983/solr";
+		HttpSolrServer server = new HttpSolrServer(urlString);
+		// search
+	    SolrQuery query = new SolrQuery();
+	    //query.setQuery("includes:" + s);
+	    query.set("q", "includes:" + s);
+	    
+	    // get results		
+	    QueryResponse qresponse = server.query(query);
+	    SolrDocumentList list = qresponse.getResults();
+	    String[] files = new String[list.size()];
+	    for(int i = 0; i < list.size(); i++){
+	    	System.out.println(list.get(i).getFieldValue("id"));
+	    	files[i] = list.get(i).getFieldValue("id").toString();
+	    }
+	    
+	    return files;
+	}
+
 }
