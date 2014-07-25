@@ -69,7 +69,7 @@ public class TopDownClustering {
 			midLevelProcess(top, mid);
 			//non-parallel bottom level clustering
 			ts2 = new Date().getTime();
-			botLevelProcess(mid, bot, topK, botK, res);
+			botLevelProcess_MultiThread(mid, bot, topK, botK, res);
 //			botLevelProcess_Parrallel(mid, bot, topK, botK, res);
 			// merge the clusters into a single file
 			merge(res, prefix);
@@ -188,6 +188,61 @@ public class TopDownClustering {
 		
 		
 	}
+	
+	
+	public static void botLevelProcess_MultiThread(String mid, String bot, int topK, int botK, String res) {
+		
+		String[] folders = getFolders(mid);
+		HadoopUtil.mkdir(res);
+		
+		KmeansThread[] threads=new KmeansThread[folders.length];
+		for(int i = 0; i < folders.length; i++){
+			String input=folders[i] + "/part-m-0";
+			String clusters=bot + "/" + i + "/cls";
+			String output=bot + "/" + i;
+			int k = botK;
+			double cd = delta;
+			int num=i;
+
+			//kmeans(input,clusters,output,k,cd,x);
+			threads[i]=new KmeansThread(input, clusters,output,k,cd,x);
+			threads[i].start();
+			
+		}
+		//wait for all threads to complete
+		for(int i = 0; i < folders.length; i++){
+			try {
+				threads[i].join();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				System.out.println("\n\n\n\n\n\nAttentions, botlevelThread "+i+" illegal exceptions!!!!!\n*********\n******\n*********");
+				e.printStackTrace();
+			}
+		}
+		//copy results
+		for(int i = 0; i < folders.length; i++){
+			String src=bot + "/" + i ;//+ "/clusters-*-final/*";
+			String dst=res + "/" + i;
+			
+			//get the name of the final folder -- dont know which i in clusters-i-final
+			String[] listOfFiles = HadoopUtil.getListOfFiles(src);
+
+			for (int j = 0; j < listOfFiles.length; j++) {
+			       // System.out.println("Directory " + listOfFiles[j].getPath());
+			    if(listOfFiles[j].endsWith("final")){
+			        	src=src+"/"+listOfFiles[j];
+			    }
+				
+			}
+			
+			HadoopUtil.mkdir(dst);
+			HadoopUtil.cpdir(src, dst);
+			
+			log("botlevel clustering " + i + "> ends");
+		}
+		
+	}
+	
 	
 	
 	public static void merge(String src, String dst) throws IOException, InterruptedException{	
@@ -359,5 +414,31 @@ class runBotLevelClustering{
 		}
 
 	}
+}
+
+class KmeansThread extends Thread
+{
+	String input;
+	String clusters;
+	String output;
+	int k;
+	double cd;
+	int x;
+
+   public KmeansThread(String input, String clusters, String output, int k, double cd, int x)
+   {
+      this.input=input;
+      this.clusters=clusters;
+      this.output=output;
+      this.k=k;
+      this.cd=cd;
+      this.x=x;
+   }
+
+   @Override
+   public void run()
+   {
+      TopDownClustering.kmeans(input, clusters, output, k, cd, x);
+   }
 }
 

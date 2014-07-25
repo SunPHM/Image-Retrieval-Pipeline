@@ -30,6 +30,7 @@ public class Pipeline {
 		long startTime = new Date().getTime();
 		
 		//TODO: call the main entry point of the Feature Extraction
+		System.out.println("\n\n\n\n\nFeature Extraction");
 		String features = dst + "/data/features";// the feature folder
 		FeatureExtraction.extractFeatures(src, dst + "/data/fn.txt", dst+"/data/features/", dst + "/temp/fe/");
 		System.out.println("Features folder:"+features);
@@ -37,6 +38,7 @@ public class Pipeline {
 		long EndTime1 = new Date().getTime();
 		
 		//TODO: call the main entry point of the vocabulary construction and frequency generation
+		System.out.println("\n\n\n\n\nvocabulary construction and frequency generation");
 		String fs = dst + "/data/fs.seq";
 		String[] args = {features, fs, dst, "" + topK, "" + botK};
 		String s = VWDriver.run(args);
@@ -44,6 +46,7 @@ public class Pipeline {
 		long EndTime2 = new Date().getTime();
 		
 		//TODO: call the main entry point of the Indexing and Searching
+		System.out.println("\n\n\n\n\nIndexing and Searching");
 		//before run indexing, need to copy the frequency.txt file to local filesystem(index part reads from localfilesystem)---done 
 		int clusterNum = topK * botK;
 		Search.init(dst + "/data/frequency.txt", clusterNum, dst + "/cluster/clusters.txt");
