@@ -176,7 +176,7 @@ public class Frequency {
 			String line;
 			for(int i = 0; i < clusterNum; i ++){
 				line = input.readLine();
-				System.out.println(line);
+				//System.out.println(line);
 				String center = line.split("\\]")[0].split("c=\\[")[1];
 				String[] array = center.split(", ");
 				for(int j = 0; j < featureSize; j++)
