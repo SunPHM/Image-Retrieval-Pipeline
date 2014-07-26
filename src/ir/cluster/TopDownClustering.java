@@ -43,10 +43,10 @@ public class TopDownClustering {
 	
 	//example args: data/cluster/fs.seq data/cluster/level  10 10
 	public static void main(String[] args){
-		run(args);
+		run(args,0);
 	}
 	
-	public static String run(String[] args) {
+	public static String run(String[] args,int botlvlcluster_type) {
 		
 		long ts0 = 0, ts1 = 0, ts2 = 0, ts3 = 0;
 		try {
@@ -69,8 +69,14 @@ public class TopDownClustering {
 			midLevelProcess(top, mid);
 			//non-parallel bottom level clustering
 			ts2 = new Date().getTime();
-			botLevelProcess_MultiThread(mid, bot, topK, botK, res);
-//			botLevelProcess_Parrallel(mid, bot, topK, botK, res);
+			if(botlvlcluster_type==0){
+				botLevelProcess(mid, bot, topK, botK, res);
+			}
+			else if(botlvlcluster_type==1){
+				botLevelProcess_Parrallel(mid, bot, topK, botK, res);
+			}
+			
+//			
 			// merge the clusters into a single file
 			merge(res, prefix);
 			ts3 = new Date().getTime();
@@ -206,19 +212,25 @@ public class TopDownClustering {
 
 			//kmeans(input,clusters,output,k,cd,x);
 			threads[i]=new KmeansThread(input, clusters,output,k,cd,x);
-			threads[i].start();
+			
 			
 		}
-		//wait for all threads to complete
-		for(int i = 0; i < folders.length; i++){
+		
+		for(int i=0;i<folders.length;i++){
+			threads[i].start();
 			try {
 				threads[i].join();
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
-				System.out.println("\n\n\n\n\n\nAttentions, botlevelThread "+i+" illegal exceptions!!!!!\n*********\n******\n*********");
+				System.out.println("\n\n\n\n\n\nAttention, botlevelThread "+i+" illegal exceptions!!!!!\n*********\n******\n*********");
 				e.printStackTrace();
 			}
 		}
+		//wait for all threads to complete
+		for(int i = 0; i < folders.length; i++){
+
+		}
+		
 		//copy results
 		for(int i = 0; i < folders.length; i++){
 			String src=bot + "/" + i ;//+ "/clusters-*-final/*";

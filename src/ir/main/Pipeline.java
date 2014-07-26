@@ -16,16 +16,16 @@ public class Pipeline {
 	 * @Solr: 4.6.1
 	 */
 	
-	public static void main(String[] args) {
+	public static String runPipeline(String[] args) {
 		//args[0]: the path to the images on HDFS or local file system
 		//args[1]: the path of the output on HDFS or local file system
 		//args[2]: the number of top-level clusters
 		//args[3]: the number of bot-level clusters
 		// test arguments: data/images/ test/ 10 10
-		run(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]));
+		return run(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]),Integer.parseInt(args[4]));
 	}
 	
-	public static void run(String src, String dst, int topK, int botK){
+	public static String run(String src, String dst, int topK, int botK, int botlvlcluster_type){
 		long N = 1000 * 60;
 		long startTime = new Date().getTime();
 		
@@ -41,7 +41,7 @@ public class Pipeline {
 		System.out.println("\n\n\n\n\nvocabulary construction and frequency generation");
 		String fs = dst + "/data/fs.seq";
 		String[] args = {features, fs, dst, "" + topK, "" + botK};
-		String s = VWDriver.run(args);
+		String s = VWDriver.run(args,botlvlcluster_type);
 		
 		long EndTime2 = new Date().getTime();
 		
@@ -53,7 +53,7 @@ public class Pipeline {
 		Search.runIndexing(dst + "/data/frequency.txt");
 		long EndTime3 = new Date().getTime();
 		//TODO: to test or evaluate here	
-		Search.search(src + "/all_souls_000002.jpg");
+		Search.search(src + "/all_souls_000000.jpg");
 		long EndTime4 = new Date().getTime();
 		
 		
@@ -63,6 +63,12 @@ public class Pipeline {
 			+"\nVVWDriver: "+ (double)(EndTime2 - EndTime1) / N + "\n" + s
 				+"Indexing: "+ (double)(EndTime3 - EndTime2) / N * 60 + " seconds\n" +
 				"Searching: " + (double)(EndTime4 - EndTime3) / N * 60 + " seconds");
+		String string_result="Total Running Time: "+ (double)(EndTime3 - startTime) / N 
+				+"\nFeature Extraction: "+ (double)(EndTime1 - startTime) / N
+			+"\nVVWDriver: "+ (double)(EndTime2 - EndTime1) / N + "\n" + s
+				+"Indexing: "+ (double)(EndTime3 - EndTime2) / N * 60 + " seconds\n" +
+				"Searching: " + (double)(EndTime4 - EndTime3) / N * 60 + " seconds";
+		return string_result;
 	}
 
 }

@@ -28,7 +28,7 @@ public class Search {
 	public static String clusters="test/cluster/clusters.txt";
 	public static String terms="data/features/frequency.txt";
 	
-	public static String urlString = "http://localhost:8983/solr";
+	public static String urlString = "http://localhost:8789/solr";
 	
 	public static void main(String[] args) throws IOException, SolrServerException{
 		// run indexing

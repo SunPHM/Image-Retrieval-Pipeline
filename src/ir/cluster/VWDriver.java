@@ -12,7 +12,7 @@ public class VWDriver {
 		
 	}
 	
-	public static String run(String[] args){
+	public static String run(String[] args,int botlvlcluster_type){
 		// args[0]: the features folder
 		// args[1]: the sequency file
 		// args[2]: the result folder
@@ -25,7 +25,7 @@ public class VWDriver {
 		long EndTime1 = new Date().getTime();
 		//TODO: call the top-down clustering
 		String[] args1 = {args[1], args[2] + "/cluster/", args[3], args[4]};
-		String t = TopDownClustering.run(args1);
+		String t = TopDownClustering.run(args1,botlvlcluster_type);
 		long EndTime2 = new Date().getTime();
 		//TODO: call the frequency extractor
 		int clusterNum = Integer.parseInt(args[3]) * Integer.parseInt(args[4]);
