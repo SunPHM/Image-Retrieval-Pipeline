@@ -51,10 +51,6 @@ public class Frequency {
 	public static void runJob (String features, int clusterNum, String clusters, String temp, String output){
 		
 		Frequency.init(features, clusterNum, clusters);
-		
-		//debug
-		//System.out.println("clusters:: "+Frequency.clusters);
-		//end debug
 		getNames(features, temp + "/fn.txt");
 		HadoopUtil.delete(output);
 		runMR(temp + "/fn.txt", temp + "/freq",features, clusterNum, clusters);
