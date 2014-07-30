@@ -2,9 +2,11 @@ package ir.cluster;
 
 import ir.util.HadoopUtil;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -29,6 +31,8 @@ import org.apache.mahout.clustering.kmeans.Kluster;
 import org.apache.mahout.common.distance.CosineDistanceMeasure;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
+
+
 
 public class TopDownClustering {
 	
@@ -74,6 +78,9 @@ public class TopDownClustering {
 			}
 			else if(botlvlcluster_type==1){
 				botLevelProcess_Parrallel(mid, bot, topK, botK, res);
+			}
+			else if(botlvlcluster_type==2){
+				botLevelProcess_MultiThread(mid, bot, topK, botK, res);
 			}
 			
 //			
@@ -218,6 +225,10 @@ public class TopDownClustering {
 		
 		for(int i=0;i<folders.length;i++){
 			threads[i].start();
+
+		}
+		//wait for all threads to complete
+		for(int i = 0; i < folders.length; i++){
 			try {
 				threads[i].join();
 			} catch (InterruptedException e) {
@@ -226,10 +237,87 @@ public class TopDownClustering {
 				e.printStackTrace();
 			}
 		}
-		//wait for all threads to complete
+		
+		//copy results
 		for(int i = 0; i < folders.length; i++){
+			String src=bot + "/" + i ;//+ "/clusters-*-final/*";
+			String dst=res + "/" + i;
+			
+			//get the name of the final folder -- dont know which i in clusters-i-final
+			String[] listOfFiles = HadoopUtil.getListOfFiles(src);
 
+			for (int j = 0; j < listOfFiles.length; j++) {
+			       // System.out.println("Directory " + listOfFiles[j].getPath());
+			    if(listOfFiles[j].endsWith("final")){
+			        	src=src+"/"+listOfFiles[j];
+			    }
+				
+			}
+			
+			HadoopUtil.mkdir(dst);
+			HadoopUtil.cpdir(src, dst);
+			
+			log("botlevel clustering " + i + "> ends");
 		}
+		
+	}
+public static void botLevelProcess_MultiProcess(String mid, String bot, int topK, int botK, String res) {
+		
+		String[] folders = getFolders(mid);
+		HadoopUtil.mkdir(res);
+		
+		Process[] ps=new Process[folders.length];
+		for(int i = 0; i < folders.length; i++){
+			String input=folders[i] + "/part-m-0";
+			String clusters=bot + "/" + i + "/cls";
+			String output=bot + "/" + i;
+			int k = botK;
+			double cd = delta;
+			int num=i;
+
+			//kmeans(input,clusters,output,k,cd,x);
+			//threads[i]=new KmeansThread(input, clusters,output,k,cd,x);
+			   try {  
+				    List<String> list = new ArrayList<String>();  
+				    ProcessBuilder pb = null;  
+				     
+				    String java = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";  
+				    String classpath = System.getProperty("java.class.path");  
+				    // list the files and directorys under C:\  
+				    list.add(java);  
+				    list.add("-classpath");  
+				    list.add(classpath);  
+				    list.add(KmeansProcess.class.getName());  
+				    list.add(input);  
+				    list.add(clusters);  
+				    list.add(output);
+				    list.add(""+k);
+				    list.add(""+cd);
+				    list.add(""+x);
+				     
+				    pb = new ProcessBuilder(list);  
+				    ps[i] = pb.start();
+				   // ps[i].waitFor();
+				     
+				    System.out.println("running command:\n"+pb.command()+"\n\n");  
+				   
+				   } catch (Throwable t) {  
+				    t.printStackTrace();  
+				   }  
+			
+			
+		}
+		
+		for(int i=0;i<folders.length;i++){
+			try {
+				ps[i].waitFor();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				System.out.println();
+				e.printStackTrace();
+			}
+		}
+		//wait for all threads to complete
 		
 		//copy results
 		for(int i = 0; i < folders.length; i++){
