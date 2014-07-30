@@ -75,8 +75,6 @@ public class Search {
 	}
 	
 	public static String createQuery(String[] features) throws IOException{//transform an image into a Solr document or a field
-		
-		//String[] features = SIFTExtractor.extract(image);
 		//System.out.println("query: " + image);
 		double[][] clusters = Frequency.FEMap.readClusters(Search.clusters);
 		int[] marks = new int[Search.clusterNum];

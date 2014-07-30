@@ -30,8 +30,6 @@ public class Indexing {
 		server.deleteByQuery( "*:*" );//clean the data in server
 		
 		//read index matrix from file
-		
-		//BufferedReader br = new BufferedReader(new FileReader(new File(filename)));
 		Configuration conf = new Configuration();
 		FileSystem fs = FileSystem.get(conf);
 		Path infile=new Path(filename);
@@ -64,7 +62,6 @@ public class Indexing {
 		String s = line.split("\t")[2];
 		// includes field = term vector
 		doc.addField("includes", s);
-		//doc.set
 		return doc;
 	}
 	

@@ -30,9 +30,6 @@ import ir.util.HadoopUtil;
 public class Frequency {
 	//input: clusters.txt, feature texts
 	//output: a file containing both the name of file and the cluster id
-	
-	
-	//these four static variables won't be shared between mappers????
 	public static int featureSize = 128;
 	public static int clusterNum = 100;
 	public static String clusters = "";
@@ -237,7 +234,6 @@ public class Frequency {
 			}
 			//System.out.println(sum);
 			output.collect(key, new Text(sum));
-			//yc++;
 		}
 		
 	}
