@@ -107,37 +107,30 @@ public class TopDownClustering {
 		HadoopUtil.mkdir(res);
 		
 		for(int i = 0; i < folders.length; i++){
-			String input=folders[i] + "/part-m-0";
-			String clusters=bot + "/" + i + "/cls";
-			String output=bot + "/" + i;
+			// run mahout k-means clustering
+			String input = folders[i] + "/part-m-0";
+			String clusters = bot + "/" + i + "/cls";
+			String output = bot + "/" + i;
 			int k = botK;
 			double cd = delta;
-			int num=i;
-
 			kmeans(input,clusters,output,k,cd,x);
 			
-			String src=bot + "/" + i ;//+ "/clusters-*-final/*";
-			String dst=res + "/" + i;
-			
-			//get the name of the final folder -- dont know which i in clusters-i-final
+			// copy clusters to the result folder
+			String src = bot + "/" + i ;
+			String dst = res + "/" + i;
 			String[] listOfFiles = HadoopUtil.getListOfFiles(src);
-
 			for (int j = 0; j < listOfFiles.length; j++) {
-			       // System.out.println("Directory " + listOfFiles[j].getPath());
 			    if(listOfFiles[j].endsWith("final")){
-			        	src=src+"/"+listOfFiles[j];
+			        	src = src + "/" + listOfFiles[j];
+			        	break;
 			    }
-				
 			}
-			
 			HadoopUtil.mkdir(dst);
 			HadoopUtil.cpdir(src, dst);
 			
-			log("botlevel clustering " + num + "> ends");
-			
+			log("botlevel mahout kmeans clustering " + i + "> ends");
 		}
 	}
-	
 	
 	
 	public static void botLevelProcess_Parrallel(String mid, String bot, int topK, int botK, String res) {
@@ -333,9 +326,7 @@ public static void botLevelProcess_MultiProcess(String mid, String bot, int topK
 			
 			log("botlevel clustering " + i + "> ends");
 		}
-		
 	}
-	
 	
 	
 	public static void merge(String src, String dst) throws IOException, InterruptedException{	
@@ -344,8 +335,8 @@ public static void botLevelProcess_MultiProcess(String mid, String bot, int topK
 		HadoopUtil.mkdir(temp);
 		//gather all the clustered points in result directory and merge them.
 		//those files should be in data/cluster/res/i/i/cluster-j-final/*() (i=1,2,3,.....,j=1,2,...), need to get the exact paths of the files
-		ArrayList<String> inputs=new ArrayList<String>();
-		String[] res_folders=HadoopUtil.getListOfFolders(src);
+		ArrayList<String> inputs = new ArrayList<String>();
+		String[] res_folders = HadoopUtil.getListOfFolders(src);
 		for (String res_folder:res_folders){
 			String[] res_i_folders=HadoopUtil.getListOfFolders(res_folder);
 			if(res_i_folders.length==1&&res_i_folders[0].endsWith("final")==false){
@@ -405,34 +396,31 @@ public static void botLevelProcess_MultiProcess(String mid, String bot, int topK
 	}
 	
 	public static void kmeans(String input, String clusters, String output, int k, double cd, int x) {
-		
-		org.apache.hadoop.conf.Configuration conf=new Configuration();
+		org.apache.hadoop.conf.Configuration conf = new Configuration();
 		try {
-			FileSystem fs = FileSystem.get(conf);
 			Path input_path = new Path(input);
-			Path clusters_path = new Path(clusters+"/part-r-00000");
+			Path clusters_path = new Path(clusters + "/part-r-00000");
 			Path output_path = new Path(output);
 			HadoopUtil.delete(output);
-			double clusterClassificationThreshold = 0;//////???	 
+			double clusterClassificationThreshold = 0; 
 			 
 			//read first K points from input folder as initial K clusters
 			SequenceFile.Reader reader = new SequenceFile.Reader(FileSystem.get(conf), input_path, conf);
-			WritableComparable key = (WritableComparable) reader.getKeyClass().newInstance();
+			WritableComparable key = (WritableComparable)reader.getKeyClass().newInstance();
 			VectorWritable value = (VectorWritable) reader.getValueClass().newInstance();
 			SequenceFile.Writer writer = new SequenceFile.Writer(FileSystem.get(conf), conf, clusters_path, Text.class,Kluster.class);
-			for (int i = 0;i < k;i++){
-				reader.next(key, value);
-				 
+			for (int i = 0; i < k; i++){
+				reader.next(key, value);	 
 				Vector vec = value.get();
-				Kluster cluster = new Kluster(vec,i,distance_measure );
+				Kluster cluster = new Kluster(vec, i, distance_measure);
 				writer.append(new Text(cluster.getIdentifier()), cluster);
 			}
-			reader.close();writer.close();
-			System.out.println("initial "+k+"  clusters written to file: " + clusters);
+			reader.close(); writer.close();
+			System.out.println("initial " + k + "  clusters written to file: " + clusters);
 			 
 			KMeansDriver.run(conf, input_path, clusters_path, output_path, 
-					distance_measure ,
-					 cd,  maxIterations, true, clusterClassificationThreshold, false);
+					distance_measure, cd, maxIterations, true, clusterClassificationThreshold, false);
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -449,12 +437,9 @@ public static void botLevelProcess_MultiProcess(String mid, String bot, int topK
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
-		
 	}
 	
-	
-	
+	@SuppressWarnings("deprecation")
 	public static void log(String msg){
 		Date now = new Date();
 		System.out.println((now.getYear() - 100) + "/" + (now.getMonth() + 1) + "/" + now.getDate() + " " +  
@@ -462,6 +447,7 @@ public static void botLevelProcess_MultiProcess(String mid, String bot, int topK
 	}
 	
 }
+
 class runBotLevelClustering{
 	public static void run(String input,String whatever_output){
 		//HadoopUtil.delete(output);
