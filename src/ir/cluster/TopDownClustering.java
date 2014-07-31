@@ -33,7 +33,6 @@ import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
 
 
-
 public class TopDownClustering {
 	
 	private static double delta = 0.001;
@@ -47,15 +46,14 @@ public class TopDownClustering {
 	
 	//example args: data/cluster/fs.seq data/cluster/level  10 10
 	public static void main(String[] args){
-		run(args,0);
+		run(args, 0);
 	}
 	
-	public static String run(String[] args,int botlvlcluster_type) {
+	public static String run(String[] args, int botlvlcluster_type) {
 		
 		long ts0 = 0, ts1 = 0, ts2 = 0, ts3 = 0;
 		try {
 			ts0 = new Date().getTime();
-			
 			// parse parameters
 			String data = args[0];
 			String prefix = args[1];
@@ -66,27 +64,22 @@ public class TopDownClustering {
 			topK = Integer.parseInt(args[2]);
 			botK = Integer.parseInt(args[3]);
 			
-			// execute pipeline
+			// execute top-down clustering pipeline
 			HadoopUtil.delete(prefix);
+			// top-level clustering
 			topLevelProcess(data, top + "/cls", top, topK);
 			ts1 = new Date().getTime();
+			// medium processing between top-level and bottom-level clustering
 			midLevelProcess(top, mid);
-			//non-parallel bottom level clustering
+			//bottom level clustering
 			ts2 = new Date().getTime();
-			if(botlvlcluster_type==0){
-				botLevelProcess(mid, bot, topK, botK, res);
-			}
-			else if(botlvlcluster_type==1){
-				botLevelProcess_Parrallel(mid, bot, topK, botK, res);
-			}
-			else if(botlvlcluster_type==2){
-				botLevelProcess_MultiThread(mid, bot, topK, botK, res);
-			}
-			
-//			
+			if(botlvlcluster_type == 0) botLevelProcess(mid, bot, topK, botK, res);
+			else if(botlvlcluster_type == 1) botLevelProcess_Parrallel(mid, bot, topK, botK, res);
+			else if(botlvlcluster_type == 2) botLevelProcess_MultiThread(mid, bot, topK, botK, res);
 			// merge the clusters into a single file
 			merge(res, prefix);
 			ts3 = new Date().getTime();
+			
 			log("top-down clustering pipeline ends with total process time: " + (double)(ts3 - ts0) / (60 * 1000) + " min");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -95,6 +88,7 @@ public class TopDownClustering {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
 		return "top-level clustering time = " +  (double)(ts1 - ts0) / (60 * 1000) + "\n" +
 		"mid-level processing time = " + (double)(ts2 - ts1) / (60 * 1000) + "\n" +
 		"bot-level clustering time = " + (double)(ts3 - ts2) / (60 * 1000) + "\n";
@@ -105,11 +99,10 @@ public class TopDownClustering {
 	}
 	
 	public static void midLevelProcess(String top, String mid) throws IOException, InterruptedException {
-		ClusterPP.run_clusterpp(top+"/clusteredPoints", mid);
+		ClusterPP.run_clusterpp(top + "/clusteredPoints", mid);
 	}
 	
 	public static void botLevelProcess(String mid, String bot, int topK, int botK, String res) {
-		
 		String[] folders = getFolders(mid);
 		HadoopUtil.mkdir(res);
 		
