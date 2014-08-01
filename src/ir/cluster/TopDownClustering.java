@@ -334,40 +334,30 @@ public static void botLevelProcess_MultiProcess(String mid, String bot, int topK
 		String temp = "temptemptemp";
 		HadoopUtil.mkdir(temp);
 		//gather all the clustered points in result directory and merge them.
-		//those files should be in data/cluster/res/i/i/cluster-j-final/*() (i=1,2,3,.....,j=1,2,...), need to get the exact paths of the files
+		//those files should be in data/cluster/res/i/i/cluster-j-final/*
 		ArrayList<String> inputs = new ArrayList<String>();
 		String[] res_folders = HadoopUtil.getListOfFolders(src);
-		for (String res_folder:res_folders){
+		for (String res_folder : res_folders){
 			String[] res_i_folders=HadoopUtil.getListOfFolders(res_folder);
-			if(res_i_folders.length==1&&res_i_folders[0].endsWith("final")==false){
-				res_i_folders=HadoopUtil.getListOfFolders(res_i_folders[0]);
-			}
-			for(String folder:res_i_folders){
-				if(folder.endsWith("final")){
-					inputs.add(folder);
-				}
-			}
+			if(res_i_folders.length ==1 && res_i_folders[0].endsWith("final") == false)
+				res_i_folders = HadoopUtil.getListOfFolders(res_i_folders[0]);
+			for(String folder : res_i_folders)
+				if(folder.endsWith("final")) inputs.add(folder);
 		}
-		ArrayList<String> inputs_files=new ArrayList<String>();
-		int index=0;
-		for(String input:inputs){
-			//inputs_files[index++]=input+"/part-r-00000";
-			String[] files=HadoopUtil.getListOfFiles(input);
-			for(String file:files){
-				if(file.startsWith("_")==false){
-						inputs_files.add(file);
-						}
-			}
-			
+		ArrayList<String> inputs_files = new ArrayList<String>();
+		for(String input : inputs){
+			String[] files = HadoopUtil.getListOfFiles(input);
+			for(String file:files)
+				if(file.startsWith("_") == false) inputs_files.add(file);
 		}
 		for(String file:inputs_files){
 			System.out.println("files to merge: "+file);
 		}
-		String [] inputs_clusterdump=new String[inputs_files.size()];
-		inputs_clusterdump=inputs_files.toArray(inputs_clusterdump);
-		ClusterDump.run_clusterdump(inputs_clusterdump, temp);
 		
-		//HadoopUtil.cpFile(temp+"/part-00000", dst+"/clusters.txt");
+		
+		String[] inputs_clusterdump = new String[inputs_files.size()];
+		inputs_clusterdump = inputs_files.toArray(inputs_clusterdump);
+		ClusterDump.run_clusterdump(inputs_clusterdump, temp);
 		HadoopUtil.copyMerge(temp, dst+"/clusters.txt");
 		HadoopUtil.delete(temp);
 	}
