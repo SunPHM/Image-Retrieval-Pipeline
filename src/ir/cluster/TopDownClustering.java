@@ -358,7 +358,7 @@ public static void botLevelProcess_MultiProcess(String mid, String bot, int topK
 		String[] inputs_clusterdump = new String[inputs_files.size()];
 		inputs_clusterdump = inputs_files.toArray(inputs_clusterdump);
 		ClusterDump.run_clusterdump(inputs_clusterdump, temp);
-		HadoopUtil.copyMerge(temp, dst+"/clusters.txt");
+		HadoopUtil.copyMerge(temp, dst + "/clusters.txt");
 		HadoopUtil.delete(temp);
 	}
 	

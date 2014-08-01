@@ -64,27 +64,24 @@ public class ClusterDump {
 		}
 
 		System.out.println("clusterdump is done");
-		
 	}
 	
 	public static class ClusterdumpMap extends MapReduceBase implements Mapper<IntWritable, ClusterWritable, IntWritable,  ClusterWritable> {
 		@Override
 		public void map(IntWritable key, ClusterWritable value, OutputCollector<IntWritable,  ClusterWritable> output, Reporter reporter) 
 				throws IOException {
-			output.collect(key,value );
+			output.collect(key, value);
 		}
-
 	}
-	//foreach key output to a seperate file
+	
+	//foreach key output to a separate file
 	public static class ClusterdumpReduce extends MapReduceBase implements Reducer<IntWritable,  ClusterWritable, IntWritable, Text> {
 		@Override
 		public void reduce(IntWritable key, Iterator< ClusterWritable> values,OutputCollector<IntWritable, Text> output,
 				Reporter reporter) throws IOException {
 			// TODO Auto-generated method stub
-				while (values.hasNext()) {
-					output.collect(null, new Text(values.next().getValue().toString()));
-				}
-			   
+			while (values.hasNext())
+				output.collect(null, new Text(values.next().getValue().toString()));
 		}	
 	}
 }
