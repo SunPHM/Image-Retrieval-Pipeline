@@ -134,28 +134,22 @@ public class TopDownClustering {
 	
 	
 	public static void botLevelProcess_Parrallel(String mid, String bot, int topK, int botK, String res) {
-		
 		String[] folders = getFolders(mid);
 		HadoopUtil.mkdir(res);
+		Configuration conf = new Configuration();
+		String output_string = bot + "/temp";
+		Path output_path = new Path(output_string);	 
+		SequenceFile.Writer writer = null;
 		
-		org.apache.hadoop.conf.Configuration conf=new Configuration();
-		String output_string=bot+"/temp";
-		Path output_path = new Path(output_string);
-//		HadoopUtil.delete(output);
-		double clusterClassificationThreshold = 0;//////???	 
-		SequenceFile.Writer writer=null;
 		try {
 			writer = new SequenceFile.Writer(FileSystem.get(conf), conf, output_path, Text.class,Text.class);
 			for(int i = 0; i < folders.length; i++){
-				String input=folders[i] + "/part-m-0";
-				String clusters=bot + "/" + i + "/cls";
-				String output=bot + "/" + i;
+				String input = folders[i] + "/part-m-0";
+				String clusters = bot + "/" + i + "/cls";
+				String output = bot + "/" + i;
 				int k = botK;
 				double cd = delta;
-	
-				//kmeans(input,clusters,output,k,cd,x);
-				//write the args to file. run kmeans in mappers
-				writer.append(new Text(""+i), new Text(input+" "+clusters+" "+output+" "+k+" "+cd+" "+x));
+				writer.append(new Text("" + i), new Text(input + " " + clusters + " " + output + " " + k + " " + cd + " " + x));
 			}
 			writer.close();
 		} catch (IOException e) {
@@ -163,7 +157,7 @@ public class TopDownClustering {
 			e.printStackTrace();
 		}
 		
-		runBotLevelClustering.run(output_string,bot+"/whatever");
+		runBotLevelClustering.run(output_string, bot + "/whatever");
 		for(int i = 0; i < folders.length; i++){
 			String src=bot + "/" + i ;//+ "/clusters-*-final/*";
 			String dst=res + "/" + i;
@@ -181,11 +175,8 @@ public class TopDownClustering {
 			
 			HadoopUtil.mkdir(dst);
 			HadoopUtil.cpdir(src, dst);
-			log("botlevel clustering " +  i+ "> ends");
+			log("botlevel clustering " +  i + "> ends");
 		}
-		
-		
-		
 	}
 	
 	

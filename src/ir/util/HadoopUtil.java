@@ -58,75 +58,51 @@ public class HadoopUtil {
 		}
 	}
 	public static void cpFile(String srcFile, String dstFile){
-		Path src=new Path(srcFile);
-		Path dst=new Path(dstFile);
+		Path src = new Path(srcFile);
+		Path dst = new Path(dstFile);
 		Configuration conf = new Configuration();
 		try {
-			FileUtil.copy(src.getFileSystem(conf), src, dst.getFileSystem(conf), dst,false, true, conf);
+			FileUtil.copy(src.getFileSystem(conf), src, dst.getFileSystem(conf), dst, false, true, conf);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			System.out.println("Failed to cp File : "+srcFile + " to "+dstFile);
+			System.out.println("Failed to cp File : " + srcFile + " to " + dstFile);
 			e.printStackTrace();
 		}
 	}
 	public static String[] getListOfFiles(String folder_path){
 		ArrayList<String> ListOfFolders=new ArrayList<String>();
-		 FileSystem fs;
 		try {
-			fs = FileSystem.get(new Configuration());
+			FileSystem fs = FileSystem.get(new Configuration());
 			FileStatus[] status = fs.listStatus(new Path(folder_path));
-			for (FileStatus filestatus:status){
-				if(filestatus.isDir()==false&&filestatus.getPath().getName().startsWith("_")==false){
+			for (FileStatus filestatus : status){
+				if(filestatus.isDir() == false && filestatus.getPath().getName().startsWith("_") == false)
 					ListOfFolders.add(folder_path+"/"+filestatus.getPath().getName());
-				}
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		String[] res=new String[ListOfFolders.size()];
-		res=ListOfFolders.toArray(res);
+		String[] res = new String[ListOfFolders.size()];
+		res = ListOfFolders.toArray(res);
 		return res;
 	}
+	
 	public static String[] getListOfFolders(String folder_path){
-		/*File path=new File(folder_path);
-		Configuration conf = new Configuration();
-		File[] tmp_files=null;
-		
-		try {
-			tmp_files=FileUtil.listFiles(path);
-			for(File f:tmp_files){
-				if(f.isDirectory()==true){
-					ListOfFiles.add(f.getPath());
-				}
-			}
-			
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		String[] res=new String[ListOfFiles.size()];
-		res=ListOfFiles.toArray(res);
-		return res;
-		*/
 		ArrayList<String> ListOfFolders=new ArrayList<String>();
-		 FileSystem fs;
 		try {
-			fs = FileSystem.get(new Configuration());
+			FileSystem fs = FileSystem.get(new Configuration());
 			FileStatus[] status = fs.listStatus(new Path(folder_path));
-			for (FileStatus filestatus:status){
-				if(filestatus.isDir()==true&&filestatus.getPath().getName().startsWith("_")==false){
-					ListOfFolders.add(folder_path+"/"+filestatus.getPath().getName());
-				}
+			for (FileStatus filestatus : status){
+				if(filestatus.isDir() == true && filestatus.getPath().getName().startsWith("_") == false)
+					ListOfFolders.add(folder_path + "/" + filestatus.getPath().getName());
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		String[] res=new String[ListOfFolders.size()];
-		res=ListOfFolders.toArray(res);
+		String[] res = new String[ListOfFolders.size()];
+		res = ListOfFolders.toArray(res);
 		return res;
-		 
 	}
 	
 }
