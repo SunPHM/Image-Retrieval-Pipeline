@@ -119,7 +119,7 @@ public class TopDownClustering {
 			String src = bot + "/" + i ;
 			String dst = res + "/" + i;
 			String[] listOfFiles = HadoopUtil.getListOfFiles(src);
-			for (int j = 0; j < listOfFiles.length; j++) {
+			for (int j = 0; j < listOfFiles.length; j++){
 			    if(listOfFiles[j].endsWith("final")){
 			        	src = src + "/" + listOfFiles[j];
 			        	break;
@@ -329,8 +329,8 @@ public static void botLevelProcess_MultiProcess(String mid, String bot, int topK
 		ArrayList<String> inputs = new ArrayList<String>();
 		String[] res_folders = HadoopUtil.getListOfFolders(src);
 		for (String res_folder : res_folders){
-			String[] res_i_folders=HadoopUtil.getListOfFolders(res_folder);
-			if(res_i_folders.length ==1 && res_i_folders[0].endsWith("final") == false)
+			String[] res_i_folders = HadoopUtil.getListOfFolders(res_folder);
+			if(res_i_folders.length == 1 && res_i_folders[0].endsWith("final") == false)
 				res_i_folders = HadoopUtil.getListOfFolders(res_i_folders[0]);
 			for(String folder : res_i_folders)
 				if(folder.endsWith("final")) inputs.add(folder);
@@ -344,7 +344,6 @@ public static void botLevelProcess_MultiProcess(String mid, String bot, int topK
 		for(String file:inputs_files){
 			System.out.println("files to merge: "+file);
 		}
-		
 		
 		String[] inputs_clusterdump = new String[inputs_files.size()];
 		inputs_clusterdump = inputs_files.toArray(inputs_clusterdump);
