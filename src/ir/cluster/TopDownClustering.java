@@ -60,7 +60,7 @@ public class TopDownClustering {
 			String top = prefix + "/top";
 			String mid = prefix + "/mid";
 			String bot = prefix + "/bot";
-			String res = prefix + "/res";
+//			String res = prefix + "/res";  -- no longer need res folder.
 			topK = Integer.parseInt(args[2]);
 			botK = Integer.parseInt(args[3]);
 			
@@ -73,11 +73,12 @@ public class TopDownClustering {
 			midLevelProcess(top, mid);
 			//bottom level clustering
 			ts2 = new Date().getTime();
-			if(botlvlcluster_type == 0) botLevelProcess(mid, bot, topK, botK, res);
-			else if(botlvlcluster_type == 1) botLevelProcess_Parrallel(mid, bot, topK, botK, res);
-			else if(botlvlcluster_type == 2) botLevelProcess_MultiThread(mid, bot, topK, botK, res);
+			if(botlvlcluster_type == 0) botLevelProcess_Serial(mid, bot, topK, botK);
+			else if(botlvlcluster_type == 1) botLevelProcess_MRJob(mid, bot, topK, botK);
+			else if(botlvlcluster_type == 2) botLevelProcess_MultiThread(mid, bot, topK, botK);
+			else if(botlvlcluster_type==3)botLevelProcess_MultiProcess(mid,bot,topK,botK);
 			// merge the clusters into a single file
-			merge(res, prefix);
+			merge(bot, prefix);
 			ts3 = new Date().getTime();
 			
 			log("top-down clustering pipeline ends with total process time: " + (double)(ts3 - ts0) / (60 * 1000) + " min");
@@ -102,9 +103,8 @@ public class TopDownClustering {
 		ClusterPP.run_clusterpp(top + "/clusteredPoints", mid);
 	}
 	
-	public static void botLevelProcess(String mid, String bot, int topK, int botK, String res) {
+	public static void botLevelProcess_Serial(String mid, String bot, int topK, int botK) {
 		String[] folders = getFolders(mid);
-		HadoopUtil.mkdir(res);
 		
 		for(int i = 0; i < folders.length; i++){
 			// run mahout k-means clustering
@@ -115,27 +115,15 @@ public class TopDownClustering {
 			double cd = delta;
 			kmeans(input,clusters,output,k,cd,x);
 			
-			// copy clusters to the result folder
-			String src = bot + "/" + i ;
-			String dst = res + "/" + i;
-			String[] listOfFiles = HadoopUtil.getListOfFiles(src);
-			for (int j = 0; j < listOfFiles.length; j++){
-			    if(listOfFiles[j].endsWith("final")){
-			        	src = src + "/" + listOfFiles[j];
-			        	break;
-			    }
-			}
-			HadoopUtil.mkdir(dst);
-			HadoopUtil.cpdir(src, dst);
+			// copy clusters to the result folder--no longer need it
 			
 			log("botlevel mahout kmeans clustering " + i + "> ends");
 		}
 	}
 	
 	
-	public static void botLevelProcess_Parrallel(String mid, String bot, int topK, int botK, String res) {
+	public static void botLevelProcess_MRJob(String mid, String bot, int topK, int botK) {
 		String[] folders = getFolders(mid);
-		HadoopUtil.mkdir(res);
 		Configuration conf = new Configuration();
 		String output_string = bot + "/temp";
 		Path output_path = new Path(output_string);	 
@@ -159,31 +147,14 @@ public class TopDownClustering {
 		
 		runBotLevelClustering.run(output_string, bot + "/whatever");
 		for(int i = 0; i < folders.length; i++){
-			String src=bot + "/" + i ;//+ "/clusters-*-final/*";
-			String dst=res + "/" + i;
-			
-			//get the name of the final folder -- dont know which i in clusters-i-final
-			String[] listOfFiles = HadoopUtil.getListOfFolders(src);
-
-			for (int j = 0; j < listOfFiles.length; j++) {
-			       // System.out.println("Directory " + listOfFiles[j].getPath());
-			    if(listOfFiles[j].endsWith("final")){
-			        	src=listOfFiles[j];
-			    }
-				
-			}
-			
-			HadoopUtil.mkdir(dst);
-			HadoopUtil.cpdir(src, dst);
 			log("botlevel clustering " +  i + "> ends");
 		}
 	}
 	
 	
-	public static void botLevelProcess_MultiThread(String mid, String bot, int topK, int botK, String res) {
+	public static void botLevelProcess_MultiThread(String mid, String bot, int topK, int botK) {
 		
 		String[] folders = getFolders(mid);
-		HadoopUtil.mkdir(res);
 		
 		KmeansThread[] threads=new KmeansThread[folders.length];
 		for(int i = 0; i < folders.length; i++){
@@ -217,31 +188,14 @@ public class TopDownClustering {
 		
 		//copy results
 		for(int i = 0; i < folders.length; i++){
-			String src=bot + "/" + i ;//+ "/clusters-*-final/*";
-			String dst=res + "/" + i;
-			
-			//get the name of the final folder -- dont know which i in clusters-i-final
-			String[] listOfFiles = HadoopUtil.getListOfFiles(src);
-
-			for (int j = 0; j < listOfFiles.length; j++) {
-			       // System.out.println("Directory " + listOfFiles[j].getPath());
-			    if(listOfFiles[j].endsWith("final")){
-			        	src=src+"/"+listOfFiles[j];
-			    }
-				
-			}
-			
-			HadoopUtil.mkdir(dst);
-			HadoopUtil.cpdir(src, dst);
 			
 			log("botlevel clustering " + i + "> ends");
 		}
 		
 	}
-public static void botLevelProcess_MultiProcess(String mid, String bot, int topK, int botK, String res) {
+public static void botLevelProcess_MultiProcess(String mid, String bot, int topK, int botK) {
 		
 		String[] folders = getFolders(mid);
-		HadoopUtil.mkdir(res);
 		
 		Process[] ps=new Process[folders.length];
 		for(int i = 0; i < folders.length; i++){
@@ -284,7 +238,7 @@ public static void botLevelProcess_MultiProcess(String mid, String bot, int topK
 			
 			
 		}
-		
+		//wait for all threads to complete
 		for(int i=0;i<folders.length;i++){
 			try {
 				ps[i].waitFor();
@@ -294,27 +248,9 @@ public static void botLevelProcess_MultiProcess(String mid, String bot, int topK
 				e.printStackTrace();
 			}
 		}
-		//wait for all threads to complete
 		
-		//copy results
+		
 		for(int i = 0; i < folders.length; i++){
-			String src=bot + "/" + i ;//+ "/clusters-*-final/*";
-			String dst=res + "/" + i;
-			
-			//get the name of the final folder -- dont know which i in clusters-i-final
-			String[] listOfFiles = HadoopUtil.getListOfFiles(src);
-
-			for (int j = 0; j < listOfFiles.length; j++) {
-			       // System.out.println("Directory " + listOfFiles[j].getPath());
-			    if(listOfFiles[j].endsWith("final")){
-			        	src=src+"/"+listOfFiles[j];
-			    }
-				
-			}
-			
-			HadoopUtil.mkdir(dst);
-			HadoopUtil.cpdir(src, dst);
-			
 			log("botlevel clustering " + i + "> ends");
 		}
 	}
@@ -325,14 +261,14 @@ public static void botLevelProcess_MultiProcess(String mid, String bot, int topK
 		String temp = "temptemptemp";
 		HadoopUtil.mkdir(temp);
 		//gather all the clustered points in result directory and merge them.
-		//those files should be in data/cluster/res/i/i/cluster-j-final/*
+		//those files should be in test/cluster/bot/i/cluster-j-final/* and not start with '_'
 		ArrayList<String> inputs = new ArrayList<String>();
-		String[] res_folders = HadoopUtil.getListOfFolders(src);
-		for (String res_folder : res_folders){
-			String[] res_i_folders = HadoopUtil.getListOfFolders(res_folder);
-			if(res_i_folders.length == 1 && res_i_folders[0].endsWith("final") == false)
-				res_i_folders = HadoopUtil.getListOfFolders(res_i_folders[0]);
-			for(String folder : res_i_folders)
+		String[] bot_folders = HadoopUtil.getListOfFolders(src);
+		for (String bot_folder : bot_folders){
+			String[] bot_i_folders = HadoopUtil.getListOfFolders(bot_folder);
+			if(bot_i_folders.length == 1 && bot_i_folders[0].endsWith("final") == false)
+				bot_i_folders = HadoopUtil.getListOfFolders(bot_i_folders[0]);
+			for(String folder : bot_i_folders)
 				if(folder.endsWith("final")) inputs.add(folder);
 		}
 		ArrayList<String> inputs_files = new ArrayList<String>();
@@ -488,5 +424,15 @@ class KmeansThread extends Thread
    {
       TopDownClustering.kmeans(input, clusters, output, k, cd, x);
    }
+}
+
+class KmeansProcess {
+	private static final CosineDistanceMeasure distance_measure = new CosineDistanceMeasure();
+	private static int maxIterations = 100;
+	
+	public static void main(String[] args){
+		TopDownClustering.kmeans(args[0],args[1],args[2],Integer.parseInt(args[3]),Double.parseDouble(args[4]),Integer.parseInt(args[5]));
+	}
+
 }
 

@@ -21,7 +21,7 @@ public class Pipeline {
 		//args[1]: the path of the output on HDFS or local file system
 		//args[2]: the number of top-level clusters
 		//args[3]: the number of bot-level clusters
-		//args[4]=0|1|2, the botlevel clustering method to choose, 0: serial; 1: MR job based, 2: multi-process or multi-thread
+		//args[4]=0|1|2|3, the botlevel clustering method to choose, 0: serial; 1: MR job based, 2:  multi-thread, 3 multi-process
 		// test arguments: data/images/ test/ 10 10 1
 		 run(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]),Integer.parseInt(args[4]));
 	}
@@ -33,7 +33,7 @@ public class Pipeline {
 		//TODO: call the main entry point of the Feature Extraction
 		System.out.println("\n\n\n\n\nFeature Extraction");
 		String features = dst + "/data/features";// the feature folder
-		FeatureExtraction.extractFeatures(src, dst + "/data/fn.txt", dst+"/data/features/", dst + "/temp/fe/");
+//		FeatureExtraction.extractFeatures(src, dst + "/data/fn.txt", dst+"/data/features/", dst + "/temp/fe/");
 		System.out.println("Features folder:"+features);
 		
 		long EndTime1 = new Date().getTime();
