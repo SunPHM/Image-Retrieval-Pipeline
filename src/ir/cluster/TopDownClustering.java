@@ -60,7 +60,6 @@ public class TopDownClustering {
 			String top = prefix + "/top";
 			String mid = prefix + "/mid";
 			String bot = prefix + "/bot";
-//			String res = prefix + "/res";  -- no longer need res folder.
 			topK = Integer.parseInt(args[2]);
 			botK = Integer.parseInt(args[3]);
 			
@@ -76,7 +75,7 @@ public class TopDownClustering {
 			if(botlvlcluster_type == 0) botLevelProcess_Serial(mid, bot, topK, botK);
 			else if(botlvlcluster_type == 1) botLevelProcess_MRJob(mid, bot, topK, botK);
 			else if(botlvlcluster_type == 2) botLevelProcess_MultiThread(mid, bot, topK, botK);
-			else if(botlvlcluster_type==3)botLevelProcess_MultiProcess(mid,bot,topK,botK);
+			else if(botlvlcluster_type == 3) botLevelProcess_MultiProcess(mid,bot,topK,botK);
 			// merge the clusters into a single file
 			merge(bot, prefix);
 			ts3 = new Date().getTime();
@@ -153,9 +152,7 @@ public class TopDownClustering {
 	
 	
 	public static void botLevelProcess_MultiThread(String mid, String bot, int topK, int botK) {
-		
 		String[] folders = getFolders(mid);
-		
 		KmeansThread[] threads=new KmeansThread[folders.length];
 		for(int i = 0; i < folders.length; i++){
 			String input=folders[i] + "/part-m-0";
@@ -163,18 +160,10 @@ public class TopDownClustering {
 			String output=bot + "/" + i;
 			int k = botK;
 			double cd = delta;
-			int num=i;
-
-			//kmeans(input,clusters,output,k,cd,x);
-			threads[i]=new KmeansThread(input, clusters,output,k,cd,x);
-			
-			
+			threads[i]=new KmeansThread(i, input, clusters,output,k,cd,x);
+			threads[i].start();
 		}
 		
-		for(int i=0;i<folders.length;i++){
-			threads[i].start();
-
-		}
 		//wait for all threads to complete
 		for(int i = 0; i < folders.length; i++){
 			try {
@@ -185,15 +174,9 @@ public class TopDownClustering {
 				e.printStackTrace();
 			}
 		}
-		
-		//copy results
-		for(int i = 0; i < folders.length; i++){
-			
-			log("botlevel clustering " + i + "> ends");
-		}
-		
 	}
-public static void botLevelProcess_MultiProcess(String mid, String bot, int topK, int botK) {
+	
+	public static void botLevelProcess_MultiProcess(String mid, String bot, int topK, int botK) {
 		
 		String[] folders = getFolders(mid);
 		
@@ -204,40 +187,34 @@ public static void botLevelProcess_MultiProcess(String mid, String bot, int topK
 			String output=bot + "/" + i;
 			int k = botK;
 			double cd = delta;
-			int num=i;
-
-			//kmeans(input,clusters,output,k,cd,x);
-			//threads[i]=new KmeansThread(input, clusters,output,k,cd,x);
-			   try {  
-				    List<String> list = new ArrayList<String>();  
-				    ProcessBuilder pb = null;  
+	
+			try{  
+				List<String> list = new ArrayList<String>();  
+				ProcessBuilder pb = null;  
 				     
-				    String java = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";  
-				    String classpath = System.getProperty("java.class.path");  
-				    // list the files and directorys under C:\  
-				    list.add(java);  
-				    list.add("-classpath");  
-				    list.add(classpath);  
-				    list.add(KmeansProcess.class.getName());  
-				    list.add(input);  
-				    list.add(clusters);  
-				    list.add(output);
-				    list.add(""+k);
-				    list.add(""+cd);
-				    list.add(""+x);
+				String java = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";  
+				String classpath = System.getProperty("java.class.path");  
+				// list the files and directorys under C:\  
+				list.add(java);  
+				list.add("-classpath");  
+				list.add(classpath);  
+				list.add(KmeansProcess.class.getName());  
+				list.add(input);  
+				list.add(clusters);  
+				list.add(output);
+				list.add(""+k);
+				list.add(""+cd);
+				list.add(""+x);
+				list.add(""+i);
 				     
-				    pb = new ProcessBuilder(list);  
-				    ps[i] = pb.start();
-				   // ps[i].waitFor();
-				     
-				    System.out.println("running command:\n"+pb.command()+"\n\n");  
-				   
-				   } catch (Throwable t) {  
+				pb = new ProcessBuilder(list);  
+				ps[i] = pb.start();
+				System.out.println("running command:\n"+pb.command()+"\n\n");  
+			} catch (Throwable t) {  
 				    t.printStackTrace();  
-				   }  
-			
-			
+			}  
 		}
+		
 		//wait for all threads to complete
 		for(int i=0;i<folders.length;i++){
 			try {
@@ -247,11 +224,6 @@ public static void botLevelProcess_MultiProcess(String mid, String bot, int topK
 				System.out.println();
 				e.printStackTrace();
 			}
-		}
-		
-		
-		for(int i = 0; i < folders.length; i++){
-			log("botlevel clustering " + i + "> ends");
 		}
 	}
 	
@@ -373,7 +345,6 @@ class runBotLevelClustering{
 	    conf.setNumReduceTasks(1);
 
 		FileInputFormat.setInputPaths(conf, new Path(input));
-		
 		FileOutputFormat.setOutputPath(conf, new Path(whatever_output));
 
 		try {
@@ -384,7 +355,6 @@ class runBotLevelClustering{
 		}
 
 		System.out.println("botlevel clustering is done");
-		
 	}
 	
 	public static class KmeansMap extends MapReduceBase implements Mapper<Text, Text, IntWritable,  ClusterWritable> {
@@ -396,12 +366,12 @@ class runBotLevelClustering{
 			String[] splits=args.split(" ");
 			TopDownClustering.kmeans(splits[0], splits[1], splits[2], Integer.parseInt(splits[3]), Double.parseDouble(splits[4]), Integer.parseInt(splits[5]));
 		}
-
 	}
 }
 
 class KmeansThread extends Thread
 {
+	int id;
 	String input;
 	String clusters;
 	String output;
@@ -409,8 +379,9 @@ class KmeansThread extends Thread
 	double cd;
 	int x;
 
-   public KmeansThread(String input, String clusters, String output, int k, double cd, int x)
+   public KmeansThread(int id, String input, String clusters, String output, int k, double cd, int x)
    {
+	  this.id = id;
       this.input=input;
       this.clusters=clusters;
       this.output=output;
@@ -423,16 +394,14 @@ class KmeansThread extends Thread
    public void run()
    {
       TopDownClustering.kmeans(input, clusters, output, k, cd, x);
+      TopDownClustering.log("thread " + id + " ends");
    }
 }
 
-class KmeansProcess {
-	private static final CosineDistanceMeasure distance_measure = new CosineDistanceMeasure();
-	private static int maxIterations = 100;
-	
+class KmeansProcess {	
 	public static void main(String[] args){
 		TopDownClustering.kmeans(args[0],args[1],args[2],Integer.parseInt(args[3]),Double.parseDouble(args[4]),Integer.parseInt(args[5]));
+		TopDownClustering.log("process " +  Integer.parseInt(args[6]) + " ends");
 	}
-
 }
 

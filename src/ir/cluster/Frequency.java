@@ -167,6 +167,7 @@ public class Frequency {
 			FSDataInputStream input = fs.open(path);
 			double[][] cs = new double[clusterNum][featureSize];
 			String line;
+			//System.out.println(clusters);
 			for(int i = 0; i < clusterNum; i ++){
 				line = input.readLine();
 				//System.out.println(line);
