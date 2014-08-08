@@ -33,7 +33,7 @@ public class Pipeline {
 		//TODO: call the main entry point of the Feature Extraction
 		System.out.println("\n\n\n\n\nFeature Extraction");
 		String features = dst + "/data/features";// the feature folder
-//		FeatureExtraction.extractFeatures(src, dst + "/data/fn.txt", dst+"/data/features/", dst + "/temp/fe/");
+		FeatureExtraction.extractFeatures(src, dst + "/data/fn.txt", dst+"/data/features/", dst + "/temp/fe/");
 		System.out.println("Features folder:"+features);
 		
 		long EndTime1 = new Date().getTime();
