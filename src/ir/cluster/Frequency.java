@@ -1,13 +1,10 @@
 package ir.cluster;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.Iterator;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
@@ -36,7 +33,7 @@ public class Frequency {
 	public static String features = "";
 	
 	public static void main(String[] args) throws IOException{
-		runJob("data/features/", 100, "data/cluster/level/clusters.txt", "data/temp/", "data/index/frequency.txt");
+		runJob("test/data/features/", 100, "test/cluster/clusters.txt", "test/temp/freq", "test/data/frequency.txt");
 	}
 	
 	public static void init(String features, int clusterNum, String clusters){
@@ -46,56 +43,29 @@ public class Frequency {
 	}
 	
 	public static void runJob (String features, int clusterNum, String clusters, String temp, String output){
-		
 		Frequency.init(features, clusterNum, clusters);
-		getNames(features, temp + "/fn.txt");
+		HadoopUtil.delete(temp);
 		HadoopUtil.delete(output);
-		runMR(temp + "/fn.txt", temp + "/freq",features, clusterNum, clusters);
-		HadoopUtil.copyMerge(temp + "/freq", output);
-		HadoopUtil.delete(temp + "/freq");
+		runFreMR(features, temp);
+		HadoopUtil.copyMerge(temp, output);
+	}
+	
+	public static void runFreMR(String infile, String outfile){
 		
-	}
-	
-	// read a folder of images from HDFS and store their names into a file on HDFS
-	public static void getNames(String features, String file){
-        try{
-            FileSystem fs = FileSystem.get(new Configuration()); // open the image folder
-            FileStatus[] status = fs.listStatus(new Path(features)); // get the list of images
-            FSDataOutputStream out = fs.create(new Path(file)); // create output stream
-            PrintWriter pw = new PrintWriter(out.getWrappedStream()); // create writer
-            for (int i=0;i<status.length;i++){
-            		//System.out.println(status[i].getPath().getName());
-            		pw.println(status[i].getPath().getName());
-            		//pw.flush();
-            }
-            pw.close();
-            out.close();
-            fs.close();
-            System.out.println("feature filenames extraction is done");
-        }catch(Exception e){
-            System.out.println("File not found");
-        }
-	}
-	
-	public static void runMR(String infile, String outfile,String features, int clusterNum, String clusters){
-
 		JobConf conf = new JobConf(Frequency.class);
-		conf.setJobName("Frequency");
+		conf.setJobName("FrequencyNonSplit");
 		
-		//
+		// configure parameters
 		conf.set("features", features);
 		conf.set("clusterNum", new Integer(clusterNum).toString());
 		conf.set("clusters", clusters);
-		//
-		
 		conf.setOutputKeyClass(Text.class);
 		conf.setOutputValueClass(Text.class);
-		
-		conf.setMapperClass(FEMap.class);
-		conf.setReducerClass(FEReduce.class);
-		conf.setNumReduceTasks(1);
-		
+		conf.setMapperClass(FreMap.class);
+		conf.setReducerClass(FreReduce.class);
+		//conf.setNumReduceTasks(1);
 		conf.setInputFormat(TextInputFormat.class);
+		//conf.setInputFormat(NonSplitTextInputFormat.class); //To check if this is necessary
 	    conf.setOutputFormat(TextOutputFormat.class);
 	    
 		FileInputFormat.setInputPaths(conf, new Path(infile));
@@ -109,53 +79,30 @@ public class Frequency {
 		}
 	}
 	
-	public static class FEMap extends MapReduceBase implements Mapper<LongWritable, Text, Text, Text> {
+	public static class FreMap extends MapReduceBase implements Mapper<LongWritable, Text, Text, Text> {
 		public static int featureSize = 128;
 		public static int clusterNum = 100;
 		public static String clusters = "";
 		public static String features = "";
+		
 		@Override
 		public void configure(JobConf job) {
-		   clusterNum=Integer.parseInt(job.get("clusterNum"));
-		   clusters=job.get("clusters");
-		   features=job.get("features");
+		   clusterNum = Integer.parseInt(job.get("clusterNum"));
+		   clusters = job.get("clusters");
+		   features = job.get("features");
 		}
+		
 		@Override
 		public void map(LongWritable key, Text value, OutputCollector<Text, Text> output, Reporter reporter) throws IOException {
-			
 			double[][] cs = readClusters(clusters);//read clusters
-			int[] marks = new int[clusterNum];
-			// read the features and 
-			String file = value.toString();
-			
-			String data = features + "/" + file;
-			//read the file line by line
-			Path dp = new Path(data);
-			Configuration conf = new Configuration();
-			FileSystem fs = FileSystem.get(conf);
-			FSDataInputStream input = fs.open(dp);
-			String line;
-			while((line = input.readLine()) != null){
-				double[] feature = new double[featureSize];
-				String[] args = line.split(" ");
-				for (int i = 0; i < featureSize; i++)
-					feature[i] = Double.parseDouble(args[i + 4]);
-				int index = findBestCluster(feature, cs);
-				marks[index]++;
-			}
-			
-			String result = "";
-			int num = 0;
-			for(int i = 0; i < clusterNum; i++){
-				for(int j = 0; j < marks[i]; j++){
-					if(result.length() == 0) result += i;
-					else result += " " + i;
-					num++;
-				}	
-			}
-			
-			output.collect(new Text(file), new Text(num + "\t" + result));
-			
+			String file = value.toString().split("\t")[0];
+			String line = value.toString().split("\t")[1];
+			double[] feature = new double[featureSize];
+			String[] args = line.split(" ");
+			for (int i = 0; i < featureSize; i++)
+				feature[i] = Double.parseDouble(args[i + 4]);
+			int index = findBestCluster(feature, cs);
+			output.collect(new Text(file), new Text(1 + "\t" + index));
 			//System.out.println(file + " processed");
 		}
 		
@@ -176,7 +123,6 @@ public class Frequency {
 				for(int j = 0; j < featureSize; j++)
 					cs[i][j] = Double.parseDouble(array[j]);
 			}
-			
 			return cs;
 		}
 		
@@ -185,17 +131,14 @@ public class Frequency {
 			double distance = -1.1;
 			//feature = norm(feature);
 			for(int i = 0; i < clusters.length; i++){
-				
 				double fl = 0;
 				double cl = 0;
-				
 				double ds = 0;
 				for(int j = 0; j < clusters[i].length; j++){
 					ds += feature[j] * clusters[i][j];
 					fl += feature[j] * feature[j];
 					cl += clusters[i][j] * clusters[i][j];
 				}
-				
 				ds = ds / (Math.sqrt(fl) * Math.sqrt(cl));
 				
 				if(ds > distance){
@@ -203,7 +146,6 @@ public class Frequency {
 					index = i;
 				}
 			}
-			
 			return index;
 		}
 		
@@ -218,25 +160,24 @@ public class Frequency {
 			}
 			return feature;
 		}
-
 	}
 
-	public static class FEReduce extends MapReduceBase implements Reducer<Text, Text, Text, Text> {
-		
+	public static class FreReduce extends MapReduceBase implements Reducer<Text, Text, Text, Text> {
 		@Override
 		public void reduce(Text key, Iterator<Text> values, OutputCollector<Text, Text> output, Reporter reporter) throws IOException {
 	
 			String sum = "";
+			int total = 0;
 			while (values.hasNext()) {
 				String s = values.next().toString();
 				if(!s.equals(""))
-					if (sum.length() == 0 ) sum = s;
-					else sum = sum + "\t" + s;
+					if (sum.length() == 0) sum = s.split("\t")[1];
+					else sum = sum + " " + s.split("\t")[1];
+					total += Integer.parseInt(s.split("\t")[0]);
 			}
 			//System.out.println(sum);
-			output.collect(key, new Text(sum));
+			output.collect(key, new Text(total + "\t" + sum));
 		}
-		
 	}
 	
 }

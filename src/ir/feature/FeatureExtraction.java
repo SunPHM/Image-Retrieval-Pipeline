@@ -28,8 +28,8 @@ import ir.util.HadoopUtil;
 public class FeatureExtraction {
 	
 	public static String img_folder = "data/images";
-	public static String fn = "data/temp/fn.txt";
-	public static String feature_folder ="data/features";
+	public static String fn = "test/data/fn.txt";
+	public static String feature_folder ="test/data/features";
 	
 	public static void main(String[] args) {
 		SIFTExtraction.getNames(img_folder, fn);
@@ -120,7 +120,7 @@ public class FeatureExtraction {
 				FSDataOutputStream out = fs.create(outFile);
 				PrintWriter pw = new PrintWriter(out.getWrappedStream());
 				for(String feature : features){
-					pw.println(feature);
+					pw.println(filename + "\t" + feature);
 					//pw.flush();
 				}
 				pw.close();

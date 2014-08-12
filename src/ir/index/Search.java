@@ -76,7 +76,7 @@ public class Search {
 	
 	public static String createQuery(String[] features) throws IOException{//transform an image into a Solr document or a field
 		//System.out.println("query: " + image);
-		double[][] clusters = Frequency.FEMap.readClusters(Search.clusters);
+		double[][] clusters = Frequency.FreMap.readClusters(Search.clusters);
 		int[] marks = new int[Search.clusterNum];
 		
 		for(int i = 0; i < features.length; i++){
@@ -84,7 +84,7 @@ public class Search {
 			String[] args = features[i].split(" ");
 			for (int j = 0; j < Search.featureSize; j++)
 				feature[j] = Double.parseDouble(args[j + 4]);
-			int index = Frequency.FEMap.findBestCluster(feature, clusters);
+			int index = Frequency.FreMap.findBestCluster(feature, clusters);
 			marks[index]++;
 		}
 		
