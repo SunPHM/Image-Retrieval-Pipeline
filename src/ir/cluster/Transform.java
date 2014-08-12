@@ -34,7 +34,7 @@ public class Transform {
 	public static void run(String features, String fs, String temp) {
 		HadoopUtil.delete(fs);
 		try {
-			runCleanMR(features, temp);
+			runTransMR(features, temp);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -43,25 +43,18 @@ public class Transform {
 		HadoopUtil.delete(temp);
 	}
 	
-	public static void runCleanMR(String infolder, String outfile) throws IOException{
-		
-
+	public static void runTransMR(String infolder, String outfile) throws IOException{
 		JobConf conf = new JobConf(Transform.class);
 		conf.setJobName("Transform");
 		
 		conf.setOutputKeyClass(LongWritable.class);
 		conf.setOutputValueClass(VectorWritable.class);
-		
 		conf.setMapperClass(PPMap.class);
 		conf.setReducerClass(PPReduce.class);
-		conf.setNumReduceTasks(1);
-		
 		conf.setInputFormat(TextInputFormat.class);
 	    conf.setOutputFormat(SequenceFileOutputFormat.class);
-	    
 		FileInputFormat.setInputPaths(conf, new Path(infolder));
 		FileOutputFormat.setOutputPath(conf, new Path(outfile));
-		
 		JobClient.runJob(conf);
 		
 		System.out.println("transformation from a folder of features to a sequence file is done");
@@ -73,8 +66,7 @@ public class Transform {
 		public static long recNum = 0;
 		
 		@Override
-		public void map(LongWritable key, Text value, OutputCollector<LongWritable, VectorWritable> output, Reporter reporter) throws IOException {
-			
+		public void map(LongWritable key, Text value, OutputCollector<LongWritable, VectorWritable> output, Reporter reporter) throws IOException {			
 			double[] feature = getPoints(value.toString().split(" "), feature_length);
 			VectorWritable vw = new VectorWritable();
 			Vector vec = new DenseVector(feature.length);
@@ -93,7 +85,6 @@ public class Transform {
 	}
 	
 	public static class PPReduce extends MapReduceBase implements Reducer<LongWritable, VectorWritable, LongWritable, VectorWritable> {
-
 		@Override
 		public void reduce(LongWritable key, Iterator<VectorWritable> values, OutputCollector<LongWritable, VectorWritable> output, 
 				Reporter reporter) throws IOException {
@@ -102,7 +93,5 @@ public class Transform {
 				output.collect(key, values.next());
 			}
 		}
-		
-		
 	}
 }
