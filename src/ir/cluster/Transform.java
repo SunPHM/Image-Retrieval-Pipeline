@@ -33,6 +33,7 @@ public class Transform {
 	
 	public static void run(String features, String fs, String temp) {
 		HadoopUtil.delete(fs);
+		HadoopUtil.delete(temp);
 		try {
 			runTransMR(features, temp);
 		} catch (IOException e) {
@@ -40,7 +41,6 @@ public class Transform {
 			e.printStackTrace();
 		}
 		HadoopUtil.copyMerge(temp, fs);
-		HadoopUtil.delete(temp);
 	}
 	
 	public static void runTransMR(String infolder, String outfile) throws IOException{
