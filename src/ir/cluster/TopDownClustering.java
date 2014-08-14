@@ -46,7 +46,7 @@ public class TopDownClustering {
 	
 	//example args: data/cluster/fs.seq data/cluster/level  10 10
 	public static void main(String[] args){
-		run(args, 0);
+		run(args, 1);
 	}
 	
 	public static String run(String[] args, int botlvlcluster_type) {
@@ -122,30 +122,34 @@ public class TopDownClustering {
 	
 	
 	public static void botLevelProcess_MRJob(String mid, String bot, int topK, int botK) {
-		String[] folders = getFolders(mid);
-		Configuration conf = new Configuration();
-		String output_string = bot + "/temp";
-		Path output_path = new Path(output_string);	 
-		SequenceFile.Writer writer = null;
 		
-		try {
-			writer = new SequenceFile.Writer(FileSystem.get(conf), conf, output_path, Text.class,Text.class);
-			for(int i = 0; i < folders.length; i++){
-				String input = folders[i] + "/part-m-0";
-				String clusters = bot + "/" + i + "/cls";
-				String output = bot + "/" + i;
-				int k = botK;
-				double cd = delta;
-				writer.append(new Text("" + i), new Text(input + " " + clusters + " " + output + " " + k + " " + cd + " " + x));
-			}
+		String[] folders = getFolders(mid);
+		String output_folder = bot + "/temp";
+		HadoopUtil.delete(output_folder);
+		for(int i = 0; i < folders.length; i++){
+			String input = folders[i] + "/part-m-0";
+			String clusters = bot + "/" + i + "/cls";
+			String output = bot + "/" + i;
+			int k = botK;
+			double cd = delta;
+			writeBotLevelParameters("" + i, input + " " + clusters + " " + output + " " + k + " " + cd + " " + x, output_folder + "/" + i + ".txt");
+		}
+		runBotLevelClustering.run(output_folder, bot + "/whatever");
+	}
+	
+	public static void writeBotLevelParameters(String key, String value, String filename){
+		try{
+			Path output_path = new Path(filename);	 
+			Configuration conf = new Configuration();
+			SequenceFile.Writer writer = new SequenceFile.Writer(FileSystem.get(conf), conf, output_path, Text.class, Text.class);
+			writer.append(new Text(key), new Text(value));
 			writer.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		runBotLevelClustering.run(output_string, bot + "/whatever");
 	}
+	
 	
 	
 	public static void botLevelProcess_MultiThread(String mid, String bot, int topK, int botK) {
@@ -323,7 +327,7 @@ public class TopDownClustering {
 }
 
 class runBotLevelClustering{
-	public static void run(String input,String whatever_output){
+	public static void run(String input, String whatever_output){
 		//HadoopUtil.delete(output);
 
 		JobConf conf = new JobConf(runBotLevelClustering.class);
@@ -362,6 +366,7 @@ class runBotLevelClustering{
 			//String input, String clusters, String output, int k, double cd, int x
 			String[] splits=args.split(" ");
 			TopDownClustering.kmeans(splits[0], splits[1], splits[2], Integer.parseInt(splits[3]), Double.parseDouble(splits[4]), Integer.parseInt(splits[5]));
+			TopDownClustering.log("bottom-level clustering " + key.toString() + " ends");
 		}
 	}
 }
