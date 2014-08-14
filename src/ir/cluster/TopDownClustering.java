@@ -75,7 +75,6 @@ public class TopDownClustering {
 			if(botlvlcluster_type == 0) botLevelProcess_Serial(mid, bot, topK, botK);
 			else if(botlvlcluster_type == 1) botLevelProcess_MRJob(mid, bot, topK, botK);
 			else if(botlvlcluster_type == 2) botLevelProcess_MultiThread(mid, bot, topK, botK);
-			else if(botlvlcluster_type == 3) botLevelProcess_MultiProcess(mid,bot,topK,botK);
 			// merge the clusters into a single file
 			merge(bot, prefix);
 			ts3 = new Date().getTime();
@@ -176,58 +175,6 @@ public class TopDownClustering {
 			}
 		}
 	}
-	
-	public static void botLevelProcess_MultiProcess(String mid, String bot, int topK, int botK) {
-		
-		String[] folders = getFolders(mid);
-		
-		Process[] ps=new Process[folders.length];
-		for(int i = 0; i < folders.length; i++){
-			String input=folders[i] + "/part-m-0";
-			String clusters=bot + "/" + i + "/cls";
-			String output=bot + "/" + i;
-			int k = botK;
-			double cd = delta;
-	
-			try{  
-				List<String> list = new ArrayList<String>();  
-				ProcessBuilder pb = null;  
-				     
-				String java = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";  
-				String classpath = System.getProperty("java.class.path");  
-				// list the files and directorys under C:\  
-				list.add(java);  
-				list.add("-classpath");  
-				list.add(classpath);  
-				list.add(KmeansProcess.class.getName());  
-				list.add(input);  
-				list.add(clusters);  
-				list.add(output);
-				list.add(""+k);
-				list.add(""+cd);
-				list.add(""+x);
-				list.add(""+i);
-				     
-				pb = new ProcessBuilder(list);  
-				ps[i] = pb.start();
-				System.out.println("running command:\n"+pb.command()+"\n\n");  
-			} catch (Throwable t) {  
-				    t.printStackTrace();  
-			}  
-		}
-		
-		//wait for all threads to complete
-		for(int i=0;i<folders.length;i++){
-			try {
-				ps[i].waitFor();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				System.out.println();
-				e.printStackTrace();
-			}
-		}
-	}
-	
 	
 	public static void merge(String src, String dst) throws IOException, InterruptedException{	
 		// copy and merge files
@@ -399,11 +346,3 @@ class KmeansThread extends Thread
       TopDownClustering.log("thread " + id + " ends");
    }
 }
-
-class KmeansProcess {	
-	public static void main(String[] args){
-		TopDownClustering.kmeans(args[0],args[1],args[2],Integer.parseInt(args[3]),Double.parseDouble(args[4]),Integer.parseInt(args[5]));
-		TopDownClustering.log("process " +  Integer.parseInt(args[6]) + " ends");
-	}
-}
-
