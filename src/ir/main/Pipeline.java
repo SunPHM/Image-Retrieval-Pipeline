@@ -4,6 +4,7 @@ import java.util.Date;
 
 import ir.cluster.VWDriver;
 import ir.feature.FeatureExtraction;
+import ir.feature.FeatureExtractionCombineFileInputFormat;
 import ir.index.Search;
 
 public class Pipeline {
@@ -31,10 +32,11 @@ public class Pipeline {
 		long startTime = new Date().getTime();
 		
 		//TODO: call the main entry point of the Feature Extraction
-		System.out.println("\n\n\n\n\nFeature Extraction");
+		System.out.println("\n\nFeature Extraction");
 		String features = dst + "/data/features";// the feature folder
 //		FeatureExtraction.extractFeatures(src, dst + "/data/fn.txt", dst+"/data/features/", dst + "/temp/fe/");
-		System.out.println("Features folder:"+features);
+		FeatureExtractionCombineFileInputFormat.extractFeatures(src, features, dst + "/temp/fe/");
+		System.out.println("Features folder:" + features);
 		
 		long EndTime1 = new Date().getTime();
 		

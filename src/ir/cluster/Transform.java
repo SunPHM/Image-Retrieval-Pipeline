@@ -53,6 +53,7 @@ public class Transform {
 		conf.setReducerClass(PPReduce.class);
 		conf.setInputFormat(CombineTextInputFormat.class);
 	    conf.setOutputFormat(SequenceFileOutputFormat.class);
+	    
 		FileInputFormat.setInputPaths(conf, new Path(infolder));
 		FileOutputFormat.setOutputPath(conf, new Path(outfile));
 		JobClient.runJob(conf);

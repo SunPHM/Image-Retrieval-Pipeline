@@ -144,7 +144,7 @@ public class FeatureExtractionCombineFileInputFormat {
 				FSDataOutputStream out = fs.create(outFile);
 				PrintWriter pw = new PrintWriter(out.getWrappedStream());
 				for(String feature : features){
-					pw.println( feature);
+					pw.println(filename + "\t" + feature);
 					//pw.flush();
 				}
 				pw.close();
