@@ -16,10 +16,10 @@ import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.Reducer;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapred.SequenceFileOutputFormat;
-import org.apache.hadoop.mapred.TextInputFormat;
 import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
+import org.apache.hadoop.mapred.lib.CombineTextInputFormat;
 
 import ir.util.HadoopUtil;
 
@@ -51,7 +51,7 @@ public class Transform {
 		conf.setOutputValueClass(VectorWritable.class);
 		conf.setMapperClass(PPMap.class);
 		conf.setReducerClass(PPReduce.class);
-		conf.setInputFormat(TextInputFormat.class);
+		conf.setInputFormat(CombineTextInputFormat.class);
 	    conf.setOutputFormat(SequenceFileOutputFormat.class);
 		FileInputFormat.setInputPaths(conf, new Path(infolder));
 		FileOutputFormat.setOutputPath(conf, new Path(outfile));

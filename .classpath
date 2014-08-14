@@ -23,6 +23,7 @@
 	<classpathentry kind="lib" path="libs/solr-solrj-4.6.1.jar"/>
 	<classpathentry kind="lib" path="libs/wstx-asl-3.2.7.jar"/>
 	<classpathentry kind="lib" path="libs/zookeeper-3.4.5.jar"/>
+	<classpathentry kind="lib" path="libs/hadoop-mapreduce-client-core-2.2.0.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="libs/mahout-core-0.8-job.jar"/>
 	<classpathentry kind="lib" path="libs/log4j-1.2.16.jar"/>

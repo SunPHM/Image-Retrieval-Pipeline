@@ -145,9 +145,6 @@ public class TopDownClustering {
 		}
 		
 		runBotLevelClustering.run(output_string, bot + "/whatever");
-		for(int i = 0; i < folders.length; i++){
-			log("botlevel clustering " +  i + "> ends");
-		}
 	}
 	
 	

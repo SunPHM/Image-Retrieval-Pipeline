@@ -18,8 +18,8 @@ import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.Reducer;
 import org.apache.hadoop.mapred.Reporter;
-import org.apache.hadoop.mapred.TextInputFormat;
 import org.apache.hadoop.mapred.TextOutputFormat;
+import org.apache.hadoop.mapred.lib.CombineTextInputFormat;
 
 import ir.util.HadoopUtil;
 
@@ -64,8 +64,7 @@ public class Frequency {
 		conf.setMapperClass(FreMap.class);
 		conf.setReducerClass(FreReduce.class);
 		//conf.setNumReduceTasks(1);
-		conf.setInputFormat(TextInputFormat.class);
-		//conf.setInputFormat(NonSplitTextInputFormat.class); //To check if this is necessary
+		conf.setInputFormat(CombineTextInputFormat.class);
 	    conf.setOutputFormat(TextOutputFormat.class);
 	    
 		FileInputFormat.setInputPaths(conf, new Path(infile));
