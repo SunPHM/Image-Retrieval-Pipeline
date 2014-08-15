@@ -53,7 +53,7 @@ public class Frequency {
 	public static void runFreMR(String infile, String outfile){
 		
 		JobConf conf = new JobConf(Frequency.class);
-		conf.setJobName("FrequencyNonSplit");
+		conf.setJobName("Frequency");
 		
 		// configure parameters
 		conf.set("features", features);

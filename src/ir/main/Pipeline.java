@@ -5,6 +5,7 @@ import java.util.Date;
 import ir.cluster.VWDriver;
 import ir.feature.FeatureExtraction;
 import ir.index.Search;
+import ir.util.HadoopUtil;
 
 public class Pipeline {
 
@@ -29,6 +30,7 @@ public class Pipeline {
 	public static String run(String src, String dst, int topK, int botK, int botlvlcluster_type){
 		long N = 1000 * 60;
 		long startTime = new Date().getTime();
+		HadoopUtil.delete(dst);
 		
 		//TODO: call the main entry point of the Feature Extraction
 		System.out.println("\n\nFeature Extraction");

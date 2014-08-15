@@ -28,11 +28,12 @@ public class Transform {
 	 * @throws IOException */
 	
 	public static void main(String[] args) {
-		//run();
+		run("test/data/features.txt", "test/data/fs.seq", "test/temp/seq");
 	}
 	
 	public static void run(String features, String fs, String temp) {
 		HadoopUtil.delete(fs);
+		HadoopUtil.delete(temp);
 		try {
 			runCleanMR(features, temp);
 		} catch (IOException e) {
@@ -40,7 +41,7 @@ public class Transform {
 			e.printStackTrace();
 		}
 		HadoopUtil.copyMerge(temp, fs);
-		HadoopUtil.delete(temp);
+		
 	}
 	
 	public static void runCleanMR(String infolder, String outfile) throws IOException{
@@ -64,7 +65,7 @@ public class Transform {
 		
 		JobClient.runJob(conf);
 		
-		System.out.println("transformation from a folder of features to a sequence file is done");
+		System.out.println("transformation from features to a sequence file is done");
 	}
 	
 	public static class PPMap extends MapReduceBase implements Mapper<LongWritable, Text, LongWritable, VectorWritable> {
@@ -75,6 +76,7 @@ public class Transform {
 		@Override
 		public void map(LongWritable key, Text value, OutputCollector<LongWritable, VectorWritable> output, Reporter reporter) throws IOException {
 			
+			//double[] feature = getPoints(value.toString().split("\t")[1].split(" "), feature_length);
 			double[] feature = getPoints(value.toString().split(" "), feature_length);
 			VectorWritable vw = new VectorWritable();
 			Vector vec = new DenseVector(feature.length);
@@ -102,7 +104,5 @@ public class Transform {
 				output.collect(key, values.next());
 			}
 		}
-		
-		
 	}
 }
