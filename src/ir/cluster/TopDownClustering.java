@@ -276,6 +276,7 @@ public class TopDownClustering {
 class runBotLevelClustering{
 	public static void run(String input, String whatever_output){
 		//HadoopUtil.delete(output);
+		System.out.println("botlevel clustering using MR job parallelism!!!!!!!");
 
 		JobConf conf = new JobConf(runBotLevelClustering.class);
 		conf.setJobName("botlevelclustering");

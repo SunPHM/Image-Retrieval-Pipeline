@@ -3,7 +3,6 @@ package ir.main;
 import java.util.Date;
 
 import ir.cluster.VWDriver;
-import ir.feature.FeatureExtraction;
 import ir.feature.FeatureExtractionCombineFileInputFormat;
 import ir.index.Search;
 
@@ -34,7 +33,6 @@ public class Pipeline {
 		//TODO: call the main entry point of the Feature Extraction
 		System.out.println("\n\nFeature Extraction");
 		String features = dst + "/data/features";// the feature folder
-//		FeatureExtraction.extractFeatures(src, dst + "/data/fn.txt", dst+"/data/features/", dst + "/temp/fe/");
 		FeatureExtractionCombineFileInputFormat.extractFeatures(src, features, dst + "/temp/fe/");
 		System.out.println("Features folder:" + features);
 		

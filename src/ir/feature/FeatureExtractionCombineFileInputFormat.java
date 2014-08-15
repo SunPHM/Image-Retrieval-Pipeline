@@ -51,7 +51,7 @@ public class FeatureExtractionCombineFileInputFormat {
 		conf.set("img_folder", img_folder);
 		//conf.set("fn", fn);
 		conf.set("feature_folder", feature_folder);
-		conf.set("mapred.max.split.size", "13421772");
+		conf.set("mapred.max.split.size", "5242880");
 		Job job=null;
 		try {
 			job = new Job(conf);
