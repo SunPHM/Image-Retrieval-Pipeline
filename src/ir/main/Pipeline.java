@@ -3,7 +3,7 @@ package ir.main;
 import java.util.Date;
 
 import ir.cluster.VWDriver;
-import ir.feature.FeatureExtractionCombineFileInputFormat;
+import ir.feature.FeatureExtraction;
 import ir.index.Search;
 
 public class Pipeline {
@@ -32,8 +32,8 @@ public class Pipeline {
 		
 		//TODO: call the main entry point of the Feature Extraction
 		System.out.println("\n\nFeature Extraction");
-		String features = dst + "/data/features";// the feature folder
-		FeatureExtractionCombineFileInputFormat.extractFeatures(src, features, dst + "/temp/fe/");
+		String features = dst + "/data/features.txt";// the feature folder
+		FeatureExtraction.extractFeatures(src, features, dst + "/temp/fe/");
 		System.out.println("Features folder:" + features);
 		
 		long EndTime1 = new Date().getTime();
@@ -42,7 +42,7 @@ public class Pipeline {
 		System.out.println("\n\n\n\n\nvocabulary construction and frequency generation");
 		String fs = dst + "/data/fs.seq";
 		String[] args = {features, fs, dst, "" + topK, "" + botK};
-		String s = VWDriver.run(args,botlvlcluster_type);
+		String s = VWDriver.run(args, botlvlcluster_type);
 		
 		long EndTime2 = new Date().getTime();
 		

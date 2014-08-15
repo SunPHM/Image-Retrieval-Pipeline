@@ -26,29 +26,7 @@ public class SIFTExtraction {
 		FileSystem fs = FileSystem.get(new Configuration());
 		BufferedImage img = ImageIO.read(fs.open(new Path("test.jpg")));
 		getFeatures(img);
-		getNames("data/images", "data/temp/fn.txt");
 	}	
-	
-	// read a folder of images from HDFS and store their names into a file on HDFS
-	public static void getNames(String img_folder, String file){
-        try{
-            FileSystem fs = FileSystem.get(new Configuration()); // open the image folder
-            FileStatus[] status = fs.listStatus(new Path(img_folder)); // get the list of images
-            FSDataOutputStream out = fs.create(new Path(file)); // create output stream
-            PrintWriter pw = new PrintWriter(out.getWrappedStream()); // create writer
-            for (int i=0;i<status.length;i++){
-            		//System.out.println(status[i].getPath().getName());
-            		pw.println(status[i].getPath().getName());
-            		//pw.flush();
-            }
-            pw.close();
-            out.close();
-            fs.close();
-            System.out.println("image filenames extraction is done");
-        }catch(Exception e){
-            System.out.println("File not found");
-        }
-	}
 	
 	// read BufferedImage and return extracted features
 	public static String[] getFeatures(BufferedImage img) throws IOException {

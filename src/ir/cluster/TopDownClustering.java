@@ -241,8 +241,7 @@ public class TopDownClustering {
 				writer.append(new Text(cluster.getIdentifier()), cluster);
 			}
 			reader.close(); writer.close();
-			System.out.println("initial " + k + "  clusters written to file: " + clusters);
-			 
+			//System.out.println("initial " + k + "  clusters written to file: " + clusters);			 
 			KMeansDriver.run(conf, input_path, clusters_path, output_path, 
 					distance_measure, cd, maxIterations, true, clusterClassificationThreshold, false);
 			

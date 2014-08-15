@@ -2,12 +2,9 @@ package ir.feature;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.io.PrintWriter;
-
 import javax.imageio.ImageIO;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
@@ -19,11 +16,11 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import ir.util.HadoopUtil;
 
-public class FeatureExtractionCombineFileInputFormat {
+public class FeatureExtraction {
 	
 	public static String img_folder = "data/images";
 	//public static String fn = "test/data/fn.txt";
-	public static String feature_folder ="test/data/features";
+	public static String feature_folder ="test/data/features.txt";
 	
 	public static void main(String[] args) {
 	//	SIFTExtraction.getNames(img_folder, fn);
@@ -33,20 +30,16 @@ public class FeatureExtractionCombineFileInputFormat {
 	public static void extractFeatures(String images,  String features, String temp){ // the main entry point for Feature Extraction to be called
 		img_folder = images;
 		feature_folder = features;
-		//fn = fn0;
-		HadoopUtil.delete(feature_folder);
-		//SIFTExtraction.getNames(images, fn);
+		HadoopUtil.delete(temp);
 		extractMR(images, temp);
+		HadoopUtil.copyMerge(temp, feature_folder);
+		System.out.println("feature extraction is done");
 	}
 	
 	// extract features using Map-Reduce
 	public static void extractMR(String infile, String outfile){
-
 		HadoopUtil.delete(outfile);
-
-		Configuration conf=new Configuration();
-		
-		
+		Configuration conf=new Configuration();		
 		//pass the parameters
 		conf.set("img_folder", img_folder);
 		//conf.set("fn", fn);
@@ -62,14 +55,10 @@ public class FeatureExtractionCombineFileInputFormat {
 		}
 		
 		job.setJobName("FeatureExtraction");
-		//
-
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(Text.class);
-
-		job.setJarByClass(FeatureExtractionCombineFileInputFormat.class);
-		job.setMapperClass(FeatureExtractionCombineFileInputFormat.FEMap.class);
-
+		job.setJarByClass(FeatureExtraction.class);
+		job.setMapperClass(FeatureExtraction.FEMap.class);
 		job.setInputFormatClass(ImageInputFormat.class);
 	    job.setOutputKeyClass(Text.class);
 	    job.setOutputValueClass(Text.class);
@@ -83,8 +72,8 @@ public class FeatureExtractionCombineFileInputFormat {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
+		
 		FileOutputFormat.setOutputPath(job, new Path(outfile));
-
 		try {
 			try {
 				job.waitForCompletion(true);
@@ -99,8 +88,6 @@ public class FeatureExtractionCombineFileInputFormat {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
-		System.out.println("feature extraction is done");
 	}
 	
 	public static class FEMap extends  Mapper<Text,LongWritable,  Text, Text> {
@@ -127,33 +114,15 @@ public class FeatureExtractionCombineFileInputFormat {
 				BufferedImage img = ImageIO.read(fs.open(new Path(file)));
 				String[] features = SIFTExtraction.getFeatures(img);
 				// store them into a file
-				store(features, feature_folder + "/" + key.toString() + ".txt");
+				for(int i = 0; i < features.length; i++)
+					context.write(new Text(file), new Text(features[i]));
 			} catch (java.lang.IllegalArgumentException e){
 				System.out.println("the image causing exception: " + file);
 			}
-			//System.out.println(file + " processed");
-		}
-
-		public void store(String[] features, String filename){
-			if(features == null) return;			
-			try {
-				Configuration conf = new Configuration();
-				FileSystem fs;
-				fs = FileSystem.get(conf);
-				Path outFile = new Path(filename);
-				FSDataOutputStream out = fs.create(outFile);
-				PrintWriter pw = new PrintWriter(out.getWrappedStream());
-				for(String feature : features){
-					pw.println(filename + "\t" + feature);
-					//pw.flush();
-				}
-				pw.close();
-				out.close();
-			} catch (IOException e) {
+			catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-
 		}
 	}
 }
