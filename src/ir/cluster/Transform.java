@@ -75,8 +75,6 @@ public class Transform {
 		
 		@Override
 		public void map(LongWritable key, Text value, OutputCollector<LongWritable, VectorWritable> output, Reporter reporter) throws IOException {
-			
-			//double[] feature = getPoints(value.toString().split("\t")[1].split(" "), feature_length);
 			double[] feature = getPoints(value.toString().split(" "), feature_length);
 			VectorWritable vw = new VectorWritable();
 			Vector vec = new DenseVector(feature.length);
