@@ -19,7 +19,7 @@ public class ImageRecordReader extends RecordReader<Text, LongWritable> {
     private final long mFileLength;
 
     /** The Configuration. */
-    private final org.apache.hadoop.conf.Configuration mConf;
+   // private final org.apache.hadoop.conf.Configuration mConf;
 
     /** Whether this FileSplit has been processed. */
     private boolean mProcessed;
@@ -43,7 +43,7 @@ public class ImageRecordReader extends RecordReader<Text, LongWritable> {
       mProcessed = false;
       mFileToRead = fileSplit.getPath(pathToProcess);
       mFileLength = fileSplit.getLength(pathToProcess);
-      mConf = context.getConfiguration();
+  //    mConf = context.getConfiguration();
 
       assert 0 == fileSplit.getOffset(pathToProcess);
 
