@@ -83,17 +83,24 @@ public class Frequency {
 		public static int clusterNum = 100;
 		public static String clusters = "";
 		public static String features = "";
+		public static double[][] cs = null;
 		
 		@Override
 		public void configure(JobConf job) {
 		   clusterNum = Integer.parseInt(job.get("clusterNum"));
 		   clusters = job.get("clusters");
 		   features = job.get("features");
+		   try {
+			cs = readClusters(clusters, clusterNum);
+		   } catch (IOException e) {
+			   // TODO Auto-generated catch block
+			   e.printStackTrace();
+		   }//read clusters
 		}
 		
 		@Override
 		public void map(LongWritable key, Text value, OutputCollector<Text, Text> output, Reporter reporter) throws IOException {
-			double[][] cs = readClusters(clusters);//read clusters
+			
 			String file = value.toString().split("\t")[0];
 			String line = value.toString().split("\t")[1];
 			double[] feature = new double[featureSize];
@@ -105,7 +112,7 @@ public class Frequency {
 			//System.out.println(file + " processed");
 		}
 		
-		public static double[][] readClusters(String clusters) throws IOException{
+		public static double[][] readClusters(String clusters, int clusterNum) throws IOException{
 			//TODO: in current stage, I only concern about the cluster centers not the radiuses
 			Configuration conf = new Configuration();
 			FileSystem fs = FileSystem.get(conf);

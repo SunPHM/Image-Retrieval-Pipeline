@@ -24,9 +24,9 @@ public class Search {
 	
 	public static int featureSize = 128;
 	
-	public static int clusterNum=100;
-	public static String clusters="test/cluster/clusters.txt";
-	public static String terms="data/features/frequency.txt";
+	public static int clusterNum = 100;
+	public static String clusters = "test/cluster/clusters.txt";
+	public static String terms = "data/features/frequency.txt";
 	
 	public static String urlString = "http://localhost:8789/solr";
 	
@@ -76,7 +76,7 @@ public class Search {
 	
 	public static String createQuery(String[] features) throws IOException{//transform an image into a Solr document or a field
 		//System.out.println("query: " + image);
-		double[][] clusters = Frequency.FreMap.readClusters(Search.clusters);
+		double[][] clusters = Frequency.FreMap.readClusters(Search.clusters, Search.clusterNum);
 		int[] marks = new int[Search.clusterNum];
 		
 		for(int i = 0; i < features.length; i++){
