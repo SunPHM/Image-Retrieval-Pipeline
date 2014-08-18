@@ -80,7 +80,7 @@ public class runAWBTest {
 			}
 		}
 		
-		
+
 		/***************different topk and botk**************/
 		// args: input_path  output_path   result_file
 /*		String result_file=args[2];

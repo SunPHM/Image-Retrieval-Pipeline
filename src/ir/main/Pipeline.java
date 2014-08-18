@@ -18,7 +18,7 @@ public class Pipeline {
 	 * @Solr: 4.6.1
 	 */
 	
-	public static String runPipeline(String[] args) {
+	public static  String  runPipeline(String[] args) {
 		//args[0]: the path to the images on HDFS or local file system
 		//args[1]: the path of the output on HDFS or local file system
 		//args[2]: the number of top-level clusters
@@ -67,12 +67,15 @@ public class Pipeline {
 			+"\nVVWDriver: "+ (double)(EndTime2 - EndTime1) / N + "\n" + s
 				+"Indexing: "+ (double)(EndTime3 - EndTime2) / N * 60 + " seconds\n" +
 				"Searching: " + (double)(EndTime4 - EndTime3) / N * 60 + " seconds");
+
 		String string_result="Total Running Time: "+ (double)(EndTime3 - startTime) / N 
 				+"\nFeature Extraction: "+ (double)(EndTime1 - startTime) / N
 			+"\nVVWDriver: "+ (double)(EndTime2 - EndTime1) / N + "\n" + s
 				+"Indexing: "+ (double)(EndTime3 - EndTime2) / N * 60 + " seconds\n" +
 				"Searching: " + (double)(EndTime4 - EndTime3) / N * 60 + " seconds";
+
 		return string_result;
 	}
+	
 
 }

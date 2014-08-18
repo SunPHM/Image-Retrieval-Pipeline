@@ -18,6 +18,7 @@ import org.apache.solr.common.SolrInputDocument;
  */
 
 public class Indexing {
+	private static long doc_buffer_size=5*5000;
 	
 	public static void main(String[] args) throws IOException, SolrServerException{
 		//index("data/index/visual-word-frequency.txt");		
@@ -28,7 +29,7 @@ public class Indexing {
 		String urlString = Search.urlString;
 		HttpSolrServer server = new HttpSolrServer(urlString);
 		server.deleteByQuery( "*:*" );//clean the data in server
-		
+		long docs_total_size=0;
 		//read index matrix from file
 		Configuration conf = new Configuration();
 		FileSystem fs = FileSystem.get(conf);
@@ -39,16 +40,24 @@ public class Indexing {
 		while((line = br.readLine()) != null){
 			SolrInputDocument doc = getDocument(line);
 			docs.add(doc);
+			if(docs.size()>=doc_buffer_size){
+				server.add(docs);
+			    server.commit();
+			    docs_total_size=docs_total_size+docs.size();
+			    System.out.println("indexed  "+(docs.size())+" docs");
+				docs.clear();
+			}
 		}
+		
 		br.close();
 		
 		//System.out.println(docs.toArray()[0]);
 		//System.out.println(docs.toArray()[1]);
-		System.out.println("number of docs indexed:"+docs.size());
 		
 		server.add(docs);
 	    server.commit();
-	    System.out.println("indexing is done");
+	    docs_total_size=docs_total_size+docs.size();
+	    System.out.println("indexing is done, total docs indexed: "+docs_total_size);
 	}
 	
 	//for each line, construct an document
