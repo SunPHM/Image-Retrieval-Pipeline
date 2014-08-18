@@ -120,6 +120,13 @@ public class FeatureExtraction {
 			} catch (java.lang.IllegalArgumentException e){
 				System.out.println("the image causing exception: " + file);
 			}
+			catch( java.awt.color.CMMException e){
+				//
+				System.out.println("the image causing exception: " + file);
+			}
+			catch(javax.imageio.IIOException e){
+				System.out.println("the image causing exception: " + file);
+			}
 			catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

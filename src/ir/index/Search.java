@@ -33,7 +33,7 @@ public class Search {
 	public static void main(String[] args) throws IOException, SolrServerException{
 		// run indexing
 		runIndexing("test/data/frequency.txt");
-		search("data/images/all_souls_000000.jpg");
+		search("data/images/ILSVRC2013_train_00107505.JPEG");
 	}
 	
 	public static void init(String terms, int clusterNum, String clusters){

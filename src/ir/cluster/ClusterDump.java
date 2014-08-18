@@ -29,6 +29,7 @@ public class ClusterDump {
 	}
 	
 
+//	public static void run
 	//read in the classified points in multiple locations  and output them to a single file
 	public static void run_clusterdump(String[] inputs, String output){
 		HadoopUtil.delete(output);
@@ -47,7 +48,7 @@ public class ClusterDump {
 
 		conf.setInputFormat(SequenceFileInputFormat.class);
 	    conf.setOutputFormat(TextOutputFormat.class);
-	    conf.setNumReduceTasks(1);
+//	    conf.setNumReduceTasks(1);
 
 		//FileInputFormat.setInputPaths(conf, new Path(input));
 		for(String input:inputs){
