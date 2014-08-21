@@ -23,7 +23,7 @@ public class Pipeline {
 		//args[1]: the path of the output on HDFS or local file system
 		//args[2]: the number of top-level clusters
 		//args[3]: the number of bot-level clusters
-		//args[4]=0|1|2|3, the botlevel clustering method to choose, 0: serial; 1: MR job based, 2:  multi-thread, 3 multi-process
+		//args[4]=0|1|2, the botlevel clustering method to choose, 0: serial; 1: MR job based, 2:  multi-thread
 		// test arguments: data/images/ test/ 10 10 1
 		run(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]),Integer.parseInt(args[4]));
 	}

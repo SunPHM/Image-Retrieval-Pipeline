@@ -63,17 +63,12 @@ public class FE_output2seqfile {
 		}
 		
 		job.setJobName("FeatureExtraction");
-		
-		
-		
-		
 		job.setJarByClass(FE_output2seqfile.class);
 		job.setMapperClass(FE_output2seqfile.FEMap.class);
-		
 		job.setInputFormatClass(ImageInputFormat.class);
 		
 		job.setOutputFormatClass(SequenceFileOutputFormat.class);
-		job.setOutputKeyClass(LongWritable.class);
+		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(VectorWritable.class);
 		
 	//    job.setOutputKeyClass(Text.class);
@@ -106,7 +101,7 @@ public class FE_output2seqfile {
 		}
 	}
 	
-	public static class FEMap extends  Mapper<Text,LongWritable,  LongWritable, VectorWritable> {
+	public static class FEMap extends  Mapper<Text,LongWritable, Text, VectorWritable> {
 		public static String img_folder = null;
 		public static String fn = null;
 		public static String feature_folder =null;
@@ -132,10 +127,10 @@ public class FE_output2seqfile {
 				String[] features = SIFTExtraction.getFeatures(img);
 				// store them into a file
 				for(int i = 0; i < features.length; i++){
-					double[]  feature=getPoints(features[i].split("\\s+"), feature_length);
+					double[]  feature=getPoints(features[i].split(" "), feature_length);
 					vec.assign(feature);
 					vw.set(vec);
-					context.write(new LongWritable(i), vw);
+					context.write(new Text(file), vw);
 				}
 			} catch (java.lang.IllegalArgumentException e){
 				System.out.println("the image causing exception: " + file);
