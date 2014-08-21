@@ -18,14 +18,14 @@ public class Pipeline {
 	 * @Solr: 4.6.1
 	 */
 	
-	public static  String  runPipeline(String[] args) {
+	public static void main(String[] args) {
 		//args[0]: the path to the images on HDFS or local file system
 		//args[1]: the path of the output on HDFS or local file system
 		//args[2]: the number of top-level clusters
 		//args[3]: the number of bot-level clusters
 		//args[4]=0|1|2|3, the botlevel clustering method to choose, 0: serial; 1: MR job based, 2:  multi-thread, 3 multi-process
 		// test arguments: data/images/ test/ 10 10 1
-		return run(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]),Integer.parseInt(args[4]));
+		run(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]),Integer.parseInt(args[4]));
 	}
 	
 	public static String run(String src, String dst, int topK, int botK, int botlvlcluster_type){
@@ -57,7 +57,7 @@ public class Pipeline {
 		Search.runIndexing(dst + "/data/frequency.txt");
 		long EndTime3 = new Date().getTime();
 		//TODO: to test or evaluate here	
-		Search.search(src + "/ILSVRC2013_train_00107505.JPEG");
+		Search.search(src + "/all_souls_000000.jpg");
 		long EndTime4 = new Date().getTime();
 		
 		

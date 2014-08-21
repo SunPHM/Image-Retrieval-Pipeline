@@ -39,6 +39,8 @@ public class runAWBTest {
 		}
 
 		*/
+
+		/*
 		i=0;
 		//MR Job botlevel processing
 		for(String input:inputs){
