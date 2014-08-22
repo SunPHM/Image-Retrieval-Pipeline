@@ -18,9 +18,9 @@ import org.apache.hadoop.io.Text;
 
 
 
-//input folder
-//outputfile 
-	//White, Tom (2012-05-10). Hadoop: The Definitive Guide (Kindle Locations 5375-5384). OReilly Media - A. Kindle Edition. 
+//args0: input images folder
+//args1: output seqfile 
+	
 
 public class Img2seqfile_localfs {
 	
