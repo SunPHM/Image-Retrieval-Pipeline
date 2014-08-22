@@ -43,17 +43,21 @@ public class runAWBTest {
 /*		
 		i=0;
 		//MR Job botlevel processing
-		for(String input:inputs){
+		String[] topks={"20","40","80", "160","300","500","1000"};
+		String[] botks={"20","40","80", "160","300","500","1000"};
+		for(int i1=0;i1<topks.length;i1++){
 			
-			String[] arguments={input,args[1]+"/"+(i++)+"_1_MRJob", "10", "10","1"};
-			System.out.println("Running  of " +input + "  " +args[1]+"/"+(i)+"_1"+" 10 10  1");
+			String[] arguments={args[0],args[1]+"/"+(i1++)+"_1_MRJob", topks[i1], botks[i1],"1"};
+			System.out.println("Running  of " +args[0] + "  " +args[1]+"/"+(i1)+"_1"+topks[i1]+" " +botks[i1]+" 1");
 			String result=Pipeline_FE_output2seqfile .runPipeline(arguments);
 			
 			try
 			{
 			    String filename= result_file;
 			    FileWriter fw = new FileWriter(filename,true); //the true will append the new data
-			    fw.write(input+":\nbotlvlclusteringType:MR Job\n"+result+"\n\n\n\n\n");//appends the string to the file
+			    fw.write(args[0]+":\nbotlvlclusteringType:MR Job\n"+
+			    		"Running  of " +args[0] + "  " +args[1]+"/"+(i1)+"_1"+topks[i1]+" " +botks[i1]+" 1"
+			    +result+"\n\n\n\n\n");//appends the string to the file
 			    fw.close();
 			}
 			catch(IOException ioe)
