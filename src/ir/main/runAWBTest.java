@@ -40,14 +40,14 @@ public class runAWBTest {
 
 		*/
 
-		/*
+/*		
 		i=0;
 		//MR Job botlevel processing
 		for(String input:inputs){
 			
 			String[] arguments={input,args[1]+"/"+(i++)+"_1_MRJob", "10", "10","1"};
 			System.out.println("Running  of " +input + "  " +args[1]+"/"+(i)+"_1"+" 10 10  1");
-			String result=Pipeline.runPipeline(arguments);
+			String result=Pipeline_FE_output2seqfile .runPipeline(arguments);
 			
 			try
 			{
@@ -62,6 +62,7 @@ public class runAWBTest {
 			}
 		}
 		i=0;
+/*
 		//Multi thread botlevel processing
 		for(String input:inputs){
 			

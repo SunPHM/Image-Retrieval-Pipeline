@@ -2,6 +2,7 @@ package ir.main;
 
 import ir.cluster.VWDriver_FE_output2seqfile;
 import ir.feature.FE_output2seqfile;
+import ir.feature.FeatureExtractionSeqFile;
 import ir.index.Search;
 import ir.util.HadoopUtil;
 
@@ -25,7 +26,7 @@ public class Pipeline_FE_output2seqfile {
 		//args[3]: the number of bot-level clusters
 		//args[4]=0|1|2, the botlevel clustering method to choose, 0: serial; 1: MR job based, 2:  multi-thread
 		// test arguments: data/images/ test/ 10 10 1
-		run(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]),Integer.parseInt(args[4]));
+		 run(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]),Integer.parseInt(args[4]));
 	}
 	
 	public static String run(String src, String dst, int topK, int botK, int botlvlcluster_type){
@@ -37,7 +38,8 @@ public class Pipeline_FE_output2seqfile {
 		System.out.println("\n\nFeature Extraction");
 		String features = dst + "/data/features.seq";// the feature folder
 	//	FeatureExtraction.extractFeatures(src, features, dst + "/temp/fe/");
-		FE_output2seqfile.extractFeatures(src, features, dst + "/temp/fe/");
+		FeatureExtractionSeqFile.extractFeatures(src, features, dst + "/temp/fe/");
+	//	FE_output2seqfile.extractFeatures(src, features, dst + "/temp/fe/");
 		System.out.println("Features folder:" + features);
 		
 		long EndTime1 = new Date().getTime();
@@ -58,7 +60,7 @@ public class Pipeline_FE_output2seqfile {
 		Search.runIndexing(dst + "/data/frequency.txt");
 		long EndTime3 = new Date().getTime();
 		//TODO: to test or evaluate here	
-		Search.search(src + "/all_souls_000000.jpg");
+		Search.search(src + "/ILSVRC2013_train_00045182.JPEG");
 		long EndTime4 = new Date().getTime();
 		
 		

@@ -1,5 +1,5 @@
 package ir.feature;
-
+//input and output are seqfiles
 import ir.util.HadoopUtil;
 
 import java.awt.image.BufferedImage;
@@ -12,12 +12,18 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
+import org.apache.mahout.math.DenseVector;
+import org.apache.mahout.math.Vector;
+import org.apache.mahout.math.VectorWritable;
 
 public class FeatureExtractionSeqFile {
 	public static String seqfile= "data/images";
@@ -58,14 +64,16 @@ public class FeatureExtractionSeqFile {
 		}
 		
 		job.setJobName("FeatureExtractionSeqFile");
+		
+		job.setOutputFormatClass(SequenceFileOutputFormat.class);
 		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(Text.class);
+		job.setOutputValueClass(VectorWritable.class);
+		
+		
 		job.setJarByClass(FeatureExtractionSeqFile.class);
 		job.setMapperClass(FeatureExtractionSeqFile.FEMap.class);
 		
 		job.setInputFormatClass(SequenceFileInputFormat.class);
-	    job.setOutputKeyClass(Text.class);
-	    job.setOutputValueClass(Text.class);
 
 		try {
 			FileInputFormat.setInputPaths(job, new Path(infile));
@@ -94,11 +102,13 @@ public class FeatureExtractionSeqFile {
 		}
 	}
 	
-	public static class FEMap extends  Mapper<Text,BytesWritable,  Text, Text> {
+	public static class FEMap extends  Mapper<Text,BytesWritable, Text, VectorWritable> {
 		public static String img_folder = null;
 		public static String fn = null;
 		public static String feature_folder =null;
-		
+		private static VectorWritable vw = new VectorWritable();
+		private static final int feature_length=128;
+		private static Vector vec = new DenseVector(feature_length);
 		@Override
 		public void setup( Context context) {
 			Configuration conf=context.getConfiguration();
@@ -111,21 +121,40 @@ public class FeatureExtractionSeqFile {
 		public void map( Text key,BytesWritable value, Context context) throws IOException {
 				
 			// get the image path
-			//String file = img_folder + "/" + key.toString();
+			String file = img_folder + "/" + key.toString();
 			// extract the SIFT features
 			FileSystem fs = FileSystem.get(new Configuration());
+			try{
 				BufferedImage img = ImageIO.read(new ByteArrayInputStream(value.get()));
 				String[] features = SIFTExtraction.getFeatures(img);
 				// store them into a file
 				for(int i = 0; i < features.length; i++){
-					try {
-						context.write(key, new Text(features[i]));
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+					double[]  feature=getPoints(features[i].split(" "), feature_length);
+					vec.assign(feature);
+					vw.set(vec);
+					context.write(new Text(file), vw);
 				}
-
+			} catch (java.lang.IllegalArgumentException e){
+				System.out.println("the image causing exception: " + file);
+			}
+			catch( java.awt.color.CMMException e){
+				//
+				System.out.println("the image causing exception: " + file);
+			}
+			catch(javax.imageio.IIOException e){
+				System.out.println("the image causing exception: " + file);
+			}
+			catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		public static double[] getPoints(String[] args, int size){// get the feature vector from the 
+			//System.out.println(args.length);
+			double[] points = new double[size];
+			for (int i = 0; i < size; i++)
+				points[i] = Double.parseDouble(args[i+4]);
+			return points;
 		}
 	}
 
