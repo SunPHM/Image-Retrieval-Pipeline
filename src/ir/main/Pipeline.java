@@ -38,7 +38,7 @@ public class Pipeline {
 		System.out.println("\n\nFeature Extraction");
 		String features = dst + "/data/features.txt";// the feature folder
 		//FeatureExtraction.extractFeatures(src, features, dst + "/temp/fe/");
-		FeatureExtractionSeqFile.extractFeatures(src, features, dst + "/temp/fe/");
+		FeatureExtraction.extractFeatures(src, features, dst + "/temp/fe/");
 		System.out.println("Features folder:" + features);
 		
 		long EndTime1 = new Date().getTime();

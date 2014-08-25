@@ -178,8 +178,7 @@ public class TopDownClustering {
 	
 	public static void merge(String src, String dst) throws IOException, InterruptedException{	
 		// copy and merge files
-		String temp = "temptemptemp";
-		HadoopUtil.mkdir(temp);
+		String temp = dst + "/dumptemp";
 		//gather all the clustered points in result directory and merge them.
 		//those files should be in test/cluster/bot/i/cluster-j-final/* and not start with '_'
 		ArrayList<String> inputs = new ArrayList<String>();
@@ -197,15 +196,15 @@ public class TopDownClustering {
 			for(String file:files)
 				if(file.startsWith("_") == false) inputs_files.add(file);
 		}
-		for(String file:inputs_files){
-			System.out.println("files to merge: "+file);
+		for(String file : inputs_files){
+			System.out.println("files to merge: " + file);
 		}
 		
 		String[] inputs_clusterdump = new String[inputs_files.size()];
 		inputs_clusterdump = inputs_files.toArray(inputs_clusterdump);
 		ClusterDump.run_clusterdump(inputs_clusterdump, temp);
 		HadoopUtil.copyMerge(temp, dst + "/clusters.txt");
-		HadoopUtil.delete(temp);
+		
 	}
 	
 	public static String[] getFolders(String mid){
@@ -290,7 +289,6 @@ class runBotLevelClustering{
 
 		conf.setInputFormat(SequenceFileInputFormat.class);
 	    conf.setOutputFormat(TextOutputFormat.class);
-	    conf.setNumReduceTasks(1);
 
 		FileInputFormat.setInputPaths(conf, new Path(input));
 		FileOutputFormat.setOutputPath(conf, new Path(whatever_output));
