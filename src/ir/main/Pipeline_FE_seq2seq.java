@@ -2,13 +2,15 @@ package ir.main;
 
 import ir.cluster.VWDriver_FE_output2seqfile;
 import ir.feature.FE_output2seqfile;
-import ir.feature.FeatureExtractionSeqFile;
+import ir.feature.FeatureExtraction_seq2seq;
 import ir.index.Search;
 import ir.util.HadoopUtil;
+import ir.util.MeasureContainers;
+import ir.util.RecordTime;
 
 import java.util.Date;
 
-public class Pipeline_FE_output2seqfile {
+public class Pipeline_FE_seq2seq{
 
 	// the main entry point for the Pipeline execution
 	/** Setup
@@ -34,23 +36,43 @@ public class Pipeline_FE_output2seqfile {
 		long startTime = new Date().getTime();
 		HadoopUtil.delete(dst);
 		
+		RecordTime rt=new RecordTime("recordtime.txt");
+		rt.writeMsg("#Task: "+src+" "+dst+" "+topK+" "+botK+" "+botlvlcluster_type);
+		//run the process to issue "hadoop job -list" and get the results in a file
+		
+		 MeasureContainers mt=new  MeasureContainers("recordcontainers.txt");
+		 mt.start();
+		 Date date=new Date();
+		
+		
 		//TODO: call the main entry point of the Feature Extraction
 		System.out.println("\n\nFeature Extraction");
 		String features = dst + "/data/features.seq";// the feature folder
 	//	FeatureExtraction.extractFeatures(src, features, dst + "/temp/fe/");
-	//	FeatureExtractionSeqFile.extractFeatures(src, features, dst + "/temp/fe/");
-		FE_output2seqfile.extractFeatures(src, features, dst + "/temp/fe/");
+		FeatureExtraction_seq2seq.extractFeatures(src, features, dst + "/temp/fe/");
+	//	FE_output2seqfile.extractFeatures(src, features, dst + "/temp/fe/");
 		System.out.println("Features folder:" + features);
+
+		rt.writeMsg("$FEEnd$ "+date.getTime());
 		
 		long EndTime1 = new Date().getTime();
 		
+		
+		rt.writeMsg("$VWStart$ "+date.getTime());
+		
 		//TODO: call the main entry point of the vocabulary construction and frequency generation
 		System.out.println("\n\n\n\n\nvocabulary construction and frequency generation");
-		String fs = dst + "/data/fs.seq";
+		String fs =features;// dst + "/data/fs.seq";
 		String[] args = {features, fs, dst, "" + topK, "" + botK};
 		String s = VWDriver_FE_output2seqfile.run(args, botlvlcluster_type);
 		
+		
+		rt.writeMsg("$VWEnd$ "+date.getTime());
+		
 		long EndTime2 = new Date().getTime();
+		
+		
+		rt.writeMsg("$ISStart$ "+date.getTime());
 		
 		//TODO: call the main entry point of the Indexing and Searching
 		System.out.println("\n\n\n\n\nIndexing and Searching");
@@ -60,9 +82,10 @@ public class Pipeline_FE_output2seqfile {
 		Search.runIndexing(dst + "/data/frequency.txt");
 		long EndTime3 = new Date().getTime();
 		//TODO: to test or evaluate here	
-		Search.search(src + "/ILSVRC2013_train_00045182.JPEG");
+		Search.search("ILSVRC2013_train_00045182.JPEG");
 		long EndTime4 = new Date().getTime();
 		
+		rt.writeMsg("$ISEnd$ "+date.getTime());
 		
 		System.out.println("\n\n*******************************************  Running Time in minutes ********************************************");
 		System.out.println("Total Running Time: "+ (double)(EndTime3 - startTime) / N 
@@ -76,6 +99,8 @@ public class Pipeline_FE_output2seqfile {
 			+"\nVVWDriver: "+ (double)(EndTime2 - EndTime1) / N + "\n" + s
 				+"Indexing: "+ (double)(EndTime3 - EndTime2) / N * 60 + " seconds\n" +
 				"Searching: " + (double)(EndTime4 - EndTime3) / N * 60 + " seconds";
+		rt.writeMsg(string_result);
+		mt.stopMe();
 
 		return string_result;
 	}

@@ -11,7 +11,7 @@ public class MeasureContainers  extends Thread
 {
 	String output_log_file=null;
 	//String[] commands = {"/bin/sh", "-c", "hadoop job -list"};
-	String[] commands = {"/bin/sh", "-c", "ls -l"};
+	String[] commands = {"/bin/sh", "-c", "hadoop job -list"};
 	long a_sec=1000;
 	Runtime rt = Runtime.getRuntime();
 	volatile boolean finished = false;

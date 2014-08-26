@@ -21,7 +21,8 @@ public class VWDriver_FE_output2seqfile {
 		long N = 1000 * 60;
 		long startTime = new Date().getTime();
 		//TODO: use Tranform to transform text features into a sequency file
-		Transform_seq.run(args[0], args[1], args[2] + "/temp/seq");
+		//it's already a seqfile, no need to run this step now
+//		Transform_seq.run(args[0], args[1], args[2] + "/temp/seq");
 		long EndTime1 = new Date().getTime();
 		//TODO: call the top-down clustering
 		String[] args1 = {args[1], args[2] + "/cluster/", args[3], args[4]};

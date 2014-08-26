@@ -8,7 +8,6 @@ import java.util.List;
 
 import ir.cluster.VWDriver;
 import ir.feature.FeatureExtraction;
-import ir.feature.FeatureExtractionSeqFile;
 import ir.index.Search;
 import ir.util.HadoopUtil;
 import ir.util.MeasureContainerProcess;
@@ -40,18 +39,22 @@ public class Pipeline {
 		long N = 1000 * 60;
 		long startTime = new Date().getTime();
 		HadoopUtil.delete(dst);
-		
+		//record time of each phase to a file
 		RecordTime rt=new RecordTime("recordtime.txt");
+		rt.writeMsg("#Task: "+src+" "+dst+" "+topK+" "+botK+" "+botlvlcluster_type);
+		//run the process to issue "hadoop job -list" and get the results in a file
 		
-		List<String> list = new ArrayList<String>();  
-		ProcessBuilder pb = null;  
-		     
+		 MeasureContainers mt=new  MeasureContainers("recordcontainers.txt");
+		 mt.start();
+
+		/*List<String> list = new ArrayList<String>();  
+		ProcessBuilder pb = null;     
 		String java = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";  
-	String classpath = System.getProperty("java.class.path");  
+		String classpath = System.getProperty("java.class.path");  
 		// list the files and directorys under C:\  
 		list.add(java);  
-		list.add("-classpath");  
-		list.add(classpath);  
+//		list.add("-classpath");  
+//		list.add(classpath);  
 		list.add(MeasureContainerProcess.class.getName());  
 		list.add("recordcontainers.txt");
 		     
@@ -63,11 +66,12 @@ public class Pipeline {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+		*/
 		
 		Date date=new Date();
 		
 		//TODO: call the main entry point of the Feature Extraction
+		
 		
 		rt.writeMsg("$FEStart$ "+date.getTime());
 		
@@ -82,6 +86,7 @@ public class Pipeline {
 		
 		long EndTime1 = new Date().getTime();
 		
+		
 		rt.writeMsg("$VWStart$ "+date.getTime());
 		
 		//TODO: call the main entry point of the vocabulary construction and frequency generation
@@ -94,6 +99,7 @@ public class Pipeline {
 		
 		long EndTime2 = new Date().getTime();
 		
+		
 		rt.writeMsg("$ISStart$ "+date.getTime());
 		//TODO: call the main entry point of the Indexing and Searching
 		System.out.println("\n\n\n\n\nIndexing and Searching");
@@ -102,8 +108,8 @@ public class Pipeline {
 		Search.init(dst + "/data/frequency.txt", clusterNum, dst + "/cluster/clusters.txt");
 		Search.runIndexing(dst + "/data/frequency.txt");
 		long EndTime3 = new Date().getTime();
-		//TODO: to test or evaluate here	
-		Search.search(src + "/all_souls_000000.jpg");
+		//TODO: to test or evaluate here  ---note: put the image in the current directory. 	
+		Search.search("ILSVRC2013_train_00023457.JPEG");
 		long EndTime4 = new Date().getTime();
 		rt.writeMsg("$ISEnd$ "+date.getTime());
 		
@@ -120,9 +126,10 @@ public class Pipeline {
 			+"\nVVWDriver: "+ (double)(EndTime2 - EndTime1) / N + "\n" + s
 				+"Indexing: "+ (double)(EndTime3 - EndTime2) / N * 60 + " seconds\n" +
 				"Searching: " + (double)(EndTime4 - EndTime3) / N * 60 + " seconds";
+		rt.writeMsg(string_result);
 
-
-		ps.destroy();
+//		ps.destroy();
+		mt.stopMe();
 		return string_result;
 		
 		

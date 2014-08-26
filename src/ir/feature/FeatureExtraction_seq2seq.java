@@ -25,7 +25,7 @@ import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
 
-public class FeatureExtractionSeqFile {
+public class FeatureExtraction_seq2seq {
 	public static String seqfile= "data/images";
 	//public static String fn = "test/data/fn.txt";
 	public static String feature_folder ="test/data/features.txt";
@@ -53,7 +53,7 @@ public class FeatureExtractionSeqFile {
 		conf.set("seqfile", seqfile);
 		//conf.set("fn", fn);
 		conf.set("feature_folder", feature_folder);
-//		conf.set("mapred.max.split.size", split_size.toString());
+		conf.set("mapred.max.split.size", split_size.toString());
 		Job job=null;
 		try {
 			job = new Job(conf);
@@ -71,8 +71,8 @@ public class FeatureExtractionSeqFile {
 	//	job.setOutputKeyClass(Text.class);
 	//	job.setOutputValueClass(Text.class);
 		
-		job.setJarByClass(FeatureExtractionSeqFile.class);
-		job.setMapperClass(FeatureExtractionSeqFile.FEMap.class);
+		job.setJarByClass(FeatureExtraction_seq2seq.class);
+		job.setMapperClass(FeatureExtraction_seq2seq.FEMap.class);
 		
 		job.setInputFormatClass(SequenceFileInputFormat.class);
 
@@ -126,14 +126,17 @@ public class FeatureExtractionSeqFile {
 			// extract the SIFT features
 			//FileSystem fs = FileSystem.get(new Configuration());
 			try{
-				BufferedImage img = ImageIO.read(new ByteArrayInputStream(value.get()));
-				String[] features = SIFTExtraction.getFeatures(img);
-				// store them into a file
-				for(int i = 0; i < features.length; i++){
-					double[]  feature=getPoints(features[i].split(" "), feature_length);
-					vec.assign(feature);
-					vw.set(vec);
-					context.write(new Text(file), vw);
+				byte[] image_bytes=value.getBytes();
+				if(image_bytes.length>0){
+					BufferedImage img = ImageIO.read(new ByteArrayInputStream(value.getBytes()));
+					String[] features = SIFTExtraction.getFeatures(img);
+					// store them into a file
+					for(int i = 0; i < features.length; i++){
+						double[]  feature=getPoints(features[i].split(" "), feature_length);
+						vec.assign(feature);
+						vw.set(vec);
+						context.write(new Text(file), vw);
+					}
 				}
 			} catch (java.lang.IllegalArgumentException e){
 				System.out.println("the image causing exception: " + file);

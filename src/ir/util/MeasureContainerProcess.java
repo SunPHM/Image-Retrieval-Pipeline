@@ -8,7 +8,7 @@ import java.util.Date;
 
 public class MeasureContainerProcess {
 	public static void main(String args[]){
-		String[] commands = {"/bin/sh", "-c", "ls -l"};
+		String[] commands = {"/bin/sh", "-c", "hadoop job -list"};
 		long a_sec=1000;
 		Runtime rt = Runtime.getRuntime();
 		String output_log_file=args[0];
