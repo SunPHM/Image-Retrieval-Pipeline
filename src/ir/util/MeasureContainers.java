@@ -7,10 +7,11 @@ import java.io.InputStreamReader;
 import java.util.Date;
 
 // used to issue "hadoop job -list" command periodically and write the result to a file
-public class MeasureTime  extends Thread
+public class MeasureContainers  extends Thread
 {
 	String output_log_file=null;
-	String[] commands = {"/bin/sh", "-c", "hadoop job -list"};
+	//String[] commands = {"/bin/sh", "-c", "hadoop job -list"};
+	String[] commands = {"/bin/sh", "-c", "ls -l"};
 	long a_sec=1000;
 	Runtime rt = Runtime.getRuntime();
 	volatile boolean finished = false;
@@ -19,7 +20,7 @@ public class MeasureTime  extends Thread
 	  {
 	    finished = true;
 	  }
-   public MeasureTime(String out)
+   public MeasureContainers(String out)
    {
 	  this.output_log_file=out;
    }
@@ -42,13 +43,13 @@ public class MeasureTime  extends Thread
 			    String s = null;
 			    fw.write("TimeStamp: "+new Date().getTime()+"\n");
 			    while ((s = stdInput.readLine()) != null) {
-			       System.out.println(s);
+			       //System.out.println(s);
 			       fw.write(s+"\n");//appends the string to the file
 			      }
 			   stdInput.close();
 			    fw.close();
 			    
-			    Thread.sleep(2*a_sec);
+			    Thread.sleep(3*a_sec);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

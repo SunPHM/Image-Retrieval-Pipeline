@@ -1,12 +1,19 @@
 package ir.main;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import ir.cluster.VWDriver;
 import ir.feature.FeatureExtraction;
 import ir.feature.FeatureExtractionSeqFile;
 import ir.index.Search;
 import ir.util.HadoopUtil;
+import ir.util.MeasureContainerProcess;
+import ir.util.MeasureContainers;
+import ir.util.RecordTime;
 
 public class Pipeline {
 
@@ -34,14 +41,48 @@ public class Pipeline {
 		long startTime = new Date().getTime();
 		HadoopUtil.delete(dst);
 		
+		RecordTime rt=new RecordTime("recordtime.txt");
+		
+		List<String> list = new ArrayList<String>();  
+		ProcessBuilder pb = null;  
+		     
+		String java = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";  
+	String classpath = System.getProperty("java.class.path");  
+		// list the files and directorys under C:\  
+		list.add(java);  
+		list.add("-classpath");  
+		list.add(classpath);  
+		list.add(MeasureContainerProcess.class.getName());  
+		list.add("recordcontainers.txt");
+		     
+		pb = new ProcessBuilder(list);
+		Process ps=null;
+		try {
+			ps = pb.start();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+		Date date=new Date();
+		
 		//TODO: call the main entry point of the Feature Extraction
+		
+		rt.writeMsg("$FEStart$ "+date.getTime());
+		
 		System.out.println("\n\nFeature Extraction");
 		String features = dst + "/data/features.txt";// the feature folder
-		//FeatureExtraction.extractFeatures(src, features, dst + "/temp/fe/");
 		FeatureExtraction.extractFeatures(src, features, dst + "/temp/fe/");
+		//FeatureExtractionSeqFile.extractFeatures(src, features, dst + "/temp/fe/");
 		System.out.println("Features folder:" + features);
 		
+
+		rt.writeMsg("$FEEnd$ "+date.getTime());
+		
 		long EndTime1 = new Date().getTime();
+		
+		rt.writeMsg("$VWStart$ "+date.getTime());
 		
 		//TODO: call the main entry point of the vocabulary construction and frequency generation
 		System.out.println("\n\n\n\n\nvocabulary construction and frequency generation");
@@ -49,8 +90,11 @@ public class Pipeline {
 		String[] args = {features, fs, dst, "" + topK, "" + botK};
 		String s = VWDriver.run(args, botlvlcluster_type);
 		
+		rt.writeMsg("$VWEnd$ "+date.getTime());
+		
 		long EndTime2 = new Date().getTime();
 		
+		rt.writeMsg("$ISStart$ "+date.getTime());
 		//TODO: call the main entry point of the Indexing and Searching
 		System.out.println("\n\n\n\n\nIndexing and Searching");
 		//before run indexing, need to copy the frequency.txt file to local filesystem(index part reads from localfilesystem)---done 
@@ -61,6 +105,7 @@ public class Pipeline {
 		//TODO: to test or evaluate here	
 		Search.search(src + "/all_souls_000000.jpg");
 		long EndTime4 = new Date().getTime();
+		rt.writeMsg("$ISEnd$ "+date.getTime());
 		
 		
 		System.out.println("\n\n*******************************************  Running Time in minutes ********************************************");
@@ -76,7 +121,11 @@ public class Pipeline {
 				+"Indexing: "+ (double)(EndTime3 - EndTime2) / N * 60 + " seconds\n" +
 				"Searching: " + (double)(EndTime4 - EndTime3) / N * 60 + " seconds";
 
+
+		ps.destroy();
 		return string_result;
+		
+		
 	}
 	
 

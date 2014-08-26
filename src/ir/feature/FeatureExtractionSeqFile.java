@@ -65,11 +65,11 @@ public class FeatureExtractionSeqFile {
 		
 		job.setJobName("FeatureExtractionSeqFile");
 		
-	//	job.setOutputFormatClass(SequenceFileOutputFormat.class);
-	//	job.setOutputKeyClass(Text.class);
-	//	job.setOutputValueClass(VectorWritable.class);
+		job.setOutputFormatClass(SequenceFileOutputFormat.class);
 		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(Text.class);
+		job.setOutputValueClass(VectorWritable.class);
+	//	job.setOutputKeyClass(Text.class);
+	//	job.setOutputValueClass(Text.class);
 		
 		job.setJarByClass(FeatureExtractionSeqFile.class);
 		job.setMapperClass(FeatureExtractionSeqFile.FEMap.class);
@@ -103,7 +103,7 @@ public class FeatureExtractionSeqFile {
 		}
 	}
 	
-	public static class FEMap extends  Mapper<Text,BytesWritable, Text, Text> {
+	public static class FEMap extends  Mapper<Text,BytesWritable, Text, VectorWritable> {
 		public static String img_folder = null;
 		public static String fn = null;
 		public static String feature_folder =null;
@@ -124,16 +124,16 @@ public class FeatureExtractionSeqFile {
 			// get the image path
 			String file = img_folder + "/" + key.toString();
 			// extract the SIFT features
-			FileSystem fs = FileSystem.get(new Configuration());
+			//FileSystem fs = FileSystem.get(new Configuration());
 			try{
 				BufferedImage img = ImageIO.read(new ByteArrayInputStream(value.get()));
 				String[] features = SIFTExtraction.getFeatures(img);
 				// store them into a file
 				for(int i = 0; i < features.length; i++){
-					//double[]  feature=getPoints(features[i].split(" "), feature_length);
-					//vec.assign(feature);
-					//vw.set(vec);
-					context.write(new Text(file), new Text(features[i]));
+					double[]  feature=getPoints(features[i].split(" "), feature_length);
+					vec.assign(feature);
+					vw.set(vec);
+					context.write(new Text(file), vw);
 				}
 			} catch (java.lang.IllegalArgumentException e){
 				System.out.println("the image causing exception: " + file);
