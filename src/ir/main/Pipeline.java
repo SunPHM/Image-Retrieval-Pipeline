@@ -106,7 +106,8 @@ public class Pipeline {
 		Search.runIndexing(dst + "/data/frequency.txt");
 		long EndTime3 = new Date().getTime();
 		//TODO: to test or evaluate here  ---note: put the image in the current directory. 	
-		Search.search("ILSVRC2013_train_00023457.JPEG");
+		//Search.search("ILSVRC2013_train_00023457.JPEG");
+		Search.search("/home/xiaofeng/workspace/Image-Retrieval-Pipeline/data/images/all_souls_000000.jpg");
 		
 		long EndTime4 = new Date().getTime();
 		rt.writeMsg("$ISEnd$ "+new Date().getTime());
