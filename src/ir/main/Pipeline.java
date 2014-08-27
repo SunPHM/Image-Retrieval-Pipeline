@@ -1,16 +1,13 @@
 package ir.main;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
+
 import java.util.Date;
-import java.util.List;
+
 
 import ir.cluster.VWDriver;
 import ir.feature.FeatureExtraction;
 import ir.index.Search;
 import ir.util.HadoopUtil;
-import ir.util.MeasureContainerProcess;
 import ir.util.MeasureContainers;
 import ir.util.RecordTime;
 
@@ -68,12 +65,12 @@ public class Pipeline {
 		}
 		*/
 		
-		Date date=new Date();
+		//Date date=new Date();
 		
 		//TODO: call the main entry point of the Feature Extraction
 		
 		
-		rt.writeMsg("$FEStart$ "+date.getTime());
+		rt.writeMsg("$FEStart$ "+new Date().getTime());
 		
 		System.out.println("\n\nFeature Extraction");
 		String features = dst + "/data/features.txt";// the feature folder
@@ -82,12 +79,12 @@ public class Pipeline {
 		System.out.println("Features folder:" + features);
 		
 
-		rt.writeMsg("$FEEnd$ "+date.getTime());
+		rt.writeMsg("$FEEnd$ "+new Date().getTime());
 		
 		long EndTime1 = new Date().getTime();
 		
 		
-		rt.writeMsg("$VWStart$ "+date.getTime());
+		rt.writeMsg("$VWStart$ "+new Date().getTime());
 		
 		//TODO: call the main entry point of the vocabulary construction and frequency generation
 		System.out.println("\n\n\n\n\nvocabulary construction and frequency generation");
@@ -95,12 +92,12 @@ public class Pipeline {
 		String[] args = {features, fs, dst, "" + topK, "" + botK};
 		String s = VWDriver.run(args, botlvlcluster_type);
 		
-		rt.writeMsg("$VWEnd$ "+date.getTime());
+		rt.writeMsg("$VWEnd$ "+new Date().getTime());
 		
 		long EndTime2 = new Date().getTime();
 		
 		
-		rt.writeMsg("$ISStart$ "+date.getTime());
+		rt.writeMsg("$ISStart$ "+new Date().getTime());
 		//TODO: call the main entry point of the Indexing and Searching
 		System.out.println("\n\n\n\n\nIndexing and Searching");
 		//before run indexing, need to copy the frequency.txt file to local filesystem(index part reads from localfilesystem)---done 
@@ -110,8 +107,9 @@ public class Pipeline {
 		long EndTime3 = new Date().getTime();
 		//TODO: to test or evaluate here  ---note: put the image in the current directory. 	
 		Search.search("ILSVRC2013_train_00023457.JPEG");
+		
 		long EndTime4 = new Date().getTime();
-		rt.writeMsg("$ISEnd$ "+date.getTime());
+		rt.writeMsg("$ISEnd$ "+new Date().getTime());
 		
 		
 		System.out.println("\n\n*******************************************  Running Time in minutes ********************************************");

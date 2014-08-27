@@ -70,12 +70,5 @@ public class Transform_seq {
 			output.collect(new LongWritable(recNum++), value);
 		}
 		
-		public static double[] getPoints(String[] args, int size){// get the feature vector from the 
-			//System.out.println(args.length);
-			double[] points = new double[size];
-			for (int i = 0; i < size; i++)
-				points[i] = Double.parseDouble(args[i + 4]);
-			return points;
-		}
 	}
 }

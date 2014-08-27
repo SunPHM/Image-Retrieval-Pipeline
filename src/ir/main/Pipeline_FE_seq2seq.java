@@ -42,8 +42,8 @@ public class Pipeline_FE_seq2seq{
 		
 		 MeasureContainers mt=new  MeasureContainers("recordcontainers.txt");
 		 mt.start();
-		 Date date=new Date();
-		
+		 //Date date=new Date();
+		 rt.writeMsg("$FEStart$ "+new Date().getTime());
 		
 		//TODO: call the main entry point of the Feature Extraction
 		System.out.println("\n\nFeature Extraction");
@@ -53,26 +53,26 @@ public class Pipeline_FE_seq2seq{
 	//	FE_output2seqfile.extractFeatures(src, features, dst + "/temp/fe/");
 		System.out.println("Features folder:" + features);
 
-		rt.writeMsg("$FEEnd$ "+date.getTime());
+		rt.writeMsg("$FEEnd$ "+new Date().getTime());
 		
 		long EndTime1 = new Date().getTime();
 		
 		
-		rt.writeMsg("$VWStart$ "+date.getTime());
+		rt.writeMsg("$VWStart$ "+new Date().getTime());
 		
 		//TODO: call the main entry point of the vocabulary construction and frequency generation
 		System.out.println("\n\n\n\n\nvocabulary construction and frequency generation");
-		String fs =features;// dst + "/data/fs.seq";
+		String fs =features;// dst + "/data/fs.seq";???
 		String[] args = {features, fs, dst, "" + topK, "" + botK};
 		String s = VWDriver_FE_output2seqfile.run(args, botlvlcluster_type);
 		
 		
-		rt.writeMsg("$VWEnd$ "+date.getTime());
+		rt.writeMsg("$VWEnd$ "+new Date().getTime());
 		
 		long EndTime2 = new Date().getTime();
 		
 		
-		rt.writeMsg("$ISStart$ "+date.getTime());
+		rt.writeMsg("$ISStart$ "+new Date().getTime());
 		
 		//TODO: call the main entry point of the Indexing and Searching
 		System.out.println("\n\n\n\n\nIndexing and Searching");
@@ -85,7 +85,7 @@ public class Pipeline_FE_seq2seq{
 		Search.search("ILSVRC2013_train_00045182.JPEG");
 		long EndTime4 = new Date().getTime();
 		
-		rt.writeMsg("$ISEnd$ "+date.getTime());
+		rt.writeMsg("$ISEnd$ "+new Date().getTime());
 		
 		System.out.println("\n\n*******************************************  Running Time in minutes ********************************************");
 		System.out.println("Total Running Time: "+ (double)(EndTime3 - startTime) / N 

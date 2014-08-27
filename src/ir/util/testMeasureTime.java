@@ -16,7 +16,7 @@ public class testMeasureTime {
 		list.add(java);  
 //		list.add("-classpath");  
 //		list.add(classpath);  
-		list.add(MeasureContainerProcess.class.getName());  
+//		list.add(MeasureContainerProcess.class.getName());  
 		list.add("recordcontainers.txt");
 		     
 		pb = new ProcessBuilder(list);
