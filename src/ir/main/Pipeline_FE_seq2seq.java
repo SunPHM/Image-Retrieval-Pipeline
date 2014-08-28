@@ -51,16 +51,14 @@ public class Pipeline_FE_seq2seq{
 		System.out.println("Features folder:" + features);
 
 		rt.writeMsg("$FEEnd$ "+new Date().getTime());
-		
 		long EndTime1 = new Date().getTime();
 		
 		
 		rt.writeMsg("$VWStart$ "+new Date().getTime());
 		
 		//TODO: call the main entry point of the vocabulary construction and frequency generation
-		System.out.println("\n\n\n\n\nvocabulary construction and frequency generation");
-		String fs = features;//dst + "/data/fs.seq";
-		String[] args = {features, fs, dst, "" + topK, "" + botK};
+		System.out.println("\n\nvocabulary construction and frequency generation");
+		String[] args = {features, dst, "" + topK, "" + botK};
 		String s = VWDriver_FE_output2seqfile.run(args, botlvlcluster_type);
 		
 		

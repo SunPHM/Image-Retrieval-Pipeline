@@ -5,14 +5,12 @@ import ir.util.HadoopUtil;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashSet;
-
 import javax.imageio.ImageIO;
 
 import org.apache.hadoop.conf.Configuration;
@@ -23,44 +21,43 @@ import org.apache.solr.client.solrj.SolrServerException;
 public class Evaluate {
 	
 	public static void main(String[] args) throws IOException, SolrServerException{
-		evaluate("data/images", "data/gt");
+		evaluate("/home/hadoop/Desktop/oxbuild_images", "data/gt");
 	}
 	
-	// benchmarking the oxford 5k dataset
+	// benchmarking the Oxford 5k dataset
 	public static void evaluate(String imageFolder, String gtFolder){
 		// read all the files with "query"
 		String[] files = HadoopUtil.getListOfFiles(gtFolder);
 		// store the F1 scores
 		ArrayList<F1Score> list = new ArrayList<F1Score>();
 		
-		for(String file : files){
+		for(String file : files){			
 			if(file.contains("query")){
 				BufferedReader reader;
+				//System.out.println(file);
 				try {
 					FileSystem fs = FileSystem.get(new Configuration());
-					reader = new BufferedReader(new InputStreamReader(fs.open(new Path(gtFolder + "/" + file))));
+					reader = new BufferedReader(new InputStreamReader(fs.open(new Path(file))));
 					String line = reader.readLine();
 					reader.close();
 					String[] array = line.split(" ");
 					String queryImage = array[0].substring("oxc1_".length()) + ".jpg";
+					//System.out.println("query image " + queryImage);
 					double lowX = Double.parseDouble(array[1]);
 					double lowY = Double.parseDouble(array[2]);
 					double highX = Double.parseDouble(array[3]);
 					double highY = Double.parseDouble(array[4]);
-					System.out.println(line);
-					System.out.println(queryImage + " " + lowX + " " + lowY + " " + highX + " " + highY);
+					//System.out.println(line);
+					//System.out.println(queryImage + " " + lowX + " " + lowY + " " + highX + " " + highY);
 					String[] features = getImageFeatures(imageFolder + "/" + queryImage, lowX, lowY, highX, highY);
 					// search the image features
-					System.out.println("query image " + queryImage);
-					F1Score f1s = searchFeatures(features, gtFolder + "/" + file.substring(0, file.length() - "_query.txt".length()));
+					//System.out.println(file.substring(0, file.length() - "_query.txt".length()));
+					F1Score f1s = searchFeatures(features, file.substring(0, file.length() - "_query.txt".length()));
 					list.add(f1s);
 				} catch (FileNotFoundException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (SolrServerException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
@@ -87,11 +84,17 @@ public class Evaluate {
 	}
 
 	// construct a query from one ground truth query, search them and get the F1 score
-	public static F1Score searchFeatures(String[] features, String gt) throws IOException, SolrServerException{
+	public static F1Score searchFeatures(String[] features, String gt) throws IOException{
 		// get query from one image and measure F1 score
 		String query = Search.createQuery(features);
 		// run query
-		String[] files = Search.query(query);
+		String[] files = null;
+		try {
+			files = Search.query(query);
+		} catch (SolrServerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		// return F1 score
 		return getF1Score(files, gt);
 	}
@@ -102,16 +105,18 @@ public class Evaluate {
 		BufferedImage img = ImageIO.read(fs.open(new Path(filename)));
 		String[] allFeatures = SIFTExtraction.getFeatures(img);
 		
+		// filter features by coordinates
 		for (int i = 0; i < allFeatures.length; i++){
 			String line = allFeatures[i];
-			String cs = line.split("\\(")[1].split("\\)")[0];
 			//System.out.println(line);
-			double x = Double.parseDouble(cs.split(", ")[0]);
-			double y = Double.parseDouble(cs.split(", ")[1]);
+			String lx = line.split(" ")[2];
+			String ly = line.split(" ")[3];
+			//System.out.println(line);
+			double x = Double.parseDouble(lx);
+			double y = Double.parseDouble(ly);
 			//System.out.println(cs + " " + x + " " + y);
 			if(lowX <= x && x <= highX && lowY <= y && y <= highY){
 				list.add(line);
-				System.out.println(line);
 			}
 		}
 		return list.toArray(new String[list.size()]);

@@ -72,7 +72,7 @@ public class Pipeline_Oxbuilds_Evaluate {
 		long EndTime3 = new Date().getTime();
 		//TODO: to test or evaluate here  ---note: put the image in the current directory. 	
 		//Search.search("ILSVRC2013_train_00023457.JPEG");
-		Evaluate.evaluate(src, gt);
+		//Evaluate.evaluate(src, gt);
 		
 		long EndTime4 = new Date().getTime();
 		rt.writeMsg("$ISEnd$ " + new Date().getTime());
