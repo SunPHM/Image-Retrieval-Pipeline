@@ -9,7 +9,7 @@ import ir.util.RecordTime;
 
 import java.util.Date;
 
-public class Pipeline_FE_seq2seq{
+public class Pipeline_FE_seq{
 
 	// the main entry point for the Pipeline execution
 	/** Setup
