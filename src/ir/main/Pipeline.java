@@ -50,7 +50,7 @@ public class Pipeline {
 		//Feature Extraction
 		rt.writeMsg("$FEStart$ "+new Date().getTime());
 		System.out.println("\n\nFeature Extraction");
-		String features = dst + "/data/features.txt";// the feature folder
+		String features = dst + "/data/features.seq";// the feature folder
 		FeatureExtraction.extractFeatures(src, features, dst + "/temp/fe/");
 		//FeatureExtractionSeqFile.extractFeatures(src, features, dst + "/temp/fe/");
 		System.out.println("Features folder:" + features);
@@ -60,8 +60,7 @@ public class Pipeline {
 		//Vocabulary Construction and Frequency Generation
 		rt.writeMsg("$VWStart$ "+new Date().getTime());
 		System.out.println("\n\nvocabulary construction and frequency generation");
-		String fs = dst + "/data/fs.seq";
-		String[] args = {features, fs, dst, "" + topK, "" + botK};
+		String[] args = {features, dst, "" + topK, "" + botK};
 		String s = VWDriver.run(args, botlvlcluster_type);
 		rt.writeMsg("$VWEnd$ "+new Date().getTime());
 		long EndTime2 = new Date().getTime();
@@ -74,11 +73,8 @@ public class Pipeline {
 		Search.init(dst + "/data/frequency.txt", clusterNum, dst + "/cluster/clusters.txt");
 		Search.runIndexing(dst + "/data/frequency.txt");
 		long EndTime3 = new Date().getTime();
-		//TODO: to test or evaluate here  ---note: put the image in the current directory. 	
-		//Search.search("ILSVRC2013_train_00023457.JPEG");
-		//Evaluate.evaluate(src, "data/gt/");
-		Search.search("/home/xiaofeng/workspace/Image-Retrieval-Pipeline/data/images/all_souls_000000.jpg");
-		
+		//to test or evaluate here
+		Search.search(src + "/all_souls_000000.jpg");
 		long EndTime4 = new Date().getTime();
 		rt.writeMsg("$ISEnd$ " + new Date().getTime());
 		 

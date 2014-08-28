@@ -27,8 +27,6 @@ public class ClusterDump {
 		HadoopUtil.copyMerge("test/cluster/bot/temp/", "test/cluster/clusters.txt");
 	}
 	
-
-//	public static void run
 	//read in the classified points in multiple locations  and output them to a single file
 	public static void run_clusterdump(String[] inputs, String output){
 		HadoopUtil.delete(output);
@@ -62,7 +60,7 @@ public class ClusterDump {
 		@Override
 		public void map(IntWritable key, ClusterWritable value, OutputCollector<Text, Text> output, Reporter reporter) 
 				throws IOException {
-			System.out.println(value.getValue().toString());
+			//System.out.println(value.getValue().toString());
 			output.collect(new Text(value.getValue().toString()), new Text(""));
 		}
 	}

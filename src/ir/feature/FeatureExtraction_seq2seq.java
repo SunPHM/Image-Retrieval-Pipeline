@@ -71,8 +71,6 @@ public class FeatureExtraction_seq2seq {
 		job.setOutputFormatClass(SequenceFileOutputFormat.class);
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(VectorWritable.class);
-	//	job.setOutputKeyClass(Text.class);
-	//	job.setOutputValueClass(Text.class);
 		
 		job.setJarByClass(FeatureExtraction_seq2seq.class);
 		job.setMapperClass(FeatureExtraction_seq2seq.FEMap.class);
@@ -174,6 +172,7 @@ public class FeatureExtraction_seq2seq {
 				e.printStackTrace();
 			}
 		}
+		
 		public static double[] getPoints(String[] args, int size){// get the feature vector from the 
 			//System.out.println(args.length);
 			double[] points = new double[size];

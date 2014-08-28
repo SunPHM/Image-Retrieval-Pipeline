@@ -13,27 +13,27 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
+import org.apache.mahout.math.DenseVector;
+import org.apache.mahout.math.Vector;
+import org.apache.mahout.math.VectorWritable;
 
 import ir.util.HadoopUtil;
 
 public class FeatureExtraction {
 	
 	public static String img_folder = "data/images";
-	//public static String fn = "test/data/fn.txt";
-	public static String feature_folder = "test/data/features.txt";
 	public static final Integer split_size = 1024*1024*10;//10MB
 	
 	public static void main(String[] args) {
-	//	SIFTExtraction.getNames(img_folder, fn);
 		extractFeatures(args[0], args[1], args[2]);
 	}
 	
 	public static void extractFeatures(String images,  String features, String temp){ // the main entry point for Feature Extraction to be called
 		img_folder = images;
-		feature_folder = features;
 		HadoopUtil.delete(temp);
 		extractMR(images, temp);
-		HadoopUtil.copyMerge(temp, feature_folder);
+		HadoopUtil.copyMerge(temp, features);
 		System.out.println("feature extraction is done");
 	}
 	
@@ -43,9 +43,8 @@ public class FeatureExtraction {
 		Configuration conf=new Configuration();		
 		//pass the parameters
 		conf.set("img_folder", img_folder);
-		//conf.set("fn", fn);
-		conf.set("feature_folder", feature_folder);
 		conf.set("mapred.max.split.size", split_size.toString());
+		
 		Job job=null;
 		try {
 			job = new Job(conf);
@@ -56,13 +55,12 @@ public class FeatureExtraction {
 		}
 		
 		job.setJobName("FeatureExtraction");
-		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(Text.class);
 		job.setJarByClass(FeatureExtraction.class);
 		job.setMapperClass(FeatureExtraction.FEMap.class);
-		job.setInputFormatClass(ImageInputFormat.class);
 	    job.setOutputKeyClass(Text.class);
-	    job.setOutputValueClass(Text.class);
+	    job.setOutputValueClass(VectorWritable.class);
+		job.setInputFormatClass(ImageInputFormat.class);
+		job.setOutputFormatClass(SequenceFileOutputFormat.class);
 
 		try {
 			FileInputFormat.setInputPaths(job, new Path(infile));
@@ -91,17 +89,14 @@ public class FeatureExtraction {
 		}
 	}
 	
-	public static class FEMap extends  Mapper<Text,LongWritable,  Text, Text> {
+	public static class FEMap extends  Mapper<Text,LongWritable, Text, VectorWritable> {
 		public static String img_folder = null;
-		public static String fn = null;
-		public static String feature_folder =null;
+		public static int feature_num = 128;
 		
 		@Override
 		public void setup( Context context) {
 			Configuration conf=context.getConfiguration();
 		   img_folder=conf.get("img_folder");
-		//   fn=job.get("fn");
-		   feature_folder=conf.get("feature_folder");
 		}
 
 		@Override
@@ -114,9 +109,14 @@ public class FeatureExtraction {
 			try{
 				BufferedImage img = ImageIO.read(fs.open(new Path(file)));
 				String[] features = SIFTExtraction.getFeatures(img);
-				// store them into a file
-				for(int i = 0; i < features.length; i++)
-					context.write(new Text(file), new Text(features[i]));
+				for(int i = 0; i < features.length; i++){
+					Vector vec = new DenseVector(feature_num);
+					VectorWritable vw = new VectorWritable();
+					double[] feature= getPoints(features[i].split(" "), feature_num);
+					vec.assign(feature);		
+					vw.set(vec);
+					context.write(new Text(file), vw);
+				}
 			} catch (java.lang.IllegalArgumentException e){
 				System.out.println("the image causing exception: " + file);
 			}
@@ -131,6 +131,14 @@ public class FeatureExtraction {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+		}
+		
+		public static double[] getPoints(String[] args, int size){// get the feature vector from the 
+			//System.out.println(args.length);
+			double[] points = new double[size];
+			for (int i = 0; i < size; i++)
+				points[i] = Double.parseDouble(args[i+4]);
+			return points;
 		}
 	}
 }

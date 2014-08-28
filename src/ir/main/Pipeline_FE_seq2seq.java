@@ -1,6 +1,6 @@
 package ir.main;
 
-import ir.cluster.VWDriver_FE_output2seqfile;
+import ir.cluster.VWDriver;
 import ir.feature.FeatureExtraction_seq2seq;
 import ir.index.Search;
 import ir.util.HadoopUtil;
@@ -56,20 +56,16 @@ public class Pipeline_FE_seq2seq{
 		
 		rt.writeMsg("$VWStart$ "+new Date().getTime());
 		
-		//TODO: call the main entry point of the vocabulary construction and frequency generation
+		//vocabulary construction and frequency generation
 		System.out.println("\n\nvocabulary construction and frequency generation");
 		String[] args = {features, dst, "" + topK, "" + botK};
-		String s = VWDriver_FE_output2seqfile.run(args, botlvlcluster_type);
-		
+		String s = VWDriver.run(args, botlvlcluster_type);
 		
 		rt.writeMsg("$VWEnd$ "+new Date().getTime());
-		
 		long EndTime2 = new Date().getTime();
 		
-		
 		rt.writeMsg("$ISStart$ "+new Date().getTime());
-		
-		//TODO: call the main entry point of the Indexing and Searching
+		//Indexing and Searching
 		System.out.println("\n\n\n\n\nIndexing and Searching");
 		//before run indexing, need to copy the frequency.txt file to local filesystem(index part reads from localfilesystem)---done 
 		int clusterNum = topK * botK;

@@ -1,6 +1,11 @@
 package ir.main;
 
+
 import java.util.Date;
+
+
+
+
 import ir.cluster.VWDriver;
 import ir.feature.FeatureExtraction;
 import ir.index.Evaluate;
@@ -26,9 +31,9 @@ public class Pipeline_Oxbuilds_Evaluate {
 		//args[2]: the number of top-level clusters
 		//args[3]: the number of bot-level clusters
 		//args[4]=0|1|2, the botlevel clustering method to choose, 0: serial; 1: MR job based, 2:  multi-thread
-		//args[5]: the path to the ground truth folder
+		//args[5]: the ground truth folder
 		// test arguments: data/images/ test/ 10 10 1
-		run(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]),Integer.parseInt(args[4]), args[5]);
+		run(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]), args[5]);
 	}
 	
 	public static String run(String src, String dst, int topK, int botK, int botlvlcluster_type, String gt){
@@ -46,7 +51,7 @@ public class Pipeline_Oxbuilds_Evaluate {
 		//Feature Extraction
 		rt.writeMsg("$FEStart$ "+new Date().getTime());
 		System.out.println("\n\nFeature Extraction");
-		String features = dst + "/data/features.txt";// the feature folder
+		String features = dst + "/data/features.seq";// the feature folder
 		FeatureExtraction.extractFeatures(src, features, dst + "/temp/fe/");
 		//FeatureExtractionSeqFile.extractFeatures(src, features, dst + "/temp/fe/");
 		System.out.println("Features folder:" + features);
@@ -56,8 +61,7 @@ public class Pipeline_Oxbuilds_Evaluate {
 		//Vocabulary Construction and Frequency Generation
 		rt.writeMsg("$VWStart$ "+new Date().getTime());
 		System.out.println("\n\nvocabulary construction and frequency generation");
-		String fs = dst + "/data/fs.seq";
-		String[] args = {features, fs, dst, "" + topK, "" + botK};
+		String[] args = {features, dst, "" + topK, "" + botK};
 		String s = VWDriver.run(args, botlvlcluster_type);
 		rt.writeMsg("$VWEnd$ "+new Date().getTime());
 		long EndTime2 = new Date().getTime();
@@ -70,10 +74,9 @@ public class Pipeline_Oxbuilds_Evaluate {
 		Search.init(dst + "/data/frequency.txt", clusterNum, dst + "/cluster/clusters.txt");
 		Search.runIndexing(dst + "/data/frequency.txt");
 		long EndTime3 = new Date().getTime();
-		//TODO: to test or evaluate here  ---note: put the image in the current directory. 	
-		//Search.search("ILSVRC2013_train_00023457.JPEG");
-		//Evaluate.evaluate(src, gt);
-		
+		//to test or evaluate here
+		//Search.search(src + "/all_souls_000000.jpg");
+		Evaluate.evaluate(src, gt);
 		long EndTime4 = new Date().getTime();
 		rt.writeMsg("$ISEnd$ " + new Date().getTime());
 		 
@@ -96,4 +99,3 @@ public class Pipeline_Oxbuilds_Evaluate {
 	}
 	
 }
-
