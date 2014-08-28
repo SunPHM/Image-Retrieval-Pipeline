@@ -1,6 +1,7 @@
 package ir.index;
 
 import ir.feature.SIFTExtraction;
+import ir.util.HadoopUtil;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
@@ -8,6 +9,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -27,8 +29,7 @@ public class Evaluate {
 	// benchmarking the oxford 5k dataset
 	public static void evaluate(String imageFolder, String gtFolder){
 		// read all the files with "query"
-		File fd = new File(gtFolder);
-		String[] files = fd.list();
+		String[] files = HadoopUtil.getListOfFiles(gtFolder);
 		// store the F1 scores
 		ArrayList<F1Score> list = new ArrayList<F1Score>();
 		
@@ -36,7 +37,8 @@ public class Evaluate {
 			if(file.contains("query")){
 				BufferedReader reader;
 				try {
-					reader = new BufferedReader(new FileReader(new File(gtFolder + "/" + file)));
+					FileSystem fs = FileSystem.get(new Configuration());
+					reader = new BufferedReader(new InputStreamReader(fs.open(new Path(gtFolder + "/" + file))));
 					String line = reader.readLine();
 					reader.close();
 					String[] array = line.split(" ");
@@ -50,8 +52,8 @@ public class Evaluate {
 					String[] features = getImageFeatures(imageFolder + "/" + queryImage, lowX, lowY, highX, highY);
 					// search the image features
 					System.out.println("query image " + queryImage);
-					F1Score fs = searchFeatures(features, gtFolder + "/" + file.substring(0, file.length() - "_query.txt".length()));
-					list.add(fs);
+					F1Score f1s = searchFeatures(features, gtFolder + "/" + file.substring(0, file.length() - "_query.txt".length()));
+					list.add(f1s);
 				} catch (FileNotFoundException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
