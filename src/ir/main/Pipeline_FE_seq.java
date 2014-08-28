@@ -72,9 +72,8 @@ public class Pipeline_FE_seq{
 		Search.init(dst + "/data/frequency.txt", clusterNum, dst + "/cluster/clusters.txt");
 		Search.runIndexing(dst + "/data/frequency.txt");
 		long EndTime3 = new Date().getTime();
-		//TODO: to test or evaluate here
-		
-	//	Search.search("ILSVRC2013_train_00045182.JPEG");
+		//to test or evaluate here
+		//Search.search("ILSVRC2013_train_00045182.JPEG");
 		Search.search("/home/xiaofeng/workspace/Image-Retrieval-Pipeline/data/images/all_souls_000000.jpg");
 		long EndTime4 = new Date().getTime();
 		
