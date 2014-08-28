@@ -9,6 +9,7 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
@@ -48,7 +49,9 @@ public class FeatureExtraction_seq2seq {
 	// extract features using Map-Reduce
 	public static void extractMR(String infile, String outfile){
 		HadoopUtil.delete(outfile);
-		Configuration conf=new Configuration();		
+		Configuration conf=new Configuration();
+		
+
 		//pass the parameters
 		conf.set("seqfile", seqfile);
 		//conf.set("fn", fn);
@@ -76,6 +79,7 @@ public class FeatureExtraction_seq2seq {
 		
 		job.setInputFormatClass(SequenceFileInputFormat.class);
 
+		
 		try {
 			FileInputFormat.setInputPaths(job, new Path(infile));
 		} catch (IllegalArgumentException e1) {
@@ -85,8 +89,25 @@ public class FeatureExtraction_seq2seq {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-		
 		FileOutputFormat.setOutputPath(job, new Path(outfile));
+		
+		
+		//deciding the number of reduce tasks to use
+		int default_num_reducer=100;
+		try {
+			FileSystem fs = FileSystem.get(conf);
+			ContentSummary cs =fs.getContentSummary(new Path(infile));
+			long input_size=cs.getSpaceConsumed();
+			default_num_reducer=(int)(Math.ceil((double)input_size/(1024*1024*50)));//50MB PER REducer
+			System.out.println("Path: "+infile+" size "+input_size+", will use "+default_num_reducer+" reducer(s)");
+		} catch (IOException e3) {
+			// TODO Auto-generated catch block
+			e3.printStackTrace();
+		}
+		job.setNumReduceTasks(default_num_reducer);
+		
+		
+		
 		try {
 			try {
 				job.waitForCompletion(true);

@@ -62,7 +62,7 @@ public class Pipeline_FE_seq2seq{
 		
 		//TODO: call the main entry point of the vocabulary construction and frequency generation
 		System.out.println("\n\n\n\n\nvocabulary construction and frequency generation");
-		String fs =features;// dst + "/data/fs.seq";???
+		String fs = dst + "/data/fs.seq";
 		String[] args = {features, fs, dst, "" + topK, "" + botK};
 		String s = VWDriver_FE_output2seqfile.run(args, botlvlcluster_type);
 		
@@ -81,8 +81,10 @@ public class Pipeline_FE_seq2seq{
 		Search.init(dst + "/data/frequency.txt", clusterNum, dst + "/cluster/clusters.txt");
 		Search.runIndexing(dst + "/data/frequency.txt");
 		long EndTime3 = new Date().getTime();
-		//TODO: to test or evaluate here	
-		Search.search("ILSVRC2013_train_00045182.JPEG");
+		//TODO: to test or evaluate here
+		
+	//	Search.search("ILSVRC2013_train_00045182.JPEG");
+		Search.search("/home/xiaofeng/workspace/Image-Retrieval-Pipeline/data/images/all_souls_000000.jpg");
 		long EndTime4 = new Date().getTime();
 		
 		rt.writeMsg("$ISEnd$ "+new Date().getTime());

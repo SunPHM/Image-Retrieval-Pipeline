@@ -55,6 +55,7 @@ public class Analyze {
 				if(line.trim().startsWith("TimeStamp")){//possibly a usable snapshot
 					timestamp=Long.parseLong((line.split(":"))[1].trim());
 					line=br.readLine();
+				//	System.out.println(line);
 					totaljobs=Integer.parseInt((line.split(":"))[1].trim());
 					if(totaljobs==0){//no snap shots
 						line=br.readLine();
