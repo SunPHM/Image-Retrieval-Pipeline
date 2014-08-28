@@ -7,7 +7,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.FileInputFormat;
 import org.apache.hadoop.mapred.FileOutputFormat;
@@ -18,8 +17,10 @@ import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.Reducer;
 import org.apache.hadoop.mapred.Reporter;
-import org.apache.hadoop.mapred.TextInputFormat;
+import org.apache.hadoop.mapred.SequenceFileInputFormat;
 import org.apache.hadoop.mapred.TextOutputFormat;
+import org.apache.mahout.math.Vector;
+import org.apache.mahout.math.VectorWritable;
 
 import ir.util.HadoopUtil;
 
@@ -63,8 +64,7 @@ public class Frequency {
 		conf.setOutputValueClass(Text.class);
 		conf.setMapperClass(FreMap.class);
 		conf.setReducerClass(FreReduce.class);
-		//conf.setNumReduceTasks(1);
-		conf.setInputFormat(TextInputFormat.class);
+		conf.setInputFormat(SequenceFileInputFormat.class);
 	    conf.setOutputFormat(TextOutputFormat.class);
 	    
 		FileInputFormat.setInputPaths(conf, new Path(infile));
@@ -78,7 +78,7 @@ public class Frequency {
 		}
 	}
 	
-	public static class FreMap extends MapReduceBase implements Mapper<LongWritable, Text, Text, Text> {
+	public static class FreMap extends MapReduceBase implements Mapper<Text, VectorWritable, Text, Text> {
 		public static int featureSize = 128;
 		public static int clusterNum = 100;
 		public static String clusters = "";
@@ -90,6 +90,7 @@ public class Frequency {
 		   clusterNum = Integer.parseInt(job.get("clusterNum"));
 		   clusters = job.get("clusters");
 		   features = job.get("features");
+		   //System.out.println(clusters);
 		   try {
 			cs = readClusters(clusters, clusterNum);
 		   } catch (IOException e) {
@@ -99,14 +100,12 @@ public class Frequency {
 		}
 		
 		@Override
-		public void map(LongWritable key, Text value, OutputCollector<Text, Text> output, Reporter reporter) throws IOException {
-			
-			String file = value.toString().split("\t")[0];
-			String line = value.toString().split("\t")[1];
+		public void map(Text key, VectorWritable value, OutputCollector<Text, Text> output, Reporter reporter) throws IOException {
+			String file = key.toString();
+			Vector vector = value.get();
 			double[] feature = new double[featureSize];
-			String[] args = line.split(" ");
 			for (int i = 0; i < featureSize; i++)
-				feature[i] = Double.parseDouble(args[i + 4]);
+				feature[i] = vector.get(i);
 			int index = findBestCluster(feature, cs);
 			output.collect(new Text(file), new Text(1 + "\t" + index));
 			//System.out.println(file + " processed");

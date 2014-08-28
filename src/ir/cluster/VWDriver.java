@@ -25,7 +25,7 @@ public class VWDriver {
 		long EndTime1 = new Date().getTime();
 		//call the frequency extractor
 		int clusterNum = Integer.parseInt(args[2]) * Integer.parseInt(args[3]);
-		Frequency_seq.runJob(args[0], clusterNum, args[1] + "/cluster/clusters.txt", args[1] + "/temp/freq/", args[1] + "/data/frequency.txt");
+		Frequency.runJob(args[0], clusterNum, args[1] + "/cluster/clusters.txt", args[1] + "/temp/freq/", args[1] + "/data/frequency.txt");
 		long EndTime2 = new Date().getTime();
 		String s = 	"top-down clsutering time = " + (double)(EndTime1 - startTime)/N + "\n" +
 					t + "frequency time = " + (double)(EndTime2 - EndTime1)/N + "\n";

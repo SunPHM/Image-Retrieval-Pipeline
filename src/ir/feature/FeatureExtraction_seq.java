@@ -13,11 +13,9 @@ import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -26,7 +24,7 @@ import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
 
-public class FeatureExtraction_seq2seq {
+public class FeatureExtraction_seq {
 	public static String seqfile= "data/images";
 	//public static String fn = "test/data/fn.txt";
 	public static String feature_folder ="test/data/features.txt";
@@ -72,8 +70,8 @@ public class FeatureExtraction_seq2seq {
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(VectorWritable.class);
 		
-		job.setJarByClass(FeatureExtraction_seq2seq.class);
-		job.setMapperClass(FeatureExtraction_seq2seq.FEMap.class);
+		job.setJarByClass(FeatureExtraction_seq.class);
+		job.setMapperClass(FeatureExtraction_seq.FEMap.class);
 		
 		job.setInputFormatClass(SequenceFileInputFormat.class);
 
@@ -91,7 +89,7 @@ public class FeatureExtraction_seq2seq {
 		
 		
 		//deciding the number of reduce tasks to use
-		int default_num_reducer=100;
+		int default_num_reducer = 100;
 		try {
 			FileSystem fs = FileSystem.get(conf);
 			ContentSummary cs =fs.getContentSummary(new Path(infile));
