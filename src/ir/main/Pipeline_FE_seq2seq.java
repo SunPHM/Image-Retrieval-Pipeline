@@ -1,7 +1,6 @@
 package ir.main;
 
 import ir.cluster.VWDriver_FE_output2seqfile;
-import ir.feature.FE_output2seqfile;
 import ir.feature.FeatureExtraction_seq2seq;
 import ir.index.Search;
 import ir.util.HadoopUtil;
@@ -48,9 +47,7 @@ public class Pipeline_FE_seq2seq{
 		//TODO: call the main entry point of the Feature Extraction
 		System.out.println("\n\nFeature Extraction");
 		String features = dst + "/data/features.seq";// the feature folder
-	//	FeatureExtraction.extractFeatures(src, features, dst + "/temp/fe/");
 		FeatureExtraction_seq2seq.extractFeatures(src, features, dst + "/temp/fe/");
-	//	FE_output2seqfile.extractFeatures(src, features, dst + "/temp/fe/");
 		System.out.println("Features folder:" + features);
 
 		rt.writeMsg("$FEEnd$ "+new Date().getTime());
@@ -62,7 +59,7 @@ public class Pipeline_FE_seq2seq{
 		
 		//TODO: call the main entry point of the vocabulary construction and frequency generation
 		System.out.println("\n\n\n\n\nvocabulary construction and frequency generation");
-		String fs = dst + "/data/fs.seq";
+		String fs = features;//dst + "/data/fs.seq";
 		String[] args = {features, fs, dst, "" + topK, "" + botK};
 		String s = VWDriver_FE_output2seqfile.run(args, botlvlcluster_type);
 		
