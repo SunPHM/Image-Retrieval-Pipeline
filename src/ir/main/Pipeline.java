@@ -4,8 +4,11 @@ package ir.main;
 import java.util.Date;
 
 
+
+
 import ir.cluster.VWDriver;
 import ir.feature.FeatureExtraction;
+import ir.index.Evaluate;
 import ir.index.Search;
 import ir.util.HadoopUtil;
 import ir.util.MeasureContainers;
@@ -36,82 +39,47 @@ public class Pipeline {
 		long N = 1000 * 60;
 		long startTime = new Date().getTime();
 		HadoopUtil.delete(dst);
+		
 		//record time of each phase to a file
-		RecordTime rt=new RecordTime("recordtime.txt");
+		RecordTime rt = new RecordTime("recordtime.txt");
 		rt.writeMsg("#Task: "+src+" "+dst+" "+topK+" "+botK+" "+botlvlcluster_type);
 		//run the process to issue "hadoop job -list" and get the results in a file
+		MeasureContainers mt = new  MeasureContainers("recordcontainers.txt");
+		mt.start();
 		
-		 MeasureContainers mt=new  MeasureContainers("recordcontainers.txt");
-		 mt.start();
-
-		/*List<String> list = new ArrayList<String>();  
-		ProcessBuilder pb = null;     
-		String java = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";  
-		String classpath = System.getProperty("java.class.path");  
-		// list the files and directorys under C:\  
-		list.add(java);  
-//		list.add("-classpath");  
-//		list.add(classpath);  
-		list.add(MeasureContainerProcess.class.getName());  
-		list.add("recordcontainers.txt");
-		     
-		pb = new ProcessBuilder(list);
-		Process ps=null;
-		try {
-			ps = pb.start();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		*/
-		
-		//Date date=new Date();
-		
-		//TODO: call the main entry point of the Feature Extraction
-		
-		
+		//Feature Extraction
 		rt.writeMsg("$FEStart$ "+new Date().getTime());
-		
 		System.out.println("\n\nFeature Extraction");
 		String features = dst + "/data/features.txt";// the feature folder
 		FeatureExtraction.extractFeatures(src, features, dst + "/temp/fe/");
 		//FeatureExtractionSeqFile.extractFeatures(src, features, dst + "/temp/fe/");
 		System.out.println("Features folder:" + features);
-		
-
 		rt.writeMsg("$FEEnd$ "+new Date().getTime());
-		
 		long EndTime1 = new Date().getTime();
 		
-		
+		//Vocabulary Construction and Frequency Generation
 		rt.writeMsg("$VWStart$ "+new Date().getTime());
-		
-		//TODO: call the main entry point of the vocabulary construction and frequency generation
-		System.out.println("\n\n\n\n\nvocabulary construction and frequency generation");
+		System.out.println("\n\nvocabulary construction and frequency generation");
 		String fs = dst + "/data/fs.seq";
 		String[] args = {features, fs, dst, "" + topK, "" + botK};
 		String s = VWDriver.run(args, botlvlcluster_type);
-		
 		rt.writeMsg("$VWEnd$ "+new Date().getTime());
-		
 		long EndTime2 = new Date().getTime();
 		
-		
+		//Indexing and Searching
 		rt.writeMsg("$ISStart$ "+new Date().getTime());
-		//TODO: call the main entry point of the Indexing and Searching
-		System.out.println("\n\n\n\n\nIndexing and Searching");
+		System.out.println("\n\nIndexing and Searching");
 		//before run indexing, need to copy the frequency.txt file to local filesystem(index part reads from localfilesystem)---done 
 		int clusterNum = topK * botK;
 		Search.init(dst + "/data/frequency.txt", clusterNum, dst + "/cluster/clusters.txt");
 		Search.runIndexing(dst + "/data/frequency.txt");
 		long EndTime3 = new Date().getTime();
 		//TODO: to test or evaluate here  ---note: put the image in the current directory. 	
-		Search.search("ILSVRC2013_train_00023457.JPEG");
-		
+		//Search.search("ILSVRC2013_train_00023457.JPEG");
+		Evaluate.evaluate(src, "data/gt/");
 		long EndTime4 = new Date().getTime();
-		rt.writeMsg("$ISEnd$ "+new Date().getTime());
-		
-		
+		rt.writeMsg("$ISEnd$ " + new Date().getTime());
+		 
 		System.out.println("\n\n*******************************************  Running Time in minutes ********************************************");
 		System.out.println("Total Running Time: "+ (double)(EndTime3 - startTime) / N 
 				+"\nFeature Extraction: "+ (double)(EndTime1 - startTime) / N
@@ -126,12 +94,8 @@ public class Pipeline {
 				"Searching: " + (double)(EndTime4 - EndTime3) / N * 60 + " seconds";
 		rt.writeMsg(string_result);
 
-//		ps.destroy();
 		mt.stopMe();
 		return string_result;
-		
-		
 	}
 	
-
 }

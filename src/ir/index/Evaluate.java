@@ -1,5 +1,8 @@
 package ir.index;
 
+import ir.feature.SIFTExtraction;
+
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -8,16 +11,21 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import javax.imageio.ImageIO;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.solr.client.solrj.SolrServerException;
 
 public class Evaluate {
 	
 	public static void main(String[] args) throws IOException, SolrServerException{
-		evaluate("test/data/features", "data/gt");
+		evaluate("data/images", "data/gt");
 	}
 	
 	// benchmarking the oxford 5k dataset
-	public static void evaluate(String featureFolder, String gtFolder){
+	public static void evaluate(String imageFolder, String gtFolder){
 		// read all the files with "query"
 		File fd = new File(gtFolder);
 		String[] files = fd.list();
@@ -32,14 +40,14 @@ public class Evaluate {
 					String line = reader.readLine();
 					reader.close();
 					String[] array = line.split(" ");
-					String queryImage = array[0].substring("oxc1_".length()) + ".jpg.txt" ;
+					String queryImage = array[0].substring("oxc1_".length()) + ".jpg";
 					double lowX = Double.parseDouble(array[1]);
 					double lowY = Double.parseDouble(array[2]);
 					double highX = Double.parseDouble(array[3]);
 					double highY = Double.parseDouble(array[4]);
-					//System.out.println(line);
-					//System.out.println(query + " " + lowX + " " + lowY + " " + highX + " " + highY);
-					String[] features = getImageFeatures(featureFolder + "/" + queryImage, lowX, lowY, highX, highY);
+					System.out.println(line);
+					System.out.println(queryImage + " " + lowX + " " + lowY + " " + highX + " " + highY);
+					String[] features = getImageFeatures(imageFolder + "/" + queryImage, lowX, lowY, highX, highY);
 					// search the image features
 					System.out.println("query image " + queryImage);
 					F1Score fs = searchFeatures(features, gtFolder + "/" + file.substring(0, file.length() - "_query.txt".length()));
@@ -54,7 +62,6 @@ public class Evaluate {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-
 			}
 		}
 		
@@ -82,17 +89,19 @@ public class Evaluate {
 		// get query from one image and measure F1 score
 		String query = Search.createQuery(features);
 		// run query
-		String[] files=	Search.query(query);
+		String[] files = Search.query(query);
 		// return F1 score
 		return getF1Score(files, gt);
 	}
 	
 	public static String[] getImageFeatures(String filename, double lowX, double lowY, double highX, double highY) throws IOException{
-		// currently use local I/O, it is very easy to transfer to HDFS I/O
-		BufferedReader reader = new BufferedReader(new FileReader(new File(filename)));
 		ArrayList<String> list = new ArrayList<String>();
-		String line;
-		while((line = reader.readLine()) != null){
+		FileSystem fs = FileSystem.get(new Configuration());
+		BufferedImage img = ImageIO.read(fs.open(new Path(filename)));
+		String[] allFeatures = SIFTExtraction.getFeatures(img);
+		
+		for (int i = 0; i < allFeatures.length; i++){
+			String line = allFeatures[i];
 			String cs = line.split("\\(")[1].split("\\)")[0];
 			//System.out.println(line);
 			double x = Double.parseDouble(cs.split(", ")[0]);
@@ -100,10 +109,9 @@ public class Evaluate {
 			//System.out.println(cs + " " + x + " " + y);
 			if(lowX <= x && x <= highX && lowY <= y && y <= highY){
 				list.add(line);
-				//System.out.println(line);
+				System.out.println(line);
 			}
 		}
-		reader.close();
 		return list.toArray(new String[list.size()]);
 	}
 	
@@ -157,7 +165,6 @@ public class Evaluate {
 		}
 		return num;
 	}
-
 }
 
 class F1Score {

@@ -20,8 +20,8 @@ public class FeatureExtraction {
 	
 	public static String img_folder = "data/images";
 	//public static String fn = "test/data/fn.txt";
-	public static String feature_folder ="test/data/features.txt";
-	public static final Integer split_size=1024*1024*10;//10MB
+	public static String feature_folder = "test/data/features.txt";
+	public static final Integer split_size = 1024*1024*10;//10MB
 	
 	public static void main(String[] args) {
 	//	SIFTExtraction.getNames(img_folder, fn);
