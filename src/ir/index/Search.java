@@ -29,6 +29,7 @@ public class Search {
 	public static String terms = "data/features/frequency.txt";
 	
 	public static String urlString = "http://localhost:8989/solr";
+	public static int numOfResults = 50;
 	
 	public static void main(String[] args) throws IOException, SolrServerException{
 		// run indexing
@@ -58,27 +59,38 @@ public class Search {
 	public static void search(String image){
 		try {
 			System.out.println("test image: " + image);
-			FileSystem fs = FileSystem.get(new Configuration());
-			BufferedImage img = ImageIO.read(fs.open(new Path(image)));
-			String[] features = SIFTExtraction.getFeatures(img);
+			String[] features = getImageFeatures(image);
 			String qs = Search.createQuery(features);
 			String[] results = query(qs);
 			System.out.println("results length = " + results.length);
-		} catch (IOException e) {
+		} catch (SolrServerException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (SolrServerException e) {
+		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
 	}
 	
+	public static String[] getImageFeatures(String image){
+		try {
+			FileSystem fs = FileSystem.get(new Configuration());
+			BufferedImage img = ImageIO.read(fs.open(new Path(image)));
+			String[] features = SIFTExtraction.getFeatures(img);
+			return features;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
 	public static String createQuery(String[] features) throws IOException{//transform an image into a Solr document or a field
-		//System.out.println("query: " + image);
+
 		double[][] clusters = Frequency.FreMap.readClusters(Search.clusters, Search.clusterNum);
 		int[] marks = new int[Search.clusterNum];
-		
+			
 		for(int i = 0; i < features.length; i++){
 			double[] feature = new double[Search.featureSize];
 			String[] args = features[i].split(" ");
@@ -87,7 +99,7 @@ public class Search {
 			int index = Frequency.FreMap.findBestCluster(feature, clusters);
 			marks[index]++;
 		}
-		
+			
 		String result = "";
 		for(int i = 0; i < Search.clusterNum; i++){
 			for(int j = 0; j < marks[i]; j++){

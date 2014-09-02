@@ -40,11 +40,11 @@ public class Indexing {
 		while((line = br.readLine()) != null){
 			SolrInputDocument doc = getDocument(line);
 			docs.add(doc);
-			if(docs.size()>=doc_buffer_size){
+			if(docs.size() >= doc_buffer_size){
 				server.add(docs);
 			    server.commit();
-			    docs_total_size=docs_total_size+docs.size();
-			    System.out.println("indexed  "+(docs.size())+" docs");
+			    docs_total_size = docs_total_size+docs.size();
+			    System.out.println("indexed  " + (docs.size()) + " docs");
 				docs.clear();
 			}
 		}

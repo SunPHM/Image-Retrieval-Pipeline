@@ -3,12 +3,9 @@ package ir.main;
 
 import java.util.Date;
 
-
-
-
 import ir.cluster.VWDriver;
 import ir.feature.FeatureExtraction;
-import ir.index.Evaluate;
+import ir.index.EvaluateOxbuilds;
 import ir.index.Search;
 import ir.util.HadoopUtil;
 import ir.util.MeasureContainers;
@@ -76,7 +73,7 @@ public class Pipeline_Oxbuilds_Evaluate {
 		long EndTime3 = new Date().getTime();
 		//to test or evaluate here
 		//Search.search(src + "/all_souls_000000.jpg");
-		Evaluate.evaluate(src, gt);
+		EvaluateOxbuilds.evaluate(src, gt);
 		long EndTime4 = new Date().getTime();
 		rt.writeMsg("$ISEnd$ " + new Date().getTime());
 		 

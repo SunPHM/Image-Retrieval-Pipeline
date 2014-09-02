@@ -3,12 +3,8 @@ package ir.main;
 
 import java.util.Date;
 
-
-
-
 import ir.cluster.VWDriver;
 import ir.feature.FeatureExtraction;
-import ir.index.Evaluate;
 import ir.index.Search;
 import ir.util.HadoopUtil;
 import ir.util.MeasureContainers;
