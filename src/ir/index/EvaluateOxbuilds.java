@@ -45,7 +45,7 @@ public class EvaluateOxbuilds {
 					reader.close();
 					String[] array = line.split(" ");
 					String queryImage = array[0].substring("oxc1_".length()) + ".jpg";
-					//System.out.println("query image " + queryImage);
+					System.out.println("query image " + queryImage);
 					double lowX = Double.parseDouble(array[1]);
 					double lowY = Double.parseDouble(array[2]);
 					double highX = Double.parseDouble(array[3]);
@@ -127,7 +127,6 @@ public class EvaluateOxbuilds {
 	
 	
 	public static F1Score getF1Score(String[] files, String gt){
-		
 		HashSet<String> goodSet = getFiles(gt + "_good.txt");
 		HashSet<String> okSet = getFiles(gt + "_ok.txt");
 		//HashSet<String> junkSet = getFiles(gt + "_junk.txt");
@@ -155,7 +154,7 @@ public class EvaluateOxbuilds {
 			reader = new BufferedReader(new FileReader(filename));
 			String line;
 			while((line = reader.readLine()) != null){
-				set.add(line + ".jpg.txt");
+				set.add(line);
 			}
 			reader.close();
 		} catch (FileNotFoundException e) {
@@ -169,10 +168,18 @@ public class EvaluateOxbuilds {
 	}
 	
 	public static int getMatches(String[] files, HashSet<String> set){
-		int num = 0;
-		for(String s : files){
-			if (set.contains(s)) num++;
+		HashSet<String> fset = new HashSet<String>();
+		for(int i = 0; i < files.length; i++){
+			String[] array = files[i].split("/");
+			String temp = array[array.length - 1];
+			fset.add(temp.split("\\.")[0]);
 		}
+		int num = 0;
+		for(String s : set){
+			//System.out.println("in getMatches: " + s);
+			if (fset.contains(s)) num++;
+		}
+		//System.out.println("num = " + num);
 		return num;
 	}
 }
