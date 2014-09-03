@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashSet;
+
 import javax.imageio.ImageIO;
 
 import org.apache.hadoop.conf.Configuration;
@@ -21,7 +22,9 @@ import org.apache.solr.client.solrj.SolrServerException;
 public class EvaluateOxbuilds {
 	
 	public static void main(String[] args) throws IOException, SolrServerException{
-		evaluate("/home/hadoop/Desktop/oxbuild_images", "data/gt");
+		Search.clusters = "test/cluster/clusters.txt";
+		Search.clusterNum = 4;
+		evaluate("data/images", "data/gt_partial");
 	}
 	
 	// benchmarking the Oxford 5k dataset

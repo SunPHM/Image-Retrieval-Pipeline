@@ -29,7 +29,7 @@ public class Search {
 	public static String terms = "data/features/frequency.txt";
 	
 	public static String urlString = "http://localhost:8989/solr";
-	public static int numOfResults = 50;
+	public static int numOfResults = 10;
 	
 	public static void main(String[] args) throws IOException, SolrServerException{
 		// run indexing
@@ -120,7 +120,7 @@ public class Search {
 	    SolrQuery query = new SolrQuery();
 	    //query.setQuery("includes:" + s);
 	    query.set("q", "includes:" + s);
-	    
+	    query.setRows(Search.numOfResults);
 	    // get results		
 	    QueryResponse qresponse = server.query(query);
 	    SolrDocumentList list = qresponse.getResults();
