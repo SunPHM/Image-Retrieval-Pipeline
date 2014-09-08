@@ -1,5 +1,7 @@
 package ir.cluster;
 
+import ir.util.XMLUtil;
+
 import java.util.Date;
 
 /**
@@ -29,6 +31,8 @@ public class VWDriver {
 		long EndTime2 = new Date().getTime();
 		String s = 	"top-down clsutering time = " + (double)(EndTime1 - startTime)/N + "\n" +
 					t + "frequency time = " + (double)(EndTime2 - EndTime1)/N + "\n";
+		//create configuration xml
+		XMLUtil.createConfiguration(args[1] + "/conf.xml", args[1] + "/data/frequency.txt", args[1] + "/cluster/clusters.txt", clusterNum);
 		return s;
 	}
 	
