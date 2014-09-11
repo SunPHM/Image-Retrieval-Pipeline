@@ -4,7 +4,9 @@ import ir.cluster.Frequency;
 import ir.feature.SIFTExtraction;
 
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
+
 import javax.imageio.ImageIO;
 
 import org.apache.hadoop.conf.Configuration;
@@ -15,6 +17,11 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.Element;
+import org.dom4j.Node;
+import org.dom4j.io.SAXReader;
 
 /**
  * Indexing and Searching runs locally using Solr
@@ -33,14 +40,36 @@ public class Search {
 	
 	public static void main(String[] args) throws IOException, SolrServerException{
 		// run indexing
-		runIndexing("test/data/frequency.txt");
-		search("data/images/all_souls_000000.jpg");
+		//runIndexing("test/data/frequency.txt");
+		//search("data/images/all_souls_000000.jpg");
+		loadConfiguration("test/conf.xml");
+		System.out.println(terms);
+		System.out.println(clusters);
+		System.out.println(clusterNum);
 	}
 	
 	public static void init(String terms, int clusterNum, String clusters){
 		Search.terms = terms;
 		Search.clusterNum = clusterNum;
 		Search.clusters = clusters;
+	}
+	
+	public static void loadConfiguration(String path){
+		try {
+			FileSystem fs = FileSystem.get(new Configuration());
+			SAXReader reader = new SAXReader();
+		    Document document = reader.read(fs.open(new Path(path)));
+		    Element root = document.getRootElement();
+		    Search.clusters = root.valueOf("@clusters");
+		    Search.terms = root.valueOf("@terms");
+		    Search.clusterNum = Integer.parseInt(root.valueOf("@clusterNum"));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (DocumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	//TODO: code cleaning and add an entry point function

@@ -1,0 +1,131 @@
+#Task: data/images test/ 2 2 1
+$FEStart$ 1409254314431
+$FEEnd$ 1409254528111
+$VWStart$ 1409254528120
+$VWEnd$ 1409254529601
+$ISStart$ 1409254529601
+#Task: data/images test/ 2 2 1
+$FEStart$ 1409254824904
+$FEEnd$ 1409255042597
+$VWStart$ 1409255042597
+$VWEnd$ 1409255118431
+$ISStart$ 1409255118432
+$ISEnd$ 1409255123610
+Total Running Time: 4.965
+Feature Extraction: 3.6516333333333333
+VVWDriver: 1.2639166666666666
+top-down clsutering time = 1.1615
+top-level clustering time = 0.4216
+mid-level processing time = 0.22005
+bot-level clustering time = 0.48901666666666666
+frequency time = 0.1024
+Indexing: 2.967 seconds
+Searching: 2.211 seconds
+#Task: data/images test/ 2 2 1
+$FEStart$ 1409255469190
+$FEEnd$ 1409255677671
+$VWStart$ 1409255677671
+$VWEnd$ 1409255742997
+$ISStart$ 1409255742997
+$ISEnd$ 1409255747193
+Total Running Time: 4.629883333333333
+Feature Extraction: 3.5046333333333335
+VVWDriver: 1.0887666666666667
+top-down clsutering time = 1.02215
+top-level clustering time = 0.3720333333333333
+mid-level processing time = 0.19516666666666665
+bot-level clustering time = 0.4549
+frequency time = 0.0666
+Indexing: 2.189 seconds
+Searching: 2.007 seconds
+#Task: data/images test/ 2 2 1
+$FEStart$ 1409255864921
+$FEEnd$ 1409256079798
+$VWStart$ 1409256079798
+$VWEnd$ 1409256149531
+$ISStart$ 1409256149540
+$ISEnd$ 1409256153892
+Total Running Time: 4.811916666666667
+Feature Extraction: 3.6094833333333334
+VVWDriver: 1.1623666666666668
+top-down clsutering time = 1.0731166666666667
+top-level clustering time = 0.37321666666666664
+mid-level processing time = 0.17721666666666666
+bot-level clustering time = 0.5221333333333333
+frequency time = 0.08908333333333333
+Indexing: 2.404 seconds
+Searching: 1.948 seconds
+#Task: data/imagenet500 test/ 2 2 1
+$FEStart$ 1409689300314
+$FEEnd$ 1409689471303
+$VWStart$ 1409689471303
+$VWEnd$ 1409689554721
+$ISStart$ 1409689554731
+$ISEnd$ 1409689558896
+Total Running Time: 4.3476333333333335
+Feature Extraction: 2.8883
+VVWDriver: 1.3904666666666667
+top-down clsutering time = 1.31925
+top-level clustering time = 0.5418666666666667
+mid-level processing time = 0.25593333333333335
+bot-level clustering time = 0.5208833333333334
+frequency time = 0.07081666666666667
+Indexing: 4.132000000000001 seconds
+Searching: 0.033 seconds
+#Task: data/imagenet500 test/ 2 2 1
+$FEStart$ 1409767027834
+$FEEnd$ 1409767216413
+$VWStart$ 1409767216413
+$VWEnd$ 1409767274961
+$ISStart$ 1409767274961
+$ISEnd$ 1409767279240
+Total Running Time: 4.208216666666667
+Feature Extraction: 3.1614333333333335
+VVWDriver: 0.9758
+top-down clsutering time = 0.9037166666666666
+top-level clustering time = 0.3819166666666667
+mid-level processing time = 0.11071666666666667
+bot-level clustering time = 0.4108
+frequency time = 0.07176666666666667
+Indexing: 4.2589999999999995 seconds
+Searching: 0.02 seconds
+#Task: data/images test1 2 2 1
+$FEStart$ 1409769963265
+$FEEnd$ 1409770199760
+$VWStart$ 1409770199760
+$VWEnd$ 1409770271411
+$ISStart$ 1409770271411
+#Task: data/images test1 2 2 1
+$FEStart$ 1409770367609
+$FEEnd$ 1409770606619
+$VWStart$ 1409770606619
+$VWEnd$ 1409770680527
+$ISStart$ 1409770680551
+$ISEnd$ 1409770694831
+Total Running Time: 5.339833333333333
+Feature Extraction: 4.020666666666667
+VVWDriver: 1.2322
+top-down clsutering time = 1.1444833333333333
+top-level clustering time = 0.4299
+mid-level processing time = 0.11988333333333333
+bot-level clustering time = 0.5945333333333334
+frequency time = 0.08715
+Indexing: 5.218 seconds
+Searching: 9.062 seconds
+#Task: data/images test1 10 10 1
+$FEStart$ 1409773541782
+$FEEnd$ 1409773765684
+$VWStart$ 1409773765684
+$VWEnd$ 1409773956500
+$ISStart$ 1409773956509
+$ISEnd$ 1409773966910
+Total Running Time: 6.982916666666667
+Feature Extraction: 3.752466666666667
+VVWDriver: 3.1804166666666664
+top-down clsutering time = 3.111266666666667
+top-level clustering time = 0.8897
+mid-level processing time = 0.14515
+bot-level clustering time = 2.07615
+frequency time = 0.06878333333333334
+Indexing: 3.002 seconds
+Searching: 7.399 seconds
