@@ -28,7 +28,7 @@ public class EvaluateOxbuilds {
 	}
 	
 	// benchmarking the Oxford 5k dataset
-	public static void evaluate(String imageFolder, String gtFolder){
+	public static String evaluate(String imageFolder, String gtFolder){
 		// read all the files with "query"
 		String[] files = HadoopUtil.getListOfFiles(gtFolder);
 		// store the F1 scores
@@ -84,6 +84,8 @@ public class EvaluateOxbuilds {
 		System.out.println("average precision = "+ sumPrecision / list.size());
 		System.out.println("average recall = " + sumRecall / list.size());
 		System.out.println("average F1 = " + sumF1 / list.size());
+		return ( "average precision = "+ sumPrecision / list.size() + "\naverage recall = " + sumRecall / list.size()
+				+"\naverage F1 = " + sumF1 / list.size());
 	}
 
 	// construct a query from one ground truth query, search them and get the F1 score

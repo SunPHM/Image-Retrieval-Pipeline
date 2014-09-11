@@ -5,6 +5,7 @@ import ir.util.HadoopUtil;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Iterator;
 
 import javax.imageio.ImageIO;
 
@@ -15,10 +16,14 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Mapper.Context;
+import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.Vector;
@@ -28,7 +33,7 @@ public class FeatureExtraction_seq {
 	public static String seqfile= "data/images";
 	//public static String fn = "test/data/fn.txt";
 	public static String feature_folder ="test/data/features.txt";
-	public static final Integer split_size=1024*1024*10;//10MB
+	public static final Integer split_size=1024*1024*10;//30MB
 	
 	public static void main(String[] args) {
 	//	SIFTExtraction.getNames(img_folder, fn);
@@ -40,8 +45,14 @@ public class FeatureExtraction_seq {
 		feature_folder = features;
 		HadoopUtil.delete(temp);
 		extractMR(seqfile, temp);
-		HadoopUtil.copyMerge(temp, feature_folder);
+//		HadoopUtil.copyMerge(temp, feature_folder);
+		HadoopUtil.delete(temp+"/_SUCCESS");
+		System.out.println("deleted path: "+temp+"/_SUCCESS");
+		HadoopUtil.cpFile(temp+"/part-r-00000", features);
+		
 		System.out.println("feature extraction is done");
+		
+		
 	}
 	
 	// extract features using Map-Reduce
@@ -54,6 +65,7 @@ public class FeatureExtraction_seq {
 		conf.set("seqfile", seqfile);
 		//conf.set("fn", fn);
 		conf.set("feature_folder", feature_folder);
+		conf.set("outfile","test");
 		conf.set("mapred.max.split.size", split_size.toString());
 		Job job=null;
 		try {
@@ -73,6 +85,8 @@ public class FeatureExtraction_seq {
 		job.setJarByClass(FeatureExtraction_seq.class);
 		job.setMapperClass(FeatureExtraction_seq.FEMap.class);
 		
+		
+		
 		job.setInputFormatClass(SequenceFileInputFormat.class);
 
 		
@@ -87,21 +101,26 @@ public class FeatureExtraction_seq {
 		}
 		FileOutputFormat.setOutputPath(job, new Path(outfile));
 		
+		 // Defines additional sequence-file based output 'sequence' for the job
+//		 MultipleOutputs.addNamedOutput(job, "seq",
+//		   SequenceFileOutputFormat.class,
+//		   Text.class, VectorWritable.class);
 		
 		//deciding the number of reduce tasks to use
-		int default_num_reducer = 100;
+/*		int default_num_reducer = 100;
 		try {
 			FileSystem fs = FileSystem.get(conf);
 			ContentSummary cs =fs.getContentSummary(new Path(infile));
 			long input_size=cs.getSpaceConsumed();
-			default_num_reducer=(int)(Math.ceil((double)input_size/(1024*1024*50)));//50MB PER REducer
+			default_num_reducer=(int)(Math.ceil((double)input_size/(1024*1024*200)));//200MB PER REducer
 			System.out.println("Path: "+infile+" size "+input_size+", will use "+default_num_reducer+" reducer(s)");
 		} catch (IOException e3) {
 			// TODO Auto-generated catch block
 			e3.printStackTrace();
 		}
 		job.setNumReduceTasks(default_num_reducer);
-		
+*/		
+		job.setNumReduceTasks(1);///need improvement
 		
 		
 		try {
@@ -127,12 +146,16 @@ public class FeatureExtraction_seq {
 		private static VectorWritable vw = new VectorWritable();
 		private static final int feature_length=128;
 		private static Vector vec = new DenseVector(feature_length);
+		public static String outfile=null;
+		
+		private MultipleOutputs<Text, VectorWritable> mos;
 		@Override
 		public void setup( Context context) {
 			Configuration conf=context.getConfiguration();
 		   img_folder=conf.get("seqfile");
 		//   fn=job.get("fn");
 		   feature_folder=conf.get("feature_folder");
+		   //outfile=conf.get("outfile");
 		}
 
 		@Override
@@ -153,6 +176,7 @@ public class FeatureExtraction_seq {
 						vec.assign(feature);
 						vw.set(vec);
 						context.write(new Text(file), vw);
+						//mos.write("seq",new Text(file), vw, outfile);
 					}
 				}
 			} catch (java.lang.IllegalArgumentException e){
@@ -164,11 +188,11 @@ public class FeatureExtraction_seq {
 			}
 			catch(javax.imageio.IIOException e){
 				System.out.println("the image causing exception: " + file);
-			}
-			catch (InterruptedException e) {
+			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			
 		}
 		
 		public static double[] getPoints(String[] args, int size){// get the feature vector from the 
@@ -179,5 +203,6 @@ public class FeatureExtraction_seq {
 			return points;
 		}
 	}
+
 
 }

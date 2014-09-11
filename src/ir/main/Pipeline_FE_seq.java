@@ -73,8 +73,8 @@ public class Pipeline_FE_seq{
 		Search.runIndexing(dst + "/data/frequency.txt");
 		long EndTime3 = new Date().getTime();
 		//to test or evaluate here
-		//Search.search("ILSVRC2013_train_00045182.JPEG");
-		Search.search("/home/xiaofeng/workspace/Image-Retrieval-Pipeline/data/images/all_souls_000000.jpg");
+		Search.search("n07749582_29305.JPEG");
+		//Search.search("all_souls_000000.jpg");
 		long EndTime4 = new Date().getTime();
 		
 		rt.writeMsg("$ISEnd$ "+new Date().getTime());

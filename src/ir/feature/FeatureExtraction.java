@@ -2,6 +2,7 @@ package ir.feature;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+
 import javax.imageio.ImageIO;
 
 import org.apache.hadoop.conf.Configuration;
@@ -13,6 +14,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.Vector;
@@ -23,17 +25,23 @@ import ir.util.HadoopUtil;
 public class FeatureExtraction {
 	
 	public static String img_folder = "data/images";
-	public static final Integer split_size = 1024*1024*10;//10MB
+	public static final Integer split_size = 1024*1024*20;//30MB
 	
 	public static void main(String[] args) {
 		extractFeatures(args[0], args[1], args[2]);
 	}
 	
 	public static void extractFeatures(String images,  String features, String temp){ // the main entry point for Feature Extraction to be called
+	System.out.println("debuggg111");
 		img_folder = images;
 		HadoopUtil.delete(temp);
+		//
 		extractMR(images, temp);
-		HadoopUtil.copyMerge(temp, features);
+		//extractMR(images, features);
+		HadoopUtil.delete(temp+"/_SUCCESS");
+		System.out.println("deleted path: "+temp+"/_SUCCESS");
+		HadoopUtil.cpFile(temp+"/test-m-00000", features);
+//		HadoopUtil.copyMerge(temp, features);-- probably causing kmeansdriver fail to read the seqfile properly dont know why yet
 		System.out.println("feature extraction is done");
 	}
 	
@@ -44,6 +52,7 @@ public class FeatureExtraction {
 		//pass the parameters
 		conf.set("img_folder", img_folder);
 		conf.set("mapred.max.split.size", split_size.toString());
+		conf.set("outfile","test");
 		
 		Job job=null;
 		try {
@@ -57,10 +66,11 @@ public class FeatureExtraction {
 		job.setJobName("FeatureExtraction");
 		job.setJarByClass(FeatureExtraction.class);
 		job.setMapperClass(FeatureExtraction.FEMap.class);
+		//
 	    job.setOutputKeyClass(Text.class);
 	    job.setOutputValueClass(VectorWritable.class);
 		job.setInputFormatClass(ImageInputFormat.class);
-		job.setOutputFormatClass(SequenceFileOutputFormat.class);
+//		job.setOutputFormatClass(SequenceFileOutputFormat.class);
 
 		try {
 			FileInputFormat.setInputPaths(job, new Path(infile));
@@ -73,6 +83,11 @@ public class FeatureExtraction {
 		}
 		
 		FileOutputFormat.setOutputPath(job, new Path(outfile));
+		
+		 // Defines additional sequence-file based output 'sequence' for the job
+		 MultipleOutputs.addNamedOutput(job, "seq",
+		   SequenceFileOutputFormat.class,
+		   Text.class, VectorWritable.class);
 		try {
 			try {
 				job.waitForCompletion(true);
@@ -92,11 +107,15 @@ public class FeatureExtraction {
 	public static class FEMap extends  Mapper<Text,LongWritable, Text, VectorWritable> {
 		public static String img_folder = null;
 		public static int feature_num = 128;
+		public static String outfile=null;
 		
+		private MultipleOutputs<Text, VectorWritable> mos;
 		@Override
 		public void setup( Context context) {
 			Configuration conf=context.getConfiguration();
 		   img_folder=conf.get("img_folder");
+		   outfile=conf.get("outfile");
+		   mos = new MultipleOutputs<Text, VectorWritable>(context);
 		}
 
 		@Override
@@ -115,7 +134,10 @@ public class FeatureExtraction {
 					double[] feature= getPoints(features[i].split(" "), feature_num);
 					vec.assign(feature);		
 					vw.set(vec);
-					context.write(new Text(file), vw);
+					//
+					
+					mos.write("seq",new Text(file), vw, outfile);
+					//context.write(new Text(file), vw);
 				}
 			} catch (java.lang.IllegalArgumentException e){
 				System.out.println("the image causing exception: " + file);
@@ -132,6 +154,9 @@ public class FeatureExtraction {
 				e.printStackTrace();
 			}
 		}
+		 public void cleanup(Context con) throws IOException, InterruptedException {
+			 mos.close();
+			 }
 		
 		public static double[] getPoints(String[] args, int size){// get the feature vector from the 
 			//System.out.println(args.length);

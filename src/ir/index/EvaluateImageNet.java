@@ -12,7 +12,7 @@ public class EvaluateImageNet {
 		evaluate("data/test12/");
 	}
 	
-	public static void evaluate(String testfolder){
+	public static double evaluate(String testfolder){
 		// get the list of image files
 		String[] images = HadoopUtil.getListOfFiles(testfolder);
 		//System.out.println("number of test images: " + images.length);
@@ -45,6 +45,7 @@ public class EvaluateImageNet {
 		}
 		double map = sp / images.length;
 		System.out.println("mean average precison = " + map);
+		return map;
 	}
 	
 	public static String extractSynset(String path){

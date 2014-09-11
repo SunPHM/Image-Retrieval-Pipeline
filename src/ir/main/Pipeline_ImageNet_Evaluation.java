@@ -5,6 +5,7 @@ import java.util.Date;
 
 import ir.cluster.VWDriver;
 import ir.feature.FeatureExtraction;
+import ir.feature.FeatureExtraction_seq;
 import ir.index.EvaluateImageNet;
 import ir.index.Search;
 import ir.util.HadoopUtil;
@@ -49,8 +50,8 @@ public class Pipeline_ImageNet_Evaluation {
 		rt.writeMsg("$FEStart$ "+new Date().getTime());
 		System.out.println("\n\nFeature Extraction");
 		String features = dst + "/data/features.seq";// the feature folder
-		FeatureExtraction.extractFeatures(src, features, dst + "/temp/fe/");
-		//FeatureExtractionSeqFile.extractFeatures(src, features, dst + "/temp/fe/");
+		//FeatureExtraction.extractFeatures(src, features, dst + "/temp/fe/");
+		FeatureExtraction_seq.extractFeatures(src, features, dst + "/temp/fe/");
 		System.out.println("Features folder:" + features);
 		rt.writeMsg("$FEEnd$ "+new Date().getTime());
 		long EndTime1 = new Date().getTime();
@@ -73,7 +74,7 @@ public class Pipeline_ImageNet_Evaluation {
 		long EndTime3 = new Date().getTime();
 		//to test or evaluate here
 		//Search.search(src + "/all_souls_000000.jpg");
-		EvaluateImageNet.evaluate(tests);
+		double precision=EvaluateImageNet.evaluate(tests);
 		long EndTime4 = new Date().getTime();
 		rt.writeMsg("$ISEnd$ " + new Date().getTime());
 		 
@@ -82,13 +83,15 @@ public class Pipeline_ImageNet_Evaluation {
 				+"\nFeature Extraction: "+ (double)(EndTime1 - startTime) / N
 			+"\nVVWDriver: "+ (double)(EndTime2 - EndTime1) / N + "\n" + s
 				+"Indexing: "+ (double)(EndTime3 - EndTime2) / N * 60 + " seconds\n" +
-				"Searching: " + (double)(EndTime4 - EndTime3) / N * 60 + " seconds");
+				"Searching: " + (double)(EndTime4 - EndTime3) / N * 60 + " seconds"+
+				"\nprecision:"+precision);
 
 		String string_result="Total Running Time: "+ (double)(EndTime3 - startTime) / N 
 				+"\nFeature Extraction: "+ (double)(EndTime1 - startTime) / N
 			+"\nVVWDriver: "+ (double)(EndTime2 - EndTime1) / N + "\n" + s
 				+"Indexing: "+ (double)(EndTime3 - EndTime2) / N * 60 + " seconds\n" +
-				"Searching: " + (double)(EndTime4 - EndTime3) / N * 60 + " seconds";
+				"Searching: " + (double)(EndTime4 - EndTime3) / N * 60 + " seconds"+
+				"\nprecision:"+precision;
 		rt.writeMsg(string_result);
 
 		mt.stopMe();
