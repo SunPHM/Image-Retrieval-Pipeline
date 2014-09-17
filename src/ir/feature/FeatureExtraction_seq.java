@@ -14,7 +14,10 @@ import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
+import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -33,7 +36,7 @@ public class FeatureExtraction_seq {
 	public static String seqfile= "data/images";
 	//public static String fn = "test/data/fn.txt";
 	public static String feature_folder ="test/data/features.txt";
-	public static final Integer split_size=1024*1024*10;//30MB
+	public static final Integer split_size=(int) (1024*1024*3);//30MB
 	
 	public static void main(String[] args) {
 	//	SIFTExtraction.getNames(img_folder, fn);
@@ -41,16 +44,23 @@ public class FeatureExtraction_seq {
 	}
 	
 	public static void extractFeatures(String in_seqfile,  String features, String temp){ // the main entry point for Feature Extraction to be called
+		//no need for temp folders to put feautres
 		seqfile=in_seqfile;
 		feature_folder = features;
+		temp=features;
 		HadoopUtil.delete(temp);
 		extractMR(seqfile, temp);
 //		HadoopUtil.copyMerge(temp, feature_folder);
 		HadoopUtil.delete(temp+"/_SUCCESS");
 		System.out.println("deleted path: "+temp+"/_SUCCESS");
-		HadoopUtil.cpFile(temp+"/part-r-00000", features);
+//	HadoopUtil.cpFile(temp, features);
+//		HadoopUtil.cpFile(temp, features);
+//		HadoopUtil.copyMerge(temp, feature_folder);
 		
-		System.out.println("feature extraction is done");
+		System.out.println("feature extraction is done, featres output to "+temp);
+		
+//		System.out.println("test reading the sequencefile from copymerge of feature extraction");
+//		testCopyMerge.test(features);
 		
 		
 	}
@@ -120,7 +130,7 @@ public class FeatureExtraction_seq {
 		}
 		job.setNumReduceTasks(default_num_reducer);
 */		
-		job.setNumReduceTasks(1);///need improvement
+//		job.setNumReduceTasks(2);///need improvement
 		
 		
 		try {
@@ -192,6 +202,9 @@ public class FeatureExtraction_seq {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			catch(java.lang.ArrayIndexOutOfBoundsException e){
+				//what can we do about the corrupted images?????
+			}
 			
 		}
 		
@@ -206,3 +219,35 @@ public class FeatureExtraction_seq {
 
 
 }
+
+class testCopyMerge {
+	public static void test(String seqfile){
+		Configuration config = new Configuration();
+		Path path = new Path(seqfile);
+		WritableComparable key=null;
+		Writable value =null;
+		try{
+			SequenceFile.Reader reader = new SequenceFile.Reader(FileSystem.get(config), path, config);
+			 key = (WritableComparable) reader.getKeyClass().newInstance();
+			 value = (Writable) reader.getValueClass().newInstance();
+			while (reader.next(key, value)){
+				//do nothing
+				System.out.print("\t"+key.toString());
+			}
+			reader.close();
+		}catch(IOException e){
+			System.out.println(key.toString()+"\t"+value.toString());
+			e.printStackTrace();
+		}
+		catch(InstantiationException e){
+			System.out.println(key.toString()+"\t"+value.toString());
+			e.printStackTrace();
+		}
+		catch(IllegalAccessException e){
+			System.out.println(key.toString()+"\t"+value.toString());
+			e.printStackTrace();
+		}
+		
+	}
+}
+

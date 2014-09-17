@@ -30,11 +30,12 @@ public class Pipeline_Oxbuilds_Evaluate {
 		//args[3]: the number of bot-level clusters
 		//args[4]=0|1|2, the botlevel clustering method to choose, 0: serial; 1: MR job based, 2:  multi-thread
 		//args[5]: the ground truth folder
+		//args[6]: the folder containing the images (not the seqfile input)
 		// test arguments: data/images/ test/ 10 10 1
-		run(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]), args[5]);
+		run(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]), args[5],args[6]);
 	}
 	
-	public static String run(String src, String dst, int topK, int botK, int botlvlcluster_type, String gt){
+	public static String run(String src, String dst, int topK, int botK, int botlvlcluster_type, String gt, String testImgFolder){
 		long N = 1000 * 60;
 		long startTime = new Date().getTime();
 		HadoopUtil.delete(dst);
@@ -76,7 +77,7 @@ public class Pipeline_Oxbuilds_Evaluate {
 		long EndTime3 = new Date().getTime();
 		//to test or evaluate here
 		//Search.search(src + "/all_souls_000000.jpg");
-		String evaluation_result=EvaluateOxbuilds.evaluate(src, gt);
+		String evaluation_result=EvaluateOxbuilds.evaluate(testImgFolder, gt);
 		long EndTime4 = new Date().getTime();
 		rt.writeMsg("$ISEnd$ " + new Date().getTime());
 		 

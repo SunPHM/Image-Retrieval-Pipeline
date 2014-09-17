@@ -94,7 +94,7 @@ public class TopDownClustering {
 	}
 	
 	public static void topLevelProcess(String input, String cls, String top, int topK) {
-		kmeans(input, cls, top, topK, delta, x);
+		kmeans(input, cls, top, topK, delta, x,true);
 	}
 	
 	public static void midLevelProcess(String top, String mid) throws IOException, InterruptedException {
@@ -111,7 +111,7 @@ public class TopDownClustering {
 			String output = bot + "/" + i;
 			int k = botK;
 			double cd = delta;
-			kmeans(input,clusters,output,k,cd,x);
+			kmeans(input,clusters,output,k,cd,x,false);
 			
 			// copy clusters to the result folder--no longer need it
 			
@@ -219,7 +219,28 @@ public class TopDownClustering {
 		else return tmp_folders;
 	}
 	
-	public static void kmeans(String input, String clusters, String output, int k, double cd, int x) {
+	public static void kmeans_init(String input,Path clusters_path,int k,Configuration conf, boolean is_input_directory) 
+			throws IOException, InstantiationException, IllegalAccessException{
+		//read first K points from input folder as initial K clusters
+		Path initial_path=null;
+		if(is_input_directory==true)//is directory
+			 initial_path=new Path(input+"/part-r-00000");
+		else
+			 initial_path=new Path(input);
+		SequenceFile.Reader reader = new SequenceFile.Reader(FileSystem.get(conf), initial_path, conf);
+		WritableComparable key = (WritableComparable)reader.getKeyClass().newInstance();
+		VectorWritable value = (VectorWritable) reader.getValueClass().newInstance();
+		SequenceFile.Writer writer = new SequenceFile.Writer(FileSystem.get(conf), conf, clusters_path, Text.class,Kluster.class);
+		for (int i = 0; i < k; i++){
+			reader.next(key, value);	 
+			Vector vec = value.get();
+			Kluster cluster = new Kluster(vec, i, distance_measure);
+			writer.append(new Text(cluster.getIdentifier()), cluster);
+		}
+		reader.close(); 
+		writer.close();
+	}
+	public static void kmeans(String input, String clusters, String output, int k, double cd, int x,boolean is_input_directory) {
 		org.apache.hadoop.conf.Configuration conf = new Configuration();
 		try {
 			Path input_path = new Path(input);
@@ -228,18 +249,7 @@ public class TopDownClustering {
 			HadoopUtil.delete(output);
 			double clusterClassificationThreshold = 0; 
 			 
-			//read first K points from input folder as initial K clusters
-			SequenceFile.Reader reader = new SequenceFile.Reader(FileSystem.get(conf), input_path, conf);
-			WritableComparable key = (WritableComparable)reader.getKeyClass().newInstance();
-			VectorWritable value = (VectorWritable) reader.getValueClass().newInstance();
-			SequenceFile.Writer writer = new SequenceFile.Writer(FileSystem.get(conf), conf, clusters_path, Text.class,Kluster.class);
-			for (int i = 0; i < k; i++){
-				reader.next(key, value);	 
-				Vector vec = value.get();
-				Kluster cluster = new Kluster(vec, i, distance_measure);
-				writer.append(new Text(cluster.getIdentifier()), cluster);
-			}
-			reader.close(); writer.close();
+			kmeans_init( input, clusters_path,k,conf,  is_input_directory);
 			//System.out.println("initial " + k + "  clusters written to file: " + clusters);		
 //*old 0.8api		
 			KMeansDriver.run(conf, input_path, clusters_path, output_path, 
@@ -294,9 +304,14 @@ class runBotLevelClustering{
 
 		conf.setInputFormat(SequenceFileInputFormat.class);
 	    conf.setOutputFormat(TextOutputFormat.class);
-
+	    
+	    
+	    //no reduce step operation is needed
+	    conf.setNumReduceTasks(0);
+	    
 		FileInputFormat.setInputPaths(conf, new Path(input));
 		FileOutputFormat.setOutputPath(conf, new Path(whatever_output));
+		
 
 		try {
 			JobClient.runJob(conf);
@@ -315,7 +330,7 @@ class runBotLevelClustering{
 			String args=value.toString();
 			//String input, String clusters, String output, int k, double cd, int x
 			String[] splits=args.split(" ");
-			TopDownClustering.kmeans(splits[0], splits[1], splits[2], Integer.parseInt(splits[3]), Double.parseDouble(splits[4]), Integer.parseInt(splits[5]));
+			TopDownClustering.kmeans(splits[0], splits[1], splits[2], Integer.parseInt(splits[3]), Double.parseDouble(splits[4]), Integer.parseInt(splits[5]),false);
 			TopDownClustering.log("bottom-level clustering " + key.toString() + " ends");
 		}
 	}
@@ -345,7 +360,7 @@ class KmeansThread extends Thread
    @Override
    public void run()
    {
-      TopDownClustering.kmeans(input, clusters, output, k, cd, x);
+      TopDownClustering.kmeans(input, clusters, output, k, cd, x,false);
       TopDownClustering.log("thread " + id + " ends");
    }
 }

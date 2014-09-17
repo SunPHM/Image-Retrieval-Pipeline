@@ -85,12 +85,13 @@ public class Search {
 		}
 	}
 	
-	public static void search(String image){
+	public static String[] search(String image){
+		String[] results=null;
 		try {
 			System.out.println("test image: " + image);
 			String[] features = getImageFeatures(image);
 			String qs = Search.createQuery(features);
-			String[] results = query(qs);
+			results = query(qs);
 			System.out.println("results length = " + results.length);
 		} catch (SolrServerException e) {
 			// TODO Auto-generated catch block
@@ -99,6 +100,7 @@ public class Search {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		return results;
 		
 	}
 	

@@ -73,7 +73,10 @@ public class Pipeline_FE_seq{
 		Search.runIndexing(dst + "/data/frequency.txt");
 		long EndTime3 = new Date().getTime();
 		//to test or evaluate here
-		Search.search("n07749582_29305.JPEG");
+		String[] search_results=Search.search("all_souls_000000.jpg");
+		for(String str:search_results){
+			System.out.println(str);
+		}
 		//Search.search("all_souls_000000.jpg");
 		long EndTime4 = new Date().getTime();
 		
