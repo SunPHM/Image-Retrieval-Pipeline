@@ -153,7 +153,10 @@ public class EvaluateOxbuilds {
 		HashSet<String> set = new HashSet<String>();
 		BufferedReader reader;
 		try {
-			reader = new BufferedReader(new FileReader(filename));
+
+			FileSystem fs = FileSystem.get(new Configuration());
+			reader = new BufferedReader(new InputStreamReader(fs.open(new Path(filename))));
+//			reader = new BufferedReader(new FileReader(filename));
 			String line;
 			while((line = reader.readLine()) != null){
 				set.add(line);

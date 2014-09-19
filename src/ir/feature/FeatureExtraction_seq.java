@@ -36,7 +36,7 @@ public class FeatureExtraction_seq {
 	public static String seqfile= "data/images";
 	//public static String fn = "test/data/fn.txt";
 	public static String feature_folder ="test/data/features.txt";
-	public static final Integer split_size=(int) (1024*1024*3);//30MB
+	public static final Integer split_size=(int) (1024*1024*10);//30MB
 	
 	public static void main(String[] args) {
 	//	SIFTExtraction.getNames(img_folder, fn);
@@ -121,8 +121,8 @@ public class FeatureExtraction_seq {
 		try {
 			FileSystem fs = FileSystem.get(conf);
 			ContentSummary cs =fs.getContentSummary(new Path(infile));
-			long input_size=cs.getSpaceConsumed();
-			default_num_reducer=(int)(Math.ceil((double)input_size/(1024*1024*200)));//200MB PER REducer
+			long input_size=cs.getLength();//cs.getSpaceConsumed();
+			default_num_reducer=(int)(Math.ceil((double)input_size/(1024*1024*32)));//200MB PER REducer
 			System.out.println("Path: "+infile+" size "+input_size+", will use "+default_num_reducer+" reducer(s)");
 		} catch (IOException e3) {
 			// TODO Auto-generated catch block
@@ -131,6 +131,7 @@ public class FeatureExtraction_seq {
 		job.setNumReduceTasks(default_num_reducer);
 */		
 //		job.setNumReduceTasks(2);///need improvement
+		job.setNumReduceTasks(0);
 		
 		
 		try {

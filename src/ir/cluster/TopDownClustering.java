@@ -223,10 +223,15 @@ public class TopDownClustering {
 			throws IOException, InstantiationException, IllegalAccessException{
 		//read first K points from input folder as initial K clusters
 		Path initial_path=null;
-		if(is_input_directory==true)//is directory
-			 initial_path=new Path(input+"/part-r-00000");
-		else
+		
+		if(is_input_directory==true){//is directory
+			String[] input_all_files=HadoopUtil.getListOfFiles(input);
+			System.out.println("\n!!!Generate initial cls from path "+input_all_files[0]+"\n");
+			 initial_path=new Path(input_all_files[0]);
+		}
+		else{
 			 initial_path=new Path(input);
+		}
 		SequenceFile.Reader reader = new SequenceFile.Reader(FileSystem.get(conf), initial_path, conf);
 		WritableComparable key = (WritableComparable)reader.getKeyClass().newInstance();
 		VectorWritable value = (VectorWritable) reader.getValueClass().newInstance();
@@ -255,9 +260,10 @@ public class TopDownClustering {
 			KMeansDriver.run(conf, input_path, clusters_path, output_path, 
 					distance_measure, cd, maxIterations, true, clusterClassificationThreshold, false);
 //0.9 api
-/*			KMeansDriver.run(conf, input_path, clusters_path, output_path, 
-					cd, x, true, clusterClassificationThreshold, false);
-					*/
+//			System.out.println("\n\n0.9API ~~~~!!!!!!!!\n\n");
+//			KMeansDriver.run(conf, input_path, clusters_path, output_path, 
+//					cd, x, true, clusterClassificationThreshold, false);
+					
 			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
