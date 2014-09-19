@@ -7,7 +7,10 @@ import java.io.IOException;
 public class RecordTime {
 	
 	private String outfile=null;
-	public RecordTime(String file){this.outfile=file;}
+	public RecordTime(String file){
+		this.outfile=file;
+		HadoopUtil.delete(file);
+		}
 	public void writeMsg(String str){
 		 FileWriter fw;
 		try {

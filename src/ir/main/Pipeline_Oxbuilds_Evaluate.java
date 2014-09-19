@@ -3,6 +3,8 @@ package ir.main;
 
 import java.util.Date;
 
+import org.apache.hadoop.fs.Path;
+
 import ir.cluster.VWDriver;
 import ir.feature.FeatureExtraction;
 import ir.feature.FeatureExtraction_seq;
@@ -31,20 +33,31 @@ public class Pipeline_Oxbuilds_Evaluate {
 		//args[4]=0|1|2, the botlevel clustering method to choose, 0: serial; 1: MR job based, 2:  multi-thread
 		//args[5]: the ground truth folder
 		//args[6]: the folder containing the images (not the seqfile input)
+		//args[7]: 0=false,1=true
 		// test arguments: data/images/ test/ 10 10 1
-		run(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]), args[5],args[6]);
+		boolean runTopdownClustering=true;
+		//if()
+		run(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]), args[5],args[6],true);
 	}
 	
-	public static String run(String src, String dst, int topK, int botK, int botlvlcluster_type, String gt, String testImgFolder){
+	public static String run(String src, String dst, int topK, int botK, int botlvlcluster_type, String gt, String testImgFolder,boolean runTopdownClustering){
 		long N = 1000 * 60;
 		long startTime = new Date().getTime();
 		HadoopUtil.delete(dst);
-		
+		Path srcPath = new Path(src);
+		String rt_mc_filename_prefix = null;
+		if(runTopdownClustering) {
+			rt_mc_filename_prefix  = "OxbuildEvaluate_"+ srcPath.getName()+"_topK="+topK+"botK"+botK+"_";
+			
+		}
+		else{
+			rt_mc_filename_prefix  = "OxbuildEvaluate_"+ srcPath.getName()+"K="+topK*botK+"_";
+		}
 		//record time of each phase to a file
-		RecordTime rt = new RecordTime("recordtime.txt");
+		RecordTime rt = new RecordTime(rt_mc_filename_prefix+"record_timestamp.txt");
 		rt.writeMsg("#Task: "+src+" "+dst+" "+topK+" "+botK+" "+botlvlcluster_type);
 		//run the process to issue "hadoop job -list" and get the results in a file
-		MeasureContainers mt = new  MeasureContainers("recordcontainers.txt");
+		MeasureContainers mt = new  MeasureContainers(rt_mc_filename_prefix+"recordcontainers.txt");
 		mt.start();
 		
 		//Feature Extraction
@@ -63,7 +76,7 @@ public class Pipeline_Oxbuilds_Evaluate {
 		rt.writeMsg("$VWStart$ "+new Date().getTime());
 		System.out.println("\n\nvocabulary construction and frequency generation");
 		String[] args = {features, dst, "" + topK, "" + botK};
-		String s = VWDriver.run(args, botlvlcluster_type);
+		String s = VWDriver.run(args, botlvlcluster_type,runTopdownClustering);
 		rt.writeMsg("$VWEnd$ "+new Date().getTime());
 		long EndTime2 = new Date().getTime();
 		
