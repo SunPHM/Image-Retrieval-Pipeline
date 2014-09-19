@@ -125,8 +125,10 @@ public class Frequency {
 				//System.out.println(line);
 				String center = line.split("\\]")[0].split("c=\\[")[1];
 				String[] array = center.split(", ");
-				for(int j = 0; j < featureSize; j++)
-					cs[i][j] = Double.parseDouble(array[j]);
+				for(int j = 0; j < featureSize; j++){
+					String[] co = array[j].split(":"); // adding regex patterns to solve the wrong format problem
+					cs[i][j] = Double.parseDouble(co[co.length - 1]);
+				}
 			}
 			return cs;
 		}
