@@ -24,11 +24,11 @@ public class EvaluateOxbuilds {
 	public static void main(String[] args) throws IOException, SolrServerException{
 		Search.clusters = "test/cluster/clusters.txt";
 		Search.clusterNum = 4;
-		evaluate("data/images", "data/gt_partial");
+		evaluate("data/images", "data/gt_partial",20);
 	}
 	
 	// benchmarking the Oxford 5k dataset
-	public static String evaluate(String imageFolder, String gtFolder){
+	public static String evaluate(String imageFolder, String gtFolder,int num_results){
 		// read all the files with "query"
 		String[] files = HadoopUtil.getListOfFiles(gtFolder);
 		// store the F1 scores
@@ -55,7 +55,7 @@ public class EvaluateOxbuilds {
 					String[] features = getPartialImageFeatures(imageFolder + "/" + queryImage, lowX, lowY, highX, highY);
 					// search the image features
 					//System.out.println(file.substring(0, file.length() - "_query.txt".length()));
-					F1Score f1s = searchFeatures(features, file.substring(0, file.length() - "_query.txt".length()));
+					F1Score f1s = searchFeatures(features, file.substring(0, file.length() - "_query.txt".length()),num_results);
 					list.add(f1s);
 				} catch (FileNotFoundException e) {
 					// TODO Auto-generated catch block
@@ -89,13 +89,13 @@ public class EvaluateOxbuilds {
 	}
 
 	// construct a query from one ground truth query, search them and get the F1 score
-	public static F1Score searchFeatures(String[] features, String gt) throws IOException{
+	public static F1Score searchFeatures(String[] features, String gt,int num_results) throws IOException{
 		// get query from one image and measure F1 score
 		String query = Search.createQuery(features);
 		// run query
 		String[] files = null;
 		try {
-			files = Search.query(query);
+			files = Search.query(query,num_results);
 		} catch (SolrServerException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -189,13 +189,3 @@ public class EvaluateOxbuilds {
 	}
 }
 
-class F1Score {
-	double precision;
-	double recall;
-	double F1;
-	F1Score(double pre, double re){
-		precision = pre;
-		recall = re;
-		F1 = 2 * (precision * recall) / (precision + recall);
-	}
-}

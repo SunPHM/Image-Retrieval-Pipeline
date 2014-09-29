@@ -2,6 +2,7 @@ package ir.cluster;
 
 import ir.util.XMLUtil;
 
+import java.io.IOException;
 import java.util.Date;
 
 /**
@@ -14,7 +15,8 @@ public class VWDriver {
 		
 	}
 	
-	public static String run(String[] args,int botlvlcluster_type,boolean runTopdownClustering){
+	public static String run(String[] args,int botlvlcluster_type,boolean runTopdownClustering) 
+			throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException, InterruptedException{
 		// args[0]: the features folder
 		// args[1]: the result folder
 		// args[2]: topK
@@ -26,11 +28,11 @@ public class VWDriver {
 		
 		String t = null;
 		if(runTopdownClustering){//topdown clustering
-				t=TopDownClustering.run(args1, botlvlcluster_type);
+				t = TopDownClustering.run(args1, botlvlcluster_type);
 		}
 		else{//kmeans clustering
-			int k=Integer.parseInt(args[2])*Integer.parseInt(args[3]);
-			t=NormalKmeansClustering.runKmeansClustering(args[0], args[1]+"/cluster/", k);
+			int k = Integer.parseInt(args[2])*Integer.parseInt(args[3]);
+			t = NormalKmeansClustering.runKmeansClustering(args[0], args[1]+"/cluster/", k);
 		}
 		
 		long EndTime1 = new Date().getTime();

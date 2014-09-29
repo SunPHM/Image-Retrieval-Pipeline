@@ -43,11 +43,13 @@ public class TopDownClustering {
 	private static final CosineDistanceMeasure distance_measure = new CosineDistanceMeasure();
 	
 	//example args: data/cluster/fs.seq data/cluster/level  10 10
-	public static void main(String[] args){
+	public static void main(String[] args) 
+			throws InstantiationException, IllegalAccessException, ClassNotFoundException{
 		run(args, 1);
 	}
 	
-	public static String run(String[] args, int botlvlcluster_type) {
+	public static String run(String[] args, int botlvlcluster_type) 
+			throws InstantiationException, IllegalAccessException, ClassNotFoundException {
 		
 		long ts0 = 0, ts1 = 0, ts2 = 0, ts3 = 0;
 		try {
@@ -91,7 +93,8 @@ public class TopDownClustering {
 		"bot-level clustering time = " + (double)(ts3 - ts2) / (60 * 1000) + "\n";
 	}
 	
-	public static void topLevelProcess(String input, String cls, String top, int topK) {
+	public static void topLevelProcess(String input, String cls, String top, int topK)
+			throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException, InterruptedException {
 		kmeans(input, cls, top, topK, delta, x,true);
 	}
 	
@@ -99,7 +102,8 @@ public class TopDownClustering {
 		ClusterPP.run_clusterpp(top + "/clusteredPoints", mid);
 	}
 	
-	public static void botLevelProcess_Serial(String mid, String bot, int topK, int botK) {
+	public static void botLevelProcess_Serial(String mid, String bot, int topK, int botK) 
+			throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException, InterruptedException {
 		String[] folders = getFolders(mid);
 		
 		for(int i = 0; i < folders.length; i++){
@@ -243,9 +247,10 @@ public class TopDownClustering {
 		reader.close(); 
 		writer.close();
 	}
-	public static void kmeans(String input, String clusters, String output, int k, double cd, int x,boolean is_input_directory) {
+	public static void kmeans(String input, String clusters, String output, int k, double cd, int x,boolean is_input_directory) 
+			throws InstantiationException, IllegalAccessException, IOException, ClassNotFoundException, InterruptedException {
 		org.apache.hadoop.conf.Configuration conf = new Configuration();
-		try {
+
 			Path input_path = new Path(input);
 			Path clusters_path = new Path(clusters + "/part-r-00000");
 			Path output_path = new Path(output);
@@ -263,24 +268,6 @@ public class TopDownClustering {
 //					cd, x, true, clusterClassificationThreshold, false);
 					
 			
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			
-			System.out.println("\n\n\n\n\nn\n\n\n\nn\n\n\n\n\n\n\n\nKmeans encounter IOException, please check!!!!!\n\n\n\n\n\n\n\n");
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InstantiationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 	}
 	
 	@SuppressWarnings("deprecation")
@@ -336,7 +323,26 @@ class runBotLevelClustering{
 			String args=value.toString();
 			//String input, String clusters, String output, int k, double cd, int x
 			String[] splits=args.split(" ");
-			TopDownClustering.kmeans(splits[0], splits[1], splits[2], Integer.parseInt(splits[3]), Double.parseDouble(splits[4]), Integer.parseInt(splits[5]),false);
+			
+			try {
+				TopDownClustering.kmeans(splits[0], splits[1], splits[2], Integer.parseInt(splits[3]), Double.parseDouble(splits[4]), Integer.parseInt(splits[5]),false);
+			} catch (NumberFormatException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InstantiationException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ClassNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
 			TopDownClustering.log("bottom-level clustering " + key.toString() + " ends");
 		}
 	}
@@ -366,7 +372,24 @@ class KmeansThread extends Thread
    @Override
    public void run()
    {
-      TopDownClustering.kmeans(input, clusters, output, k, cd, x,false);
+      try {
+		TopDownClustering.kmeans(input, clusters, output, k, cd, x,false);
+	} catch (InstantiationException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	} catch (IllegalAccessException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	} catch (ClassNotFoundException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	} catch (IOException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	} catch (InterruptedException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
       TopDownClustering.log("thread " + id + " ends");
    }
 }

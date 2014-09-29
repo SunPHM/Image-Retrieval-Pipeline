@@ -6,7 +6,8 @@ import java.io.IOException;
 
 public class runTestonImageNet {
 	
-	public static void main(String args[]) throws NumberFormatException, IOException{
+	public static void main(String args[]) 
+			throws NumberFormatException, IOException, InstantiationException, IllegalAccessException, ClassNotFoundException, InterruptedException{
 		String input = args[0];
 		String output = args[1];
 		String testImgFolder = args[2];

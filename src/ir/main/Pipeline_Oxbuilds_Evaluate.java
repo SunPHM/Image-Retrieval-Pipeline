@@ -1,6 +1,7 @@
 package ir.main;
 
 
+import java.io.IOException;
 import java.util.Date;
 
 import org.apache.hadoop.fs.Path;
@@ -19,13 +20,20 @@ public class Pipeline_Oxbuilds_Evaluate {
 	// the main entry point for the Pipeline execution
 	/** Setup
 	 * @return 
+	 * @throws InterruptedException 
+	 * @throws IOException 
+	 * @throws ClassNotFoundException 
+	 * @throws IllegalAccessException 
+	 * @throws InstantiationException 
+	 * @throws NumberFormatException 
 	 * @Java: 1.6
 	 * @Hadoop: 1.2.1
 	 * @Mahout: 0.8
 	 * @Solr: 4.6.1
 	 */
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) 
+			throws NumberFormatException, InstantiationException, IllegalAccessException, ClassNotFoundException, IOException, InterruptedException {
 		//args[0]: the path to the images on HDFS or local file system
 		//args[1]: the path of the output on HDFS or local file system
 		//args[2]: the number of top-level clusters
@@ -45,7 +53,8 @@ public class Pipeline_Oxbuilds_Evaluate {
 		run(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]), args[5],args[6],runTopdownClustering);
 	}
 	
-	public static String run(String src, String dst, int topK, int botK, int botlvlcluster_type, String gt, String testImgFolder,boolean runTopdownClustering){
+	public static String run(String src, String dst, int topK, int botK, int botlvlcluster_type, String gt, String testImgFolder,boolean runTopdownClustering) 
+			throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException, InterruptedException{
 		long N = 1000 * 60;
 		long startTime = new Date().getTime();
 		HadoopUtil.delete(dst);
@@ -93,7 +102,7 @@ public class Pipeline_Oxbuilds_Evaluate {
 		long EndTime3 = new Date().getTime();
 		//to test or evaluate here
 		//Search.search(src + "/all_souls_000000.jpg");
-		String evaluation_result=EvaluateOxbuilds.evaluate(testImgFolder, gt);
+		String evaluation_result=EvaluateOxbuilds.evaluate(testImgFolder, gt,20);
 		long EndTime4 = new Date().getTime();
 		rt.writeMsg("$ISEnd$ " + new Date().getTime());
 		 

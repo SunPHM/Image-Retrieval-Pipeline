@@ -142,7 +142,8 @@ public class Search {
 		return result;
 	}
 
-	public static String[] query(String s) throws SolrServerException{//query and output results
+	//query with customed number of results
+	public static String[] query(String s, int num_results) throws SolrServerException{//query and output results
 		
 		//query a numeric vector as a string
 		String urlString = Search.urlString;
@@ -151,7 +152,7 @@ public class Search {
 	    SolrQuery query = new SolrQuery();
 	    //query.setQuery("includes:" + s);
 	    query.set("q", "includes:" + s);
-	    query.setRows(Search.numOfResults);
+	    query.setRows(num_results);
 	    // get results		
 	    QueryResponse qresponse = server.query(query);
 	    SolrDocumentList list = qresponse.getResults();
@@ -162,5 +163,11 @@ public class Search {
 	    }
 	    
 	    return files;
+	}
+	
+	//call with a default number of results
+	public static String[] query(String s) throws SolrServerException{//query and output results
+		
+	    return query(s,Search.numOfResults);
 	}
 }

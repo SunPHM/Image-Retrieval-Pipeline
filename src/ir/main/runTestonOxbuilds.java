@@ -8,7 +8,8 @@ public class runTestonOxbuilds {
 		run(args);
 		runTestonOxbuilds_kmeans.run(args);
 	}
-	public static void run(String args[]) throws IOException{
+	public static void run(String args[])
+			throws IOException, InstantiationException, IllegalAccessException, ClassNotFoundException, InterruptedException{
 		String input=args[0];
 		String output=args[1];
 		String gt=args[2];

@@ -7,6 +7,7 @@ import ir.util.HadoopUtil;
 import ir.util.MeasureContainers;
 import ir.util.RecordTime;
 
+import java.io.IOException;
 import java.util.Date;
 
 public class Pipeline_FE_seq{
@@ -14,13 +15,20 @@ public class Pipeline_FE_seq{
 	// the main entry point for the Pipeline execution
 	/** Setup
 	 * @return 
+	 * @throws InterruptedException 
+	 * @throws IOException 
+	 * @throws ClassNotFoundException 
+	 * @throws IllegalAccessException 
+	 * @throws InstantiationException 
+	 * @throws NumberFormatException 
 	 * @Java: 1.6
 	 * @Hadoop: 1.2.1
 	 * @Mahout: 0.8
 	 * @Solr: 4.6.1
 	 */
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) 
+			throws NumberFormatException, InstantiationException, IllegalAccessException, ClassNotFoundException, IOException, InterruptedException {
 		//args[0]: the path to the images on HDFS or local file system
 		//args[1]: the path of the output on HDFS or local file system
 		//args[2]: the number of top-level clusters
@@ -30,7 +38,8 @@ public class Pipeline_FE_seq{
 		 run(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]),Integer.parseInt(args[4]));
 	}
 	
-	public static String run(String src, String dst, int topK, int botK, int botlvlcluster_type){
+	public static String run(String src, String dst, int topK, int botK, int botlvlcluster_type) 
+			throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException, InterruptedException{
 		long N = 1000 * 60;
 		long startTime = new Date().getTime();
 		HadoopUtil.delete(dst);

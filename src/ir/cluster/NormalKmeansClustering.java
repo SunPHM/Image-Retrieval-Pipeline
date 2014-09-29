@@ -6,7 +6,8 @@ import java.util.Date;
 //interface should be same to TopDownclustering
 public class NormalKmeansClustering {
 
-	public static String runKmeansClustering(String features, String cluster_output, int k){
+	public static String runKmeansClustering(String features, String cluster_output, int k) 
+			throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException, InterruptedException{
 		
 		long ts0 = new Date().getTime();
 		TopDownClustering.topLevelProcess(features, cluster_output+"top/cls", cluster_output+"/top/", k);
