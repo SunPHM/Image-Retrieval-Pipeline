@@ -266,6 +266,8 @@ public class TopDownClustering {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			
+			System.out.println("\n\n\n\n\nn\n\n\n\nn\n\n\n\n\n\n\n\nKmeans encounter IOException, please check!!!!!\n\n\n\n\n\n\n\n");
 		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

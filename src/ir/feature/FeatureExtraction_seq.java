@@ -33,13 +33,11 @@ import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
 
 public class FeatureExtraction_seq {
-	public static String seqfile= "data/images";
-	//public static String fn = "test/data/fn.txt";
-	public static String feature_folder ="test/data/features.txt";
-	public static final Integer split_size=(int) (1024*1024*10);//30MB
+	public static String seqfile = "data/images";
+	public static String feature_folder = "test/data/features.txt";
+	public static final Integer split_size = (int) (1024*1024*64);//30MB
 	
 	public static void main(String[] args) {
-	//	SIFTExtraction.getNames(img_folder, fn);
 		extractFeatures(args[0], args[1], args[2]);
 	}
 	
@@ -50,19 +48,10 @@ public class FeatureExtraction_seq {
 		temp=features;
 		HadoopUtil.delete(temp);
 		extractMR(seqfile, temp);
-//		HadoopUtil.copyMerge(temp, feature_folder);
 		HadoopUtil.delete(temp+"/_SUCCESS");
 		System.out.println("deleted path: "+temp+"/_SUCCESS");
-//	HadoopUtil.cpFile(temp, features);
-//		HadoopUtil.cpFile(temp, features);
-//		HadoopUtil.copyMerge(temp, feature_folder);
 		
 		System.out.println("feature extraction is done, featres output to "+temp);
-		
-//		System.out.println("test reading the sequencefile from copymerge of feature extraction");
-//		testCopyMerge.test(features);
-		
-		
 	}
 	
 	// extract features using Map-Reduce
@@ -111,26 +100,6 @@ public class FeatureExtraction_seq {
 		}
 		FileOutputFormat.setOutputPath(job, new Path(outfile));
 		
-		 // Defines additional sequence-file based output 'sequence' for the job
-//		 MultipleOutputs.addNamedOutput(job, "seq",
-//		   SequenceFileOutputFormat.class,
-//		   Text.class, VectorWritable.class);
-		
-		//deciding the number of reduce tasks to use
-/*		int default_num_reducer = 100;
-		try {
-			FileSystem fs = FileSystem.get(conf);
-			ContentSummary cs =fs.getContentSummary(new Path(infile));
-			long input_size=cs.getLength();//cs.getSpaceConsumed();
-			default_num_reducer=(int)(Math.ceil((double)input_size/(1024*1024*32)));//200MB PER REducer
-			System.out.println("Path: "+infile+" size "+input_size+", will use "+default_num_reducer+" reducer(s)");
-		} catch (IOException e3) {
-			// TODO Auto-generated catch block
-			e3.printStackTrace();
-		}
-		job.setNumReduceTasks(default_num_reducer);
-*/		
-//		job.setNumReduceTasks(2);///need improvement
 		job.setNumReduceTasks(0);
 		
 		

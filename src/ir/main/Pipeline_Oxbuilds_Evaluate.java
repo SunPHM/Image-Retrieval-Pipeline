@@ -33,11 +33,16 @@ public class Pipeline_Oxbuilds_Evaluate {
 		//args[4]=0|1|2, the botlevel clustering method to choose, 0: serial; 1: MR job based, 2:  multi-thread
 		//args[5]: the ground truth folder
 		//args[6]: the folder containing the images (not the seqfile input)
-		//args[7]: 0=false,1=true
+		//args[7]:optional 0=false,1=true for topdownclustering
 		// test arguments: data/images/ test/ 10 10 1
-		boolean runTopdownClustering=true;
-		//if()
-		run(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]), args[5],args[6],true);
+		boolean runTopdownClustering = true;
+		if(args.length >= 8){
+			if(args[7].equals("0")){
+				System.out.println("\n\n\nUsing Kmeans clustering instead of Topdownclustering!!!!");
+				runTopdownClustering = false;
+			}
+		}
+		run(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]), args[5],args[6],runTopdownClustering);
 	}
 	
 	public static String run(String src, String dst, int topK, int botK, int botlvlcluster_type, String gt, String testImgFolder,boolean runTopdownClustering){
@@ -47,11 +52,11 @@ public class Pipeline_Oxbuilds_Evaluate {
 		Path srcPath = new Path(src);
 		String rt_mc_filename_prefix = null;
 		if(runTopdownClustering) {
-			rt_mc_filename_prefix  = "OxbuildEvaluate_"+ srcPath.getName()+"_topK="+topK+"botK"+botK+"_";
+			rt_mc_filename_prefix  = "OxbuildEvaluate_"+ srcPath.getName()+"_topK_"+topK+"botK_"+botK+"_botlvlcluster_type_"+botlvlcluster_type;
 			
 		}
 		else{
-			rt_mc_filename_prefix  = "OxbuildEvaluate_"+ srcPath.getName()+"K="+topK*botK+"_";
+			rt_mc_filename_prefix  = "OxbuildEvaluate_"+ srcPath.getName()+"K_"+topK*botK+"_botlvlcluster_type_"+botlvlcluster_type;
 		}
 		//record time of each phase to a file
 		RecordTime rt = new RecordTime(rt_mc_filename_prefix+"record_timestamp.txt");
@@ -66,13 +71,11 @@ public class Pipeline_Oxbuilds_Evaluate {
 		String features = dst + "/data/features.seq";// the feature folder
 //		FeatureExtraction.extractFeatures(src, features, dst + "/temp/fe/");
 		FeatureExtraction_seq.extractFeatures(src, features, dst + "/temp/fe/");
-		//FeatureExtractionSeqFile.extractFeatures(src, features, dst + "/temp/fe/");
 		System.out.println("Features folder:" + features);
 		rt.writeMsg("$FEEnd$ "+new Date().getTime());
 		long EndTime1 = new Date().getTime();
 		
 		//Vocabulary Construction and Frequency Generation
-//features="ir/output/oxbuild_test_1st_try/data/features.seq";
 		rt.writeMsg("$VWStart$ "+new Date().getTime());
 		System.out.println("\n\nvocabulary construction and frequency generation");
 		String[] args = {features, dst, "" + topK, "" + botK};

@@ -60,7 +60,7 @@ public class Pipeline_FE_seq{
 		System.out.println("\n\nvocabulary construction and frequency generation");
 		String[] args = {features, dst, "" + topK, "" + botK};
 		//
-		String s = VWDriver.run(args, botlvlcluster_type,false);
+		String s = VWDriver.run(args, botlvlcluster_type,true);
 		
 		rt.writeMsg("$VWEnd$ "+new Date().getTime());
 		long EndTime2 = new Date().getTime();

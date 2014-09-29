@@ -3,6 +3,8 @@ package ir.main;
 
 import java.util.Date;
 
+import org.apache.hadoop.fs.Path;
+
 import ir.cluster.VWDriver;
 import ir.feature.FeatureExtraction;
 import ir.feature.FeatureExtraction_seq;
@@ -31,19 +33,37 @@ public class Pipeline_ImageNet_Evaluation {
 		//args[4]=0|1|2, the botlevel clustering method to choose, 0: serial; 1: MR job based, 2:  multi-thread
 		//args[5]: the test folder containing images for test
 		// test arguments: data/images/ test/ 10 10 1
-		run(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]), args[5]);
+		
+		boolean runTopdownClustering = true;
+		if(args.length >= 7){
+			if(args[6].equals("0")){
+				System.out.println("\n\n\nUsing Kmeans clustering instead of Topdownclustering!!!!");
+				runTopdownClustering = false;
+			}
+		}
+		run(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]), args[5],runTopdownClustering);
 	}
 	
-	public static String run(String src, String dst, int topK, int botK, int botlvlcluster_type, String tests){
+	public static String run(String src, String dst, int topK, int botK, int botlvlcluster_type, String tests,boolean runTopdownClustering){
 		long N = 1000 * 60;
 		long startTime = new Date().getTime();
 		HadoopUtil.delete(dst);
 		
+		Path srcPath = new Path(src);
+		String rt_mc_filename_prefix = null;
+		if(runTopdownClustering) {
+			rt_mc_filename_prefix  = "ImageNetEvaluate_"+ srcPath.getName()+"_topK_"+topK+"botK_"+botK+"_botlvlcluster_type_"+botlvlcluster_type;
+			
+		}
+		else{
+			rt_mc_filename_prefix  = "ImageNetEvaluate_"+ srcPath.getName()+"K="+topK*botK+"_botlvlcluster_type:"+botlvlcluster_type;
+		}
+		
 		//record time of each phase to a file
-		RecordTime rt = new RecordTime("recordtime.txt");
+		RecordTime rt = new RecordTime(rt_mc_filename_prefix+"record_timestamp.txt");
 		rt.writeMsg("#Task: "+src+" "+dst+" "+topK+" "+botK+" "+botlvlcluster_type);
 		//run the process to issue "hadoop job -list" and get the results in a file
-		MeasureContainers mt = new  MeasureContainers("recordcontainers.txt");
+		MeasureContainers mt = new  MeasureContainers(rt_mc_filename_prefix+"recordcontainers.txt");
 		mt.start();
 		
 		//Feature Extraction
