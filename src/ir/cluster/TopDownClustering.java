@@ -5,8 +5,10 @@ import ir.util.HadoopUtil;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
@@ -33,6 +35,9 @@ import org.apache.mahout.math.VectorWritable;
 
 public class TopDownClustering {
 	
+	private final static int cluster_capacity = 100; // in number of containers
+	private  static int num_jobs_botlevelclustering = 100;
+	
 	private static double delta = 0.001;
 	private static int x = 100;
 	
@@ -42,6 +47,8 @@ public class TopDownClustering {
 	private static int maxIterations = 100;
 	private static final CosineDistanceMeasure distance_measure = new CosineDistanceMeasure();
 	
+	
+
 	//example args: data/cluster/fs.seq data/cluster/level  10 10
 	public static void main(String[] args) 
 			throws InstantiationException, IllegalAccessException, ClassNotFoundException{
@@ -71,6 +78,8 @@ public class TopDownClustering {
 			// medium processing between top-level and bottom-level clustering
 			midLevelProcess(top, mid);
 			//bottom level clustering
+			setParallelDegree(mid,topK);
+			
 			ts2 = new Date().getTime();
 			if(botlvlcluster_type == 0) botLevelProcess_Serial(mid, bot, topK, botK);
 			else if(botlvlcluster_type == 1) botLevelProcess_MRJob(mid, bot, topK, botK);
@@ -92,6 +101,30 @@ public class TopDownClustering {
 		"mid-level processing time = " + (double)(ts2 - ts1) / (60 * 1000) + "\n" +
 		"bot-level clustering time = " + (double)(ts3 - ts2) / (60 * 1000) + "\n";
 	}
+	
+	//set the number of botlevel clustering job run in parallel
+	public static void setParallelDegree(String input_mid_folders, int topK) throws IOException{
+		
+		Configuration conf = new Configuration();
+		FileSystem fs = FileSystem.get(conf);
+		String[] folders = getFolders(input_mid_folders);
+		double containers_needed = 0;
+		for(String folder : folders){//set the number of botlevel clustering job run in parallel
+			ContentSummary cs =fs.getContentSummary(new Path(folder));
+			double input_size=(double) cs.getLength();//cs.getSpaceConsumed();
+			double input_mb =  Math.ceil(input_size/1024*1024d);
+			//assuming each map container can process 128 mb data and each reducer can process 64 mb, and 50% jobs in reduce phase
+			//should be tuned depending on cluster's setting and percentage of jobs in reduce phase should also be tuned
+			containers_needed = containers_needed + Math.ceil(input_mb/128) + 0.5 * Math.ceil(input_mb/64); 
+		}
+		
+		double avg_containers_per_job = Math.ceil( containers_needed / topK );
+		
+		num_jobs_botlevelclustering = (int) (cluster_capacity / avg_containers_per_job);
+		
+		System.out.println("\n\n Setting number of jobs parallelly run : " + num_jobs_botlevelclustering);
+	}
+	
 	
 	public static void topLevelProcess(String input, String cls, String top, int topK)
 			throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException, InterruptedException {
@@ -121,19 +154,23 @@ public class TopDownClustering {
 		}
 	}
 	
-	
-	public static void botLevelProcess_MRJob(String mid, String bot, int topK, int botK) {
+
+	public static void botLevelProcess_MRJob(String mid, String bot, int topK, int botK) throws IOException {
 		
 		String[] folders = getFolders(mid);
 		String output_folder = bot + "/temp";
 		HadoopUtil.delete(output_folder);
+		
 		for(int i = 0; i < folders.length; i++){
 			String input = folders[i] + "/part-m-0";
+					
 			String clusters = bot + "/" + i + "/cls";
 			String output = bot + "/" + i;
 			int k = botK;
 			double cd = delta;
-			writeBotLevelParameters("" + i, input + " " + clusters + " " + output + " " + k + " " + cd + " " + x, output_folder + "/" + i + ".txt");
+
+			int output_num = i % num_jobs_botlevelclustering;
+			writeBotLevelParameters("" + i, input + " " + clusters + " " + output + " " + k + " " + cd + " " + x, output_folder + "/" + output_num + ".txt");
 		}
 		runBotLevelClustering.run(output_folder, bot + "/whatever");
 	}
@@ -144,6 +181,7 @@ public class TopDownClustering {
 			Configuration conf = new Configuration();
 			SequenceFile.Writer writer = new SequenceFile.Writer(FileSystem.get(conf), conf, output_path, Text.class, Text.class);
 			writer.append(new Text(key), new Text(value));
+			
 			writer.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -153,29 +191,36 @@ public class TopDownClustering {
 	
 	
 	
-	public static void botLevelProcess_MultiThread(String mid, String bot, int topK, int botK) {
+	public static void botLevelProcess_MultiThread(String mid, String bot, int topK, int botK) throws IOException, InterruptedException {
 		String[] folders = getFolders(mid);
-		KmeansThread[] threads=new KmeansThread[folders.length];
+		KmeansThread[] threads = new KmeansThread[num_jobs_botlevelclustering];
+		
+		//init all KmeansThread
+		for(KmeansThread kt : threads){
+			kt = new KmeansThread();
+		}
+		
+		// add parameters to kmeans threands
 		for(int i = 0; i < folders.length; i++){
-			String input=folders[i] + "/part-m-0";
-			String clusters=bot + "/" + i + "/cls";
-			String output=bot + "/" + i;
+			String input = folders[i] + "/part-m-0";
+			String clusters = bot + "/" + i + "/cls";
+			String output = bot + "/" + i;
 			int k = botK;
 			double cd = delta;
-			threads[i]=new KmeansThread(i, input, clusters,output,k,cd,x);
-			threads[i].start();
+			
+			threads[i % num_jobs_botlevelclustering].addParams(new Kmeans_Params(i, input, clusters, output, k, cd, x));
+		}
+		
+		//start all kmeans threads
+		for(KmeansThread kt : threads){
+			kt.start();
 		}
 		
 		//wait for all threads to complete
 		for(int i = 0; i < folders.length; i++){
-			try {
-				threads[i].join();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				System.out.println("\n\n\n\n\n\nAttention, botlevelThread "+i+" illegal exceptions!!!!!\n*********\n******\n*********");
-				e.printStackTrace();
-			}
+			threads[i].join();
 		}
+		
 	}
 	
 	public static void merge(String src, String dst) throws IOException, InterruptedException{	
@@ -211,7 +256,8 @@ public class TopDownClustering {
 	
 	public static String[] getFolders(String mid){
 		String[] tmp_folders=HadoopUtil.getListOfFolders(mid);
-		System.out.println("In path:"+ mid);
+		System.out.println("In path:"+ mid);			
+		//threads[i].start();
 		for(String str:tmp_folders)
 			System.out.println("folder: "+str);
 		if(tmp_folders == null || tmp_folders.length != topK){
@@ -233,7 +279,8 @@ public class TopDownClustering {
 		}
 		else{
 			 initial_path=new Path(input);
-		}
+		}			
+		
 		SequenceFile.Reader reader = new SequenceFile.Reader(FileSystem.get(conf), initial_path, conf);
 		WritableComparable key = (WritableComparable)reader.getKeyClass().newInstance();
 		VectorWritable value = (VectorWritable) reader.getValueClass().newInstance();
@@ -350,46 +397,54 @@ class runBotLevelClustering{
 
 class KmeansThread extends Thread
 {
-	int id;
-	String input;
-	String clusters;
-	String output;
-	int k;
-	double cd;
-	int x;
-
-   public KmeansThread(int id, String input, String clusters, String output, int k, double cd, int x)
-   {
-	  this.id = id;
-      this.input=input;
-      this.clusters=clusters;
-      this.output=output;
-      this.k=k;
-      this.cd=cd;
-      this.x=x;
-   }
+	List<Kmeans_Params> params =new ArrayList<Kmeans_Params>();
+	
+	public void addParams(Kmeans_Params params){
+		this.params.add(params);
+	}
 
    @Override
    public void run()
    {
-      try {
-		TopDownClustering.kmeans(input, clusters, output, k, cd, x,false);
-	} catch (InstantiationException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	} catch (IllegalAccessException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	} catch (ClassNotFoundException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	} catch (IOException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	} catch (InterruptedException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	}
-      TopDownClustering.log("thread " + id + " ends");
+    	  for(Kmeans_Params param : params){
+	    		try {
+					TopDownClustering.kmeans(param.input, param.clusters, param.output, param.k, param.cd, param.x,false);
+				} catch (InstantiationException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IllegalAccessException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (ClassNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+	    		TopDownClustering.log("job no. " + param.id + " ends");
+    	  }
    }
+}
+
+class Kmeans_Params{
+	public int id;
+	public String input;
+	public String clusters;
+	public String output;
+	public int k;
+	public double cd;
+	public int x;
+	public Kmeans_Params(int id, String input, String clusters, String output, int k, double cd, int x){
+		  this.id = id;
+	      this.input = input;
+	      this.clusters = clusters;
+	      this.output = output;
+	      this.k = k;
+	      this.cd = cd;
+	      this.x = x;
+	}
 }

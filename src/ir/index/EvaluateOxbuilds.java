@@ -172,9 +172,11 @@ public class EvaluateOxbuilds {
 		return set;
 	}
 	
-	public static int getMatches(String[] files, HashSet<String> set){
+	public static int getMatches(String[] files, int prefix_array_size, HashSet<String> set){
 		HashSet<String> fset = new HashSet<String>();
-		for(int i = 0; i < files.length; i++){
+		//added for prefix of an array
+		
+		for(int i = 0; i < prefix_array_size; i++){
 			String[] array = files[i].split("/");
 			String temp = array[array.length - 1];
 			fset.add(temp.split("\\.")[0]);
@@ -187,5 +189,9 @@ public class EvaluateOxbuilds {
 		//System.out.println("num = " + num);
 		return num;
 	}
+	public static int getMatches(String[] files, HashSet<String> set){
+		return getMatches(files, files.length, set);
+	}
+	
 }
 

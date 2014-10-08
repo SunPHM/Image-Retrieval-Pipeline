@@ -73,9 +73,10 @@ public class Search {
 	}
 	
 	//TODO: code cleaning and add an entry point function
-	public static void runIndexing(String terms){
+	public static long runIndexing(String terms){
+		long docs_indexed=-1;
 		try {
-			Indexing.index(terms);
+			docs_indexed = Indexing.index(terms);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -83,6 +84,7 @@ public class Search {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		return docs_indexed;
 	}
 	
 	public static String[] search(String image){

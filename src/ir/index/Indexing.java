@@ -24,7 +24,7 @@ public class Indexing {
 		//index("data/index/visual-word-frequency.txt");		
 	}
 	
-	public static void index(String filename) throws IOException, SolrServerException{//indexing existing index matrix
+	public static long index(String filename) throws IOException, SolrServerException{//indexing existing index matrix
 		
 		String urlString = Search.urlString;
 		HttpSolrServer server = new HttpSolrServer(urlString);
@@ -58,6 +58,7 @@ public class Indexing {
 	    server.commit();
 	    docs_total_size=docs_total_size+docs.size();
 	    System.out.println("indexing is done, total docs indexed: "+docs_total_size);
+	    return docs_total_size;
 	}
 	
 	//for each line, construct an document
