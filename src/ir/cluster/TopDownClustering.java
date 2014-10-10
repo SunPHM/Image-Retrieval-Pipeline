@@ -35,7 +35,7 @@ import org.apache.mahout.math.VectorWritable;
 
 public class TopDownClustering {
 	
-	private final static int cluster_capacity = 100; // in number of containers
+	private  static int cluster_capacity = 15; // in number of containers, change this 
 	private  static int num_jobs_botlevelclustering = 100;
 	
 	private static double delta = 0.001;
@@ -51,8 +51,10 @@ public class TopDownClustering {
 
 	//example args: data/cluster/fs.seq data/cluster/level  10 10
 	public static void main(String[] args) 
-			throws InstantiationException, IllegalAccessException, ClassNotFoundException{
-		run(args, 1);
+			throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException{
+		//run(args, 1);
+		setParallelDegree("test_fe_seq2seq_100images/cluster/mid/", 10, 1);
+		
 	}
 	
 	public static String run(String[] args, int botlvlcluster_type) 
@@ -78,7 +80,7 @@ public class TopDownClustering {
 			// medium processing between top-level and bottom-level clustering
 			midLevelProcess(top, mid);
 			//bottom level clustering
-			setParallelDegree(mid,topK);
+			setParallelDegree(mid, topK, botlvlcluster_type);
 			
 			ts2 = new Date().getTime();
 			if(botlvlcluster_type == 0) botLevelProcess_Serial(mid, bot, topK, botK);
@@ -103,7 +105,7 @@ public class TopDownClustering {
 	}
 	
 	//set the number of botlevel clustering job run in parallel
-	public static void setParallelDegree(String input_mid_folders, int topK) throws IOException{
+	public static void setParallelDegree(String input_mid_folders, int topK, int botlevelclusteringtype) throws IOException{
 		
 		Configuration conf = new Configuration();
 		FileSystem fs = FileSystem.get(conf);
@@ -112,17 +114,32 @@ public class TopDownClustering {
 		for(String folder : folders){//set the number of botlevel clustering job run in parallel
 			ContentSummary cs =fs.getContentSummary(new Path(folder));
 			double input_size=(double) cs.getLength();//cs.getSpaceConsumed();
-			double input_mb =  Math.ceil(input_size/1024*1024d);
+			
+			System.out.println(input_size);
+			double input_mb =  Math.ceil(input_size/(1024*1024));
+			
+			System.out.println("Input: " + folder + "  size in MB : " + input_mb);
 			//assuming each map container can process 128 mb data and each reducer can process 64 mb, and 50% jobs in reduce phase
 			//should be tuned depending on cluster's setting and percentage of jobs in reduce phase should also be tuned
 			containers_needed = containers_needed + Math.ceil(input_mb/128) + 0.5 * Math.ceil(input_mb/64); 
 		}
 		
+		System.out.println("Total containers needed to run all jobs in parallel: " + containers_needed);
+		
 		double avg_containers_per_job = Math.ceil( containers_needed / topK );
 		
-		num_jobs_botlevelclustering = (int) (cluster_capacity / avg_containers_per_job);
+		if(botlevelclusteringtype == 1){
+			//num_jobs_botlevelclustering + num_jobs_botlevelclustering*avg_containers_per_job < cluster_capacity -1
+			num_jobs_botlevelclustering = (int) ((cluster_capacity - 1) / (1 + avg_containers_per_job));
+		}
+		else{
+			num_jobs_botlevelclustering = (int) (cluster_capacity / avg_containers_per_job);
+		}
+		System.out.println("\n\nAverage containers per job : " +  avg_containers_per_job
+				+ "\nCluster's Capacity is " + cluster_capacity
+				+ "\nSetting maximum number of jobs parallelly run : " + num_jobs_botlevelclustering);
 		
-		System.out.println("\n\n Setting number of jobs parallelly run : " + num_jobs_botlevelclustering);
+//		num_jobs_botlevelclustering = 50;
 	}
 	
 	
@@ -160,7 +177,28 @@ public class TopDownClustering {
 		String[] folders = getFolders(mid);
 		String output_folder = bot + "/temp";
 		HadoopUtil.delete(output_folder);
+		List<String> params = new ArrayList<String>();
 		
+		for(int i = 0; i < num_jobs_botlevelclustering && i < folders.length; i++){
+			params.clear();
+			for(int j = 0; i + j < folders.length; j = j + num_jobs_botlevelclustering){
+				int index = i + j;
+				String input = folders[index] + "/part-m-0";
+				
+				String clusters = bot + "/" + index + "/cls";
+				String output = bot + "/" + index;
+				int k = botK;
+				double cd = delta;
+				
+				String param = input + " " + clusters + " " + output + " " + k + " " + cd + " " + x;
+				params.add(param);
+			}
+			writeBotLevelParameters(""+i,params, output_folder + "/" + i + ".txt");
+			
+		}
+		
+		
+/*		
 		for(int i = 0; i < folders.length; i++){
 			String input = folders[i] + "/part-m-0";
 					
@@ -172,21 +210,21 @@ public class TopDownClustering {
 			int output_num = i % num_jobs_botlevelclustering;
 			writeBotLevelParameters("" + i, input + " " + clusters + " " + output + " " + k + " " + cd + " " + x, output_folder + "/" + output_num + ".txt");
 		}
+*/
 		runBotLevelClustering.run(output_folder, bot + "/whatever");
 	}
 	
-	public static void writeBotLevelParameters(String key, String value, String filename){
-		try{
+	public static void writeBotLevelParameters(String key, List<String> values, String filename) throws IOException{
+
 			Path output_path = new Path(filename);	 
 			Configuration conf = new Configuration();
 			SequenceFile.Writer writer = new SequenceFile.Writer(FileSystem.get(conf), conf, output_path, Text.class, Text.class);
-			writer.append(new Text(key), new Text(value));
+			for(String value:values){
+				writer.append(new Text(key), new Text(value));
+			}
 			
 			writer.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+
 	}
 	
 	
@@ -196,8 +234,8 @@ public class TopDownClustering {
 		KmeansThread[] threads = new KmeansThread[num_jobs_botlevelclustering];
 		
 		//init all KmeansThread
-		for(KmeansThread kt : threads){
-			kt = new KmeansThread();
+		for(int i = 0; i < threads.length; i++){
+			threads[i] = new KmeansThread();
 		}
 		
 		// add parameters to kmeans threands
@@ -217,7 +255,7 @@ public class TopDownClustering {
 		}
 		
 		//wait for all threads to complete
-		for(int i = 0; i < folders.length; i++){
+		for(int i = 0; i < num_jobs_botlevelclustering; i++){
 			threads[i].join();
 		}
 		

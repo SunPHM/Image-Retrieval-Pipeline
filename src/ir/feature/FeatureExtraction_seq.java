@@ -35,7 +35,7 @@ import org.apache.mahout.math.VectorWritable;
 public class FeatureExtraction_seq {
 	public static String seqfile = "data/images";
 	public static String feature_folder = "test/data/features.txt";
-	public static final Integer split_size = (int) (1024*1024*32);//30MB
+	public static final Integer split_size = (int) (1024*1024*3);//30MB
 	
 	public static void main(String[] args) {
 		extractFeatures(args[0], args[1], args[2]);
