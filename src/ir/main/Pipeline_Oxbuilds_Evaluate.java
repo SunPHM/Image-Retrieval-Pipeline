@@ -11,6 +11,7 @@ import ir.feature.FeatureExtraction;
 import ir.feature.FeatureExtraction_seq;
 import ir.index.EvaluateOxbuilds;
 import ir.index.Search;
+import ir.index.getmAP;
 import ir.util.HadoopUtil;
 import ir.util.MeasureContainers;
 import ir.util.RecordTime;
@@ -98,7 +99,7 @@ public class Pipeline_Oxbuilds_Evaluate {
 		//before run indexing, need to copy the frequency.txt file to local filesystem(index part reads from localfilesystem)---done 
 		int clusterNum = topK * botK;
 		Search.init(dst + "/data/frequency.txt", clusterNum, dst + "/cluster/clusters.txt");
-		Search.runIndexing(dst + "/data/frequency.txt");
+		long total_images = Search.runIndexing(dst + "/data/frequency.txt");
 		long EndTime3 = new Date().getTime();
 		//to test or evaluate here
 		//Search.search(src + "/all_souls_000000.jpg");
@@ -106,20 +107,22 @@ public class Pipeline_Oxbuilds_Evaluate {
 		long EndTime4 = new Date().getTime();
 		rt.writeMsg("$ISEnd$ " + new Date().getTime());
 		 
-		System.out.println("\n\n*******************************************  Running Time in minutes ********************************************");
-		System.out.println("Total Running Time: "+ (double)(EndTime3 - startTime) / N 
-				+"\nFeature Extraction: "+ (double)(EndTime1 - startTime) / N
-			+"\nVVWDriver: "+ (double)(EndTime2 - EndTime1) / N + "\n" + s
-				+"Indexing: "+ (double)(EndTime3 - EndTime2) / N * 60 + " seconds\n" +
-				"Searching: " + (double)(EndTime4 - EndTime3) / N * 60 + " seconds");
-
+		//get the mAP
+		double mAP = getmAP.getmAP(testImgFolder, gt, total_images);
+		
+		
 		String string_result="Total Running Time: "+ (double)(EndTime3 - startTime) / N 
 				+"\nFeature Extraction: "+ (double)(EndTime1 - startTime) / N
 			+"\nVVWDriver: "+ (double)(EndTime2 - EndTime1) / N + "\n" + s
 				+"Indexing: "+ (double)(EndTime3 - EndTime2) / N * 60 + " seconds\n" +
 				"Searching: " + (double)(EndTime4 - EndTime3) / N * 60 + " seconds"
 				
-				+"\n"+ evaluation_result;
+				+"\n"+ evaluation_result
+				+ "\nThe mAP is " + mAP;
+		System.out.println("\n\n*******************************************  Running Time in minutes ********************************************");
+		System.out.println(string_result);
+
+		
 		rt.writeMsg(string_result);
 
 		mt.stopMe();

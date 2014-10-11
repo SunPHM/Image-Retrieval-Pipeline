@@ -135,11 +135,14 @@ public class TopDownClustering {
 		else{
 			num_jobs_botlevelclustering = (int) (cluster_capacity / avg_containers_per_job);
 		}
+		
+		//using fixed number of setting
+		num_jobs_botlevelclustering = 100;
 		System.out.println("\n\nAverage containers per job : " +  avg_containers_per_job
 				+ "\nCluster's Capacity is " + cluster_capacity
 				+ "\nSetting maximum number of jobs parallelly run : " + num_jobs_botlevelclustering);
 		
-//		num_jobs_botlevelclustering = 50;
+
 	}
 	
 	

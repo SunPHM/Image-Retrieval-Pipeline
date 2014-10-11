@@ -5,8 +5,11 @@ import java.util.ArrayList;
 public class runTestonOxbuilds {
 	
 	public static void main(String[] args) throws Exception{
-		run(args);
-		runTestonOxbuilds_kmeans.run(args);
+		for(int i =0; i <= 2; i++){
+			args[1] = args[1] + "_1";
+			run(args);
+		}
+	//	runTestonOxbuilds_kmeans.run(args);
 	}
 	public static void run(String args[])
 			throws IOException, InstantiationException, IllegalAccessException, ClassNotFoundException, InterruptedException{

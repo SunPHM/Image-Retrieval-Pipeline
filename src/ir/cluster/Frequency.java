@@ -34,7 +34,9 @@ public class Frequency {
 	public static String features = "";
 	
 	public static void main(String[] args) throws IOException{
-		runJob("test/data/features/", 100, "test/cluster/clusters.txt", "test/temp/freq", "test/data/frequency.txt");
+		//runJob("test/data/features/", 100, "test/cluster/clusters.txt", "test/temp/freq", "test/data/frequency.txt");
+		runJob(args[0], Integer.parseInt(args[1]), args[2], args[3], args[4]);
+		//Frequency.FreMap.readClusters(args[0], Integer.parseInt(args[1]));
 	}
 	
 	public static void init(String features, int clusterNum, String clusters){
@@ -122,12 +124,33 @@ public class Frequency {
 			//System.out.println(clusters);
 			for(int i = 0; i < clusterNum; i ++){
 				line = input.readLine();
-
+				
 				String center = line.split("\\]")[0].split("c=\\[")[1];
 				String[] array = center.split(", ");
-				for(int j = 0; j < featureSize; j++){
-					String[] co = array[j].split(":"); // adding regex patterns to solve the wrong format problem
-					cs[i][j] = Double.parseDouble(co[co.length - 1]);
+				//debug
+				//System.out.println(line);
+				
+				//if normal case, correct format
+				if(center.contains(":") == false) {
+
+					for(int j = 0; j < featureSize; j++){
+						String[] co = array[j].split(":"); // adding regex patterns to solve the wrong format problem
+						cs[i][j] = Double.parseDouble(co[co.length - 1]);
+					}
+				}
+				else { // abnormal case, fill those missing dimensions with zeros
+					String[] result_array = new String[featureSize];
+					for (int k =0; k < featureSize; k ++){
+						result_array[k] = "0";
+					}
+					for(String str : array){
+						String[] splits = str.split(":");
+						int index = Integer.parseInt(splits[0]);
+						result_array[index] = splits[1];
+					}
+					for(int j = 0; j < featureSize; j++){
+						cs[i][j] = Double.parseDouble(result_array[j]);
+					}
 				}
 			}
 			return cs;
