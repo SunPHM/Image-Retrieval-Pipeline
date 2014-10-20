@@ -15,15 +15,8 @@ public class Pipeline {
 
 	// the main entry point for the Pipeline execution
 	/** Setup
-	 * @return 
-	 * @throws InterruptedException 
-	 * @throws IOException 
-	 * @throws ClassNotFoundException 
-	 * @throws IllegalAccessException 
-	 * @throws InstantiationException 
-	 * @throws NumberFormatException 
 	 * @Java: 1.6
-	 * @Hadoop: 1.2.1
+	 * @Hadoop: 2.2.0
 	 * @Mahout: 0.8
 	 * @Solr: 4.6.1
 	 */
@@ -34,7 +27,7 @@ public class Pipeline {
 		//args[1]: the path of the output on HDFS or local file system
 		//args[2]: the number of top-level clusters
 		//args[3]: the number of bot-level clusters
-		//args[4]=0|1|2, the botlevel clustering method to choose, 0: serial; 1: MR job based, 2:  multi-thread
+		//args[4]=0|1|2, the botlevel clustering method to choose, 0: serial; 1: map-reduce, 2:  multi-thread
 		// test arguments: data/images/ test/ 10 10 1
 		run(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]),Integer.parseInt(args[4]));
 	}
@@ -66,8 +59,8 @@ public class Pipeline {
 		rt.writeMsg("$VWStart$ "+new Date().getTime());
 		System.out.println("\n\nvocabulary construction and frequency generation");
 		String[] args = {features, dst, "" + topK, "" + botK};
-		String s = VWDriver.run(args, botlvlcluster_type,true);
-		rt.writeMsg("$VWEnd$ "+new Date().getTime());
+		String s = VWDriver.run(args, botlvlcluster_type, true);
+		rt.writeMsg("$VWEnd$ " + new Date().getTime());
 		long EndTime2 = new Date().getTime();
 		
 		//Indexing and Searching
@@ -86,13 +79,13 @@ public class Pipeline {
 		System.out.println("\n\n*******************************************  Running Time in minutes ********************************************");
 		System.out.println("Total Running Time: "+ (double)(EndTime3 - startTime) / N 
 				+"\nFeature Extraction: "+ (double)(EndTime1 - startTime) / N
-			+"\nVVWDriver: "+ (double)(EndTime2 - EndTime1) / N + "\n" + s
+			+"\nVWDriver: "+ (double)(EndTime2 - EndTime1) / N + "\n" + s
 				+"Indexing: "+ (double)(EndTime3 - EndTime2) / N * 60 + " seconds\n" +
 				"Searching: " + (double)(EndTime4 - EndTime3) / N * 60 + " seconds");
 
 		String string_result="Total Running Time: "+ (double)(EndTime3 - startTime) / N 
 				+"\nFeature Extraction: "+ (double)(EndTime1 - startTime) / N
-			+"\nVVWDriver: "+ (double)(EndTime2 - EndTime1) / N + "\n" + s
+			+"\nVWDriver: "+ (double)(EndTime2 - EndTime1) / N + "\n" + s
 				+"Indexing: "+ (double)(EndTime3 - EndTime2) / N * 60 + " seconds\n" +
 				"Searching: " + (double)(EndTime4 - EndTime3) / N * 60 + " seconds";
 		rt.writeMsg(string_result);
