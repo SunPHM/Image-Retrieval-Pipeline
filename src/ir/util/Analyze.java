@@ -19,10 +19,10 @@ public class Analyze {
 
 	public static void main(String args[]){
 	//	String logfile = args[0];
-		long startTime = Long.parseLong("1411310321599"); 
-		long endTime = Long.parseLong("1411314373446");
-		String logfile = "/home/xiaofeng/AWBtest/test_sep_20/imagenet_1/imagenet/ImageNetEvaluate_ImageNet-47GB-456567.seq_topK_50botK_50_botlvlcluster_type_2recordcontainers.txt";
-		String result_file = "ImageNetEvaluate_ImageNet-47GB-456567.seq_topK_50botK_50_botlvlcluster_type_2recordcontainers.csv";
+		long startTime = Long.parseLong("1413142635609"); 
+		long endTime = Long.parseLong("1413154651880");
+		String logfile = "AWB_benchmarking_oct_10/ImageNet_1st/ImageNetEvaluate_ImageNet-47GB-456567.seq_topK_100botK_500_botlvlcluster_type_2recordcontainers.txt";
+		String result_file = "ImageNetEvaluate_ImageNet-47GB-456567.seq_topK_100botK_500_botlvlcluster_type_2.csv";
 		
 		
 		List<snapshot> snapshots = getSnapshots(logfile);
@@ -63,7 +63,7 @@ public class Analyze {
 				if(line.trim().startsWith("TimeStamp")){//possibly a usable snapshot
 					timestamp = Long.parseLong((line.split(":"))[1].trim());
 					line = br.readLine();
-//					System.out.println(line);
+					System.out.println(line);
 					totaljobs = Integer.parseInt((line.split(":"))[1].trim());
 					if(totaljobs == 0){//no snap shots
 						line = br.readLine();
@@ -77,10 +77,11 @@ public class Analyze {
 							String splits[] = line.split("\\s+");
 							
 							//3 or 4 here!!!??
-							if(splits[3].trim().equals("ypeng")){
-								String s = splits[8].trim();
+							int w = 0;
+							if(splits[w + 3].trim().equals("ypeng")){
+								String s = splits[w + 8].trim();
 								s  = s.substring(0, s.length() - 1);
-								UsedContainers += Integer.parseInt(splits[6].trim());
+								UsedContainers += Integer.parseInt(splits[w + 6].trim());
 								UsedMem += Integer.parseInt(s);
 							}
 						}

@@ -37,5 +37,25 @@ public class XMLUtil {
 		}    
 
 	}
+	public static void createConfiguration(String path, String terms, String clusters, int topclusterNum, int botclusterNum){
+		
+		Document document = DocumentHelper.createDocument();
+	    Element root = document.addElement( "root" );
+	    root.addAttribute("terms", terms);
+	    root.addAttribute("clusters", clusters);
+	    root.addAttribute("topclusterNum", "" + topclusterNum);
+	    root.addAttribute("botclusterNum", "" + botclusterNum);
+	    
+		try {
+			FileSystem fs = FileSystem.get(new Configuration());
+		    XMLWriter writer = new XMLWriter(fs.create(new Path(path)));
+		    writer.write(document);
+		    writer.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}    
+
+	}
 	
 }

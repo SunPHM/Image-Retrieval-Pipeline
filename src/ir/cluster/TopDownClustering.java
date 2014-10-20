@@ -2,13 +2,17 @@ package ir.cluster;
 
 import ir.util.HadoopUtil;
 
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.ContentSummary;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
@@ -38,7 +42,8 @@ public class TopDownClustering {
 	private  static int cluster_capacity = 15; // in number of containers, change this 
 	private  static int num_jobs_botlevelclustering = 100;
 	
-	private static double delta = 0.001;
+	private static double delta = 0.001; //0.001; // need to vary this to explore
+//	delta = 0.0005;
 	private static int x = 100;
 	
 	private static int topK = 0;
@@ -71,11 +76,14 @@ public class TopDownClustering {
 			String bot = prefix + "/bot";
 			topK = Integer.parseInt(args[2]);
 			botK = Integer.parseInt(args[3]);
+			String clusters = prefix + "/clusters";
 			
 			// execute top-down clustering pipeline
 			HadoopUtil.delete(prefix);
 			// top-level clustering
 			topLevelProcess(data, top + "/cls", top, topK);
+			getClusterResults(top, clusters, 0, 0);
+			
 			ts1 = new Date().getTime();
 			// medium processing between top-level and bottom-level clustering
 			midLevelProcess(top, mid);
@@ -88,6 +96,10 @@ public class TopDownClustering {
 			else if(botlvlcluster_type == 2) botLevelProcess_MultiThread(mid, bot, topK, botK);
 			// merge the clusters into a single file
 			merge(bot, prefix);
+			
+			//get the clustered results centroids
+			getMultipleClusterResults(bot, clusters, 1);
+			
 			ts3 = new Date().getTime();
 			
 			log("top-down clustering pipeline ends with total process time: " + (double)(ts3 - ts0) / (60 * 1000) + " min");
@@ -104,6 +116,86 @@ public class TopDownClustering {
 		"bot-level clustering time = " + (double)(ts3 - ts2) / (60 * 1000) + "\n";
 	}
 	
+	public static void getMultipleClusterResults(String input, String outputfolder, int level) throws NumberFormatException, IOException, InterruptedException {
+		// TODO Auto-generated method stub
+		
+		int parallel_degree = 10;
+		String folders[] = HadoopUtil.getListOfFolders(input);
+		
+		if(folders == null || folders.length == 0){
+			throw new FileNotFoundException(input);
+		}
+		if(parallel_degree > folders.length){
+			parallel_degree = folders.length;
+		}
+		
+		
+		ClusterResultThread[] threads = new ClusterResultThread[parallel_degree];
+		
+		//init all KmeansThread
+		for(int i = 0; i < threads.length; i++){
+			threads[i] = new ClusterResultThread();
+		}
+		
+		// add parameters to  threands
+		for(int i = 0; i < folders.length; i++){
+			String splits[] = folders[i].split("/");
+			String clusterId = splits[splits.length - 1];
+			threads[i % parallel_degree].addParams(new ClusterResult_Params(folders[i], outputfolder, level,Integer.parseInt(clusterId)));
+		}
+		
+		//start all threads
+		for(ClusterResultThread ct : threads){
+			ct.start();
+		}
+		
+		//wait for all threads to complete
+		for(int i = 0; i < parallel_degree; i++){
+			threads[i].join();
+		}
+	}
+
+	//get the cluster centroids of the output of kmeans clustering and output them to the output folder with level n folder and key.txt
+	//for toplevel clustering result : level = 0, clusterID = 0
+	public static void getClusterResults(String input, String outputfolder, int level, int clusterId) throws IOException {
+		// TODO Auto-generated method stub
+		String[] folders = HadoopUtil.getListOfFolders(input);
+		String folder = null;
+		for(String f:folders){
+			if(f.endsWith("-final")){
+				folder = f;
+			}
+		}
+		if(folder == null){
+			throw new FileNotFoundException(input + "/...final");
+		}
+		String files[] = HadoopUtil.getListOfFiles(folder);
+		Configuration conf = new Configuration();
+		FileSystem fs = FileSystem.get(conf);
+		Path output_folder = new Path(outputfolder + "/" + level);
+		Path output = new Path(outputfolder + "/" + level + "/" + clusterId + ".txt");
+		if(fs.exists(output_folder) == false){
+			fs.mkdirs(output_folder);
+		}
+		
+		FSDataOutputStream out = fs.create(output);
+		BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(out));
+		
+		for(String file : files){
+			if(file.startsWith("_") == false){
+				SequenceFile.Reader reader = new SequenceFile.Reader(fs, new Path(file), conf);
+				IntWritable key = new IntWritable();
+				ClusterWritable value = new ClusterWritable();
+				
+				while(reader.next(key, value)){
+					bw.write(key.toString() + "   " + value.getValue().toString() + "\n");
+				}
+				reader.close();
+			}
+		}
+		bw.flush();bw.close();
+	}
+
 	//set the number of botlevel clustering job run in parallel
 	public static void setParallelDegree(String input_mid_folders, int topK, int botlevelclusteringtype) throws IOException{
 		
@@ -487,5 +579,43 @@ class Kmeans_Params{
 	      this.k = k;
 	      this.cd = cd;
 	      this.x = x;
+	}
+}
+
+class ClusterResultThread extends Thread
+{
+	List<ClusterResult_Params> params =new ArrayList<ClusterResult_Params>();
+	
+	public void addParams(ClusterResult_Params params){
+		this.params.add(params);
+	}
+
+   @Override
+   public void run()
+   {
+    	  for(ClusterResult_Params param : params){
+					try {
+						TopDownClustering.getClusterResults(param.input, param.output, param.level, param.clusterId);
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				
+	    		TopDownClustering.log(param.input + " processed!!!");
+    	  }
+   }
+}
+
+
+class ClusterResult_Params{
+	public String input;
+	public String output;
+	public int level;
+	public int clusterId;
+	public ClusterResult_Params(String in, String out, int lvl, int id){
+		this.input = in;
+		this.output = out;
+		this.level = lvl;
+		this.clusterId = id;
 	}
 }

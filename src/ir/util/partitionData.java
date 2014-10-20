@@ -1,3 +1,4 @@
+package ir.util;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -7,8 +8,6 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.fs.Path;
-
-import ir.util.HadoopUtil;
 
 //parttion the 47GB data to 5GB, 10GB and 20GB and 30GB filtering out files that does not end with .jpg or .jpeg
 //input_folder, output_folder

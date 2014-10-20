@@ -1,6 +1,7 @@
 package ir.index;
 
 import ir.cluster.Frequency;
+import ir.cluster.TopDownFrequency;
 import ir.feature.SIFTExtraction;
 
 import java.awt.image.BufferedImage;
@@ -32,6 +33,8 @@ public class Search {
 	public static int featureSize = 128;
 	
 	public static int clusterNum = 100;
+	public static int topclusterNum = 10;
+	public static int botclusterNum = 10;
 	public static String clusters = "test/cluster/clusters.txt";
 	public static String terms = "data/features/frequency.txt";
 	
@@ -43,15 +46,18 @@ public class Search {
 		//runIndexing("test/data/frequency.txt");
 		//search("data/images/all_souls_000000.jpg");
 		loadConfiguration("test/conf.xml");
+		loadConfiguration_topdown("test/conf_new.xml");
 		System.out.println(terms);
 		System.out.println(clusters);
 		System.out.println(clusterNum);
 	}
 	
-	public static void init(String terms, int clusterNum, String clusters){
+	public static void init(String terms, int clusterNum, String clusters, int topclusterNum, int botclusterNum){
 		Search.terms = terms;
 		Search.clusterNum = clusterNum;
 		Search.clusters = clusters;
+		Search.topclusterNum = topclusterNum;
+		Search.botclusterNum = botclusterNum;
 	}
 	
 	public static void loadConfiguration(String path){
@@ -63,6 +69,26 @@ public class Search {
 		    Search.clusters = root.valueOf("@clusters");
 		    Search.terms = root.valueOf("@terms");
 		    Search.clusterNum = Integer.parseInt(root.valueOf("@clusterNum"));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (DocumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public static void loadConfiguration_topdown(String path){
+		try {
+			FileSystem fs = FileSystem.get(new Configuration());
+			SAXReader reader = new SAXReader();
+		    Document document = reader.read(fs.open(new Path(path)));
+		    Element root = document.getRootElement();
+		    Search.clusters = root.valueOf("@clusters");
+		    Search.terms = root.valueOf("@terms");
+		    Search.topclusterNum = Integer.parseInt(root.valueOf("@topclusterNum"));
+		    Search.botclusterNum = Integer.parseInt(root.valueOf("@botclusterNum"));
+		    Search.clusterNum = Search.topclusterNum * Search.botclusterNum;
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -105,6 +131,25 @@ public class Search {
 		return results;
 		
 	}
+	public static String[] search_topdown(String image){
+		String[] results=null;
+		try {
+			System.out.println("test image: " + image);
+			String[] features = getImageFeatures(image);
+			String qs = Search.createQuery_topdown(features);
+			results = query(qs);
+			System.out.println("results length = " + results.length);
+		} catch (SolrServerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return results;
+		
+	}
+	
 	
 	public static String[] getImageFeatures(String image){
 		try {
@@ -143,6 +188,39 @@ public class Search {
 		//System.out.println("query string: " + result);
 		return result;
 	}
+	public static String createQuery_topdown(String[] features) throws IOException{//transform an image into a Solr document or a field
+
+		double[][] clusters = Frequency.FreMap.readClusters(Search.clusters+"/0/0.txt", Search.topclusterNum);
+//		int[] marks = new int[Search.clusterNum];
+		
+		String result = "";
+		for(int i = 0; i < features.length; i++){
+			double[] feature = new double[Search.featureSize];
+			String[] args = features[i].split(" ");
+			for (int j = 0; j < Search.featureSize; j++)
+				feature[j] = Double.parseDouble(args[j + 4]);
+			int index = TopDownFrequency.findGlobalClusterId(feature, Search.clusters, topclusterNum, botclusterNum);
+			
+			if(result.length() == 0){
+				result = result + index;
+			}
+			else{
+				result = result + " " + index;
+			}
+		}
+			
+/*		String result = "";
+		for(int i = 0; i < Search.clusterNum; i++){
+			for(int j = 0; j < marks[i]; j++){
+				if(result.length() == 0) result += i;
+				else result += " " + i;
+			}	
+		}
+		//System.out.println("query string: " + result);	 
+*/
+		return result;
+	}
+
 
 	//query with customed number of results
 	public static String[] query(String s, int num_results) throws SolrServerException{//query and output results

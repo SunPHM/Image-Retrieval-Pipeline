@@ -98,12 +98,12 @@ public class Pipeline_Oxbuilds_Evaluate {
 		System.out.println("\n\nIndexing and Searching");
 		//before run indexing, need to copy the frequency.txt file to local filesystem(index part reads from localfilesystem)---done 
 		int clusterNum = topK * botK;
-		Search.init(dst + "/data/frequency.txt", clusterNum, dst + "/cluster/clusters.txt");
+		Search.init(dst + "/data/frequency.txt", clusterNum, dst + "/cluster/clusters.txt", topK, botK);
 		long total_images = Search.runIndexing(dst + "/data/frequency.txt");
 		long EndTime3 = new Date().getTime();
 		//to test or evaluate here
 		//Search.search(src + "/all_souls_000000.jpg");
-		String evaluation_result=EvaluateOxbuilds.evaluate(testImgFolder, gt,20);
+//		String evaluation_result=EvaluateOxbuilds.evaluate(testImgFolder, gt,20);
 		long EndTime4 = new Date().getTime();
 		rt.writeMsg("$ISEnd$ " + new Date().getTime());
 		 
@@ -117,7 +117,7 @@ public class Pipeline_Oxbuilds_Evaluate {
 				+"Indexing: "+ (double)(EndTime3 - EndTime2) / N * 60 + " seconds\n" +
 				"Searching: " + (double)(EndTime4 - EndTime3) / N * 60 + " seconds"
 				
-				+"\n"+ evaluation_result
+				+"\n"//+ evaluation_result
 				+ "\nThe mAP is " + mAP;
 		System.out.println("\n\n*******************************************  Running Time in minutes ********************************************");
 		System.out.println(string_result);

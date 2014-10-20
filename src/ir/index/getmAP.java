@@ -23,12 +23,13 @@ public class getmAP {
 
 	public static void main(String args[]) throws IOException{
 		String pipeline_output = args[0];
-		int    clusterNum = Integer.parseInt(args[1]);
-		String images = args[2];
-		String gt = args[3];
+		int    topk = Integer.parseInt(args[1]);
+		int    botk = Integer.parseInt(args[2]);
+		String images = args[3];
+		String gt = args[4];
 		
 		String dst = pipeline_output;
-		Search.init(dst + "/data/frequency.txt", clusterNum, dst + "/cluster/clusters.txt");
+		Search.init(dst + "/data/frequency.txt", topk * botk, dst + "/cluster/clusters.txt", topk, botk);
 		long num_docs = Search.runIndexing(dst + "/data/frequency.txt");
 		getmAP(images,gt, num_docs);
 	}
