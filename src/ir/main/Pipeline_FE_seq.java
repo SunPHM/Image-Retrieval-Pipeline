@@ -81,8 +81,8 @@ public class Pipeline_FE_seq{
 		
 		long EndTime3 = new Date().getTime();
 		//to test or evaluate here
-		String[] search_results=Search.search("all_souls_000000.jpg");
-		for(String str:search_results){
+		String[] search_results = Search.search("all_souls_000000.jpg");
+		for(String str : search_results){
 			System.out.println(str);
 		}
 		//Search.search("all_souls_000000.jpg");

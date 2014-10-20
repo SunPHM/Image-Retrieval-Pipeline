@@ -19,15 +19,8 @@ public class Pipeline_ImageNet_Evaluation {
 
 	// the main entry point for the Pipeline execution
 	/** Setup
-	 * @return 
-	 * @throws InterruptedException 
-	 * @throws IOException 
-	 * @throws ClassNotFoundException 
-	 * @throws IllegalAccessException 
-	 * @throws InstantiationException 
-	 * @throws NumberFormatException 
 	 * @Java: 1.6
-	 * @Hadoop: 1.2.1
+	 * @Hadoop: 2.2.0
 	 * @Mahout: 0.8
 	 * @Solr: 4.6.1
 	 */
