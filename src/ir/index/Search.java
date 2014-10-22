@@ -7,6 +7,10 @@ import ir.feature.SIFTExtraction;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Random;
 
 import javax.imageio.ImageIO;
 
@@ -40,6 +44,15 @@ public class Search {
 	
 	public static String urlString = "http://localhost:8989/solr";
 	public static int numOfResults = 20;
+	
+	//cache 
+	static double[][] topcluster = null;
+	
+	static HashMap<Integer, double[][]> botclusters = new HashMap<Integer, double[][]>();
+	static final int max_number_botclusters = 200; //200 cache to store the bot level clusters
+	//static int index_to_be_deleted = 0; // the  clusters to be deleted when hashmap is full
+
+	
 	
 	public static void main(String[] args) throws IOException, SolrServerException{
 		// run indexing
@@ -131,6 +144,8 @@ public class Search {
 		return results;
 		
 	}
+	
+	// search using the topdown frequency approach
 	public static String[] search_topdown(String image){
 		String[] results=null;
 		try {
@@ -188,9 +203,11 @@ public class Search {
 		//System.out.println("query string: " + result);
 		return result;
 	}
+	
+	//for dealing with topdown frequency approach
 	public static String createQuery_topdown(String[] features) throws IOException{//transform an image into a Solr document or a field
 
-		double[][] clusters = Frequency.FreMap.readClusters(Search.clusters+"/0/0.txt", Search.topclusterNum);
+//		double[][] clusters = TopDownFrequency.readClusters(Search.clusters+"/0/0.txt", Search.topclusterNum);
 //		int[] marks = new int[Search.clusterNum];
 		
 		String result = "";
@@ -199,7 +216,7 @@ public class Search {
 			String[] args = features[i].split(" ");
 			for (int j = 0; j < Search.featureSize; j++)
 				feature[j] = Double.parseDouble(args[j + 4]);
-			int index = TopDownFrequency.findGlobalClusterId(feature, Search.clusters, topclusterNum, botclusterNum);
+			int index = findGlobalClusterId(feature, Search.clusters, Search.topclusterNum, Search.botclusterNum);
 			
 			if(result.length() == 0){
 				result = result + index;
@@ -221,6 +238,35 @@ public class Search {
 		return result;
 	}
 
+	public static int findGlobalClusterId(double[] feature, String clusters_folder, int topclusterNum, int botclusterNum) throws IOException{
+		//this is the interface for outer queries
+		///feature = norm(feature);
+		if(Search.topcluster == null){
+			Search.topcluster = TopDownFrequency.readClusters(clusters_folder+"/0/0.txt", topclusterNum);
+		}
+		int topId = TopDownFrequency.findBestCluster(feature, Search.topcluster);
+		
+		double[][] cs_bot = null;
+		if(Search.botclusters.containsKey(topId)){
+			//hit
+			cs_bot = Search.botclusters.get(topId);
+		}
+		else {
+			//miss
+			cs_bot = TopDownFrequency.readClusters(clusters_folder+"/1/" + topId + ".txt", botclusterNum);
+			if(Search.botclusters.size() >= Search.max_number_botclusters){
+				// Hashmap full, delete a random pair
+				Random        random    = new Random();
+				List<Integer> keys      = new ArrayList<Integer>(Search.botclusters.keySet());
+				Integer       randomKey = keys.get( random.nextInt(keys.size()) );
+				Search.botclusters.remove(randomKey);
+			}
+			Search.botclusters.put(topId, cs_bot);
+		}
+		int botId = TopDownFrequency.findBestCluster(feature, cs_bot);
+		return topId * botclusterNum + botId;
+	}
+	
 
 	//query with customed number of results
 	public static String[] query(String s, int num_results) throws SolrServerException{//query and output results

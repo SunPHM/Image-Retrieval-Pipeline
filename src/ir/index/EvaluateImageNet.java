@@ -24,7 +24,12 @@ public class EvaluateImageNet {
 				String[] features = Search.getImageFeatures(path);
 				String synset = extractSynset(images[i]);
 				//System.out.println("synset: " + synset);
-				String qs = Search.createQuery(features);
+				
+				// -- old frequency approach
+				//String qs = Search.createQuery(features);
+				// -- topdown frequency approach
+				String qs = Search.createQuery_topdown(features);
+				
 				String[] results = Search.query(qs);
 				//System.out.println("number of results: " + results.length);
 				int cn = 0;

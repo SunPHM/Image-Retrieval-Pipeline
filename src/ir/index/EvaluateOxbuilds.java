@@ -90,8 +90,13 @@ public class EvaluateOxbuilds {
 
 	// construct a query from one ground truth query, search them and get the F1 score
 	public static F1Score searchFeatures(String[] features, String gt,int num_results) throws IOException{
+	
 		// get query from one image and measure F1 score
-		String query = Search.createQuery(features);
+		//-- old approach
+		// String query = Search.createQuery(features);
+		// -- topdown frequency
+		String query = Search.createQuery_topdown(features);
+		
 		// run query
 		String[] files = null;
 		try {

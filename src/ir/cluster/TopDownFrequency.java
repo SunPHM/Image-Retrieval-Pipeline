@@ -1,23 +1,18 @@
 package ir.cluster;
 
-import ir.cluster.Frequency.FreMap;
-import ir.cluster.Frequency.FreReduce;
 import ir.util.HadoopUtil;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.FileInputFormat;
 import org.apache.hadoop.mapred.FileOutputFormat;
@@ -31,7 +26,6 @@ import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapred.SequenceFileInputFormat;
 import org.apache.hadoop.mapred.TextOutputFormat;
 import org.apache.hadoop.mapred.lib.MultipleSequenceFileOutputFormat;
-import org.apache.mahout.clustering.iterator.ClusterWritable;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
 
@@ -39,7 +33,7 @@ public class TopDownFrequency {
 	//input: clusters/level/clusterid, features
 	//output: a file containing both the name of file and the cluster id
 	public static int featureSize = 128;
-
+	
 
 	public static void main(String[] args) throws IOException{
 	//	features = args[0];
@@ -325,16 +319,7 @@ public class TopDownFrequency {
 		return index;
 	}
 	
-	public static int findGlobalClusterId(double[] feature, String clusters_folder, int topclusterNum, int botclusterNum) throws IOException{
-		///feature = norm(feature);
-		double[][] cs_top = readClusters(clusters_folder+"/0/0.txt", topclusterNum);
-		int topId = findBestCluster(feature, cs_top);
-		
-		double[][] cs_bot = readClusters(clusters_folder+"/1/" + topId + ".txt", botclusterNum);
-		int botId = findBestCluster(feature, cs_bot);
-		return topId * botclusterNum + botId;
-	}
-	
+
 	public static double[] norm(double[] feature){
 		double len = 0;
 		for(int i = 0; i < feature.length; i++){
