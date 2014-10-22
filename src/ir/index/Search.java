@@ -126,7 +126,8 @@ public class Search {
 		return docs_indexed;
 	}
 	
-	public static String[] search(String image){
+/*	
+ 	public static String[] search(String image){
 		String[] results=null;
 		try {
 			System.out.println("test image: " + image);
@@ -144,6 +145,7 @@ public class Search {
 		return results;
 		
 	}
+	*/
 	
 	// search using the topdown frequency approach
 	public static String[] search_topdown(String image){
@@ -179,7 +181,7 @@ public class Search {
 		return null;
 	}
 	
-	public static String createQuery(String[] features) throws IOException{//transform an image into a Solr document or a field
+/*	public static String createQuery(String[] features) throws IOException{//transform an image into a Solr document or a field
 
 		double[][] clusters = Frequency.FreMap.readClusters(Search.clusters, Search.clusterNum);
 		int[] marks = new int[Search.clusterNum];
@@ -203,7 +205,7 @@ public class Search {
 		//System.out.println("query string: " + result);
 		return result;
 	}
-	
+	*/
 	//for dealing with topdown frequency approach
 	public static String createQuery_topdown(String[] features) throws IOException{//transform an image into a Solr document or a field
 

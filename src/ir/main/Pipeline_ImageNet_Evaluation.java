@@ -91,8 +91,16 @@ public class Pipeline_ImageNet_Evaluation {
 		System.out.println("\n\nIndexing and Searching");
 		//before run indexing, need to copy the frequency.txt file to local filesystem(index part reads from localfilesystem)---done 
 		int clusterNum = topK * botK;
-		Search.init(dst + "/data/frequency.txt", clusterNum, dst + "/cluster/clusters.txt", topK, botK);
-		Search.runIndexing(dst + "/data/frequency.txt");
+		
+		//old frequency approach
+		//Search.init(dst + "/data/frequency.txt", clusterNum, dst + "/cluster/clusters.txt", topK, botK);
+		//long total_images = Search.runIndexing(dst + "/data/frequency.txt");
+				
+		Search.init(dst + "/data/frequency_new.txt", clusterNum, dst + "/cluster/clusters", topK, botK);
+	    long total_images = Search.runIndexing(dst + "/data/frequency_new.txt");
+		
+		
+		
 		long EndTime3 = new Date().getTime();
 		//to test or evaluate here
 		//Search.search(src + "/all_souls_000000.jpg");
