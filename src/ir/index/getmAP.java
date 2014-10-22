@@ -71,7 +71,7 @@ public class getmAP {
 					rec_pre.put(f1s.getRec(), f1s.getPre());
 				}
 */
-				String query = Search.createQuery(features);
+				String query = Search.createQuery_topdown(features);
 				// run query
 				String[] files_search_results = null;
 				try {
