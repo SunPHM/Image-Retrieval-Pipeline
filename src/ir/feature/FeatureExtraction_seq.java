@@ -5,12 +5,10 @@ import ir.util.HadoopUtil;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.Iterator;
 
 import javax.imageio.ImageIO;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
@@ -19,10 +17,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Mapper.Context;
-import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -50,7 +45,6 @@ public class FeatureExtraction_seq {
 		extractMR(seqfile, temp);
 		HadoopUtil.delete(temp+"/_SUCCESS");
 		System.out.println("deleted path: "+temp+"/_SUCCESS");
-		
 		System.out.println("feature extraction is done, featres output to "+temp);
 	}
 	
@@ -59,7 +53,6 @@ public class FeatureExtraction_seq {
 		HadoopUtil.delete(outfile);
 		Configuration conf=new Configuration();
 		
-
 		//pass the parameters
 		conf.set("seqfile", seqfile);
 		//conf.set("fn", fn);
@@ -76,19 +69,14 @@ public class FeatureExtraction_seq {
 		}
 		
 		job.setJobName("FeatureExtractionSeqFile");
-		
-		job.setOutputFormatClass(SequenceFileOutputFormat.class);
-		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(VectorWritable.class);
-		
 		job.setJarByClass(FeatureExtraction_seq.class);
 		job.setMapperClass(FeatureExtraction_seq.FEMap.class);
 		
-		
-		
 		job.setInputFormatClass(SequenceFileInputFormat.class);
+		job.setOutputFormatClass(SequenceFileOutputFormat.class);
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(VectorWritable.class);
 
-		
 		try {
 			FileInputFormat.setInputPaths(job, new Path(infile));
 		} catch (IllegalArgumentException e1) {
@@ -98,10 +86,9 @@ public class FeatureExtraction_seq {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
+		
 		FileOutputFormat.setOutputPath(job, new Path(outfile));
-		
 		job.setNumReduceTasks(0);
-		
 		
 		try {
 			try {
@@ -150,7 +137,6 @@ public class FeatureExtraction_seq {
 				if(image_bytes.length>0){
 					BufferedImage img = ImageIO.read(new ByteArrayInputStream(value.getBytes()));
 					String[] features = SIFTExtraction.getFeatures(img);
-					// store them into a file
 					for(int i = 0; i < features.length; i++){
 						double[]  feature=getPoints(features[i].split(" "), feature_length);
 						vec.assign(feature);

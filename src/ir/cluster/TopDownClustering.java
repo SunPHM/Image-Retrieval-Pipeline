@@ -52,14 +52,12 @@ public class TopDownClustering {
 	private static int maxIterations = 100;
 	private static final CosineDistanceMeasure distance_measure = new CosineDistanceMeasure();
 	
-	
 
 	//example args: data/cluster/fs.seq data/cluster/level  10 10
 	public static void main(String[] args) 
 			throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException{
 		//run(args, 1);
 		setParallelDegree("test_fe_seq2seq_100images/cluster/mid/", 10, 1);
-		
 	}
 	
 	public static String run(String[] args, int botlvlcluster_type) 

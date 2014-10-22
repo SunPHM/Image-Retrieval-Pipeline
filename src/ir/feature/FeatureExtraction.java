@@ -70,7 +70,7 @@ public class FeatureExtraction {
 	    job.setOutputKeyClass(Text.class);
 	    job.setOutputValueClass(VectorWritable.class);
 		job.setInputFormatClass(ImageInputFormat.class);
-//		job.setOutputFormatClass(SequenceFileOutputFormat.class);
+		job.setOutputFormatClass(SequenceFileOutputFormat.class);
 
 		try {
 			FileInputFormat.setInputPaths(job, new Path(infile));
