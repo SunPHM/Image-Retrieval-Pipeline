@@ -80,15 +80,15 @@ public class Pipeline_FE_seq{
 		//before run indexing, need to copy the frequency.txt file to local filesystem(index part reads from localfilesystem)---done 
 		int clusterNum = topK * botK;
 		
-		Search.init(dst + "/data/frequency.txt", clusterNum, dst + "/cluster/clusters.txt", topK, botK);
-		Search.runIndexing(dst + "/data/frequency.txt");
+//		Search.init(dst + "/data/frequency.txt", clusterNum, dst + "/cluster/clusters.txt", topK, botK);
+//		Search.runIndexing(dst + "/data/frequency.txt");
 		
-//		Search.init(dst + "/data/frequency_new.txt", clusterNum, dst + "/cluster/clusters", topK, botK);
-//		Search.runIndexing(dst + "/data/frequency_new.txt");
+		Search.init(dst + "/data/frequency_new.txt", clusterNum, dst + "/cluster/clusters", topK, botK);
+		Search.runIndexing(dst + "/data/frequency_new.txt");
 		
 		long EndTime3 = new Date().getTime();
 		//to test or evaluate here
-		String[] search_results=Search.search("all_souls_000000.jpg");
+		String[] search_results=Search.search_topdown("all_souls_000000.jpg");
 		for(String str:search_results){
 			System.out.println(str);
 		}

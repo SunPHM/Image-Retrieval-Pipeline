@@ -115,7 +115,7 @@ public class TopDownClustering {
 		"mid-level processing time = " + (double)(ts2 - ts1) / (60 * 1000) + "\n" +
 		"bot-level clustering time = " + (double)(ts3 - ts2) / (60 * 1000) + "\n";
 	}
-	
+	// multi-thread implementation of getting the clusters from bot level clustering
 	public static void getMultipleClusterResults(String input, String outputfolder, int level) throws NumberFormatException, IOException, InterruptedException {
 		// TODO Auto-generated method stub
 		

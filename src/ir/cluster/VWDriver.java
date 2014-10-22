@@ -42,14 +42,14 @@ public class VWDriver {
 		int clusterNum = Integer.parseInt(args[2]) * Integer.parseInt(args[3]);
 		
 		//old frequency job 
-		Frequency.runJob(args[0], clusterNum, args[1] + "/cluster/clusters.txt", args[1] + "/temp/freq/", args[1] + "/data/frequency.txt");
+//		Frequency.runJob(args[0], clusterNum, args[1] + "/cluster/clusters.txt", args[1] + "/temp/freq/", args[1] + "/data/frequency.txt");
 		//create configuration xml
-		XMLUtil.createConfiguration(args[1] + "/conf.xml", args[1] + "/data/frequency.txt", args[1] + "/cluster/clusters.txt", clusterNum);
+//		XMLUtil.createConfiguration(args[1] + "/conf.xml", args[1] + "/data/frequency.txt", args[1] + "/cluster/clusters.txt", clusterNum);
 		
 		//topdown frequency
-//		TopDownFrequency.runJob(args[0], topclusterNum, botclusterNum, args[1] + "/cluster/clusters/", args[1] + "/temp/tdfreq/", args[1] + "/data/frequency_new.txt");
-//		XMLUtil.createConfiguration(args[1] + "/conf_new.xml", args[1] + "/data/frequency_new.txt", args[1] + "/cluster/clusters", 
-//				topclusterNum, botclusterNum);
+		TopDownFrequency.runJob(args[0], topclusterNum, botclusterNum, args[1] + "/cluster/clusters/", args[1] + "/temp/tdfreq/", args[1] + "/data/frequency_new.txt");
+		XMLUtil.createConfiguration(args[1] + "/conf_new.xml", args[1] + "/data/frequency_new.txt", args[1] + "/cluster/clusters", 
+				topclusterNum, botclusterNum);
 		
 		
 		long EndTime2 = new Date().getTime();

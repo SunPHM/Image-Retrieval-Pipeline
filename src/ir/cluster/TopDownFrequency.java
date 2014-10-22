@@ -39,10 +39,10 @@ public class TopDownFrequency {
 	//input: clusters/level/clusterid, features
 	//output: a file containing both the name of file and the cluster id
 	public static int featureSize = 128;
-	public static int topclusterNum = 10;
-	public static int botclusterNum = 10;
-	public static String clusters = "";
-	public static String features = "";
+//	public static int topclusterNum = 10;
+//	public static int botclusterNum = 10;
+//	public static String clusters = "";
+//	public static String features = "";
 
 
 	public static void main(String[] args) throws IOException{
@@ -52,13 +52,14 @@ public class TopDownFrequency {
 	//	botclusterNum = Integer.parseInt(args[3]);
 	//	String temp = args[4];
 	//	String output = args[5];
-		features = "test_fe_seq2seq_100images/data/features.seq";
-		clusters = "test_fe_seq2seq_100images/cluster/clusters";
+		String features = "test_fe_seq2seq_100images/data/features.seq";
+		String clusters = "test_fe_seq2seq_100images/cluster/clusters";
 		String dividedfeatures = "test_fe_seq2seq_100images/data/dividedfeatures";
-		topclusterNum = 10;
+		int topclusterNum = 10;
 		predivide(features, clusters + "/0/0.txt", dividedfeatures, topclusterNum);
 		//runJob(features, botclusterNum, topclusterNum, clusters, temp, output);
 	}
+	
 	//parameter needed :
 	// features folder
 	// clusters folder : containers layers of clusters.txt
@@ -67,8 +68,6 @@ public class TopDownFrequency {
 	// outputpath of frequency.txt
 	public static void runJob (String features, int topclusterNum, int botclusterNum, String clusters, String temp, String output) 
 			throws IOException{
-		
-		TopDownFrequency.init(features, topclusterNum, botclusterNum, clusters);
 		
 		HadoopUtil.delete(temp);
 		HadoopUtil.delete(output);
@@ -82,13 +81,6 @@ public class TopDownFrequency {
 		HadoopUtil.copyMerge(freqtemp, output);
 	}
 	
-	public static void init(String features, int topclusterNum, int botclusterNum, String clusters){
-		TopDownFrequency.topclusterNum = topclusterNum;
-		TopDownFrequency.botclusterNum = botclusterNum;
-		TopDownFrequency.clusters = clusters;
-		TopDownFrequency.features = features;
-	}
-
 	//frequency job
 	public static void botlevelFrequencyJob(String dividedfeatures, String botclusters, 
 			int topclusterNum, int botclusterNum, String temp) {
@@ -130,7 +122,6 @@ public class TopDownFrequency {
 	public static class frequencyMap extends MapReduceBase implements Mapper<Text, TextVectorWritable, Text, Text> {
 
 		public static int featureSize = 128;
-		public static int topclusterNum = 10;
 		public static int topclusterId = 0;
 		public static int botclusterNum = 10;
 		public static String clusters = "";
@@ -199,8 +190,8 @@ public class TopDownFrequency {
 	}
 	
 	//for each cluster in toplevelclustering generate a file
-	static class MultiFileOutput extends MultipleSequenceFileOutputFormat<Text, VectorWritable> {
-        protected String generateFileNameForKeyValue(Text key, VectorWritable value,String name) {
+	static class MultiFileOutput extends MultipleSequenceFileOutputFormat<Text, TextVectorWritable> {
+        protected String generateFileNameForKeyValue(Text key, TextVectorWritable value,String name) {
                 return key.toString()+".seq";
         }
 	}
@@ -212,26 +203,27 @@ public class TopDownFrequency {
 	//topclusterNum
 	public static void predivide(String features, String clusters, String output, int topclusterNum) throws IOException{
 		HadoopUtil.delete(output);
-		JobConf conf = new JobConf(Frequency.class);
-		conf.setJobName("Frequency");
+		JobConf conf = new JobConf(TopDownFrequency.class);
+		conf.setJobName("TopDownFrequency");
 		
 		// configure parameters
 		conf.set("features", features);
 		conf.set("clusterNum", new Integer(topclusterNum).toString());
 		conf.set("clusters", clusters);
 		conf.setOutputKeyClass(Text.class);
-		conf.setOutputValueClass(VectorWritable.class);
+		conf.setOutputValueClass(TextVectorWritable.class);
 		conf.setMapperClass(predivideMap.class);
 //		conf.setReducerClass(predivideReduce.class);
 		conf.setInputFormat(SequenceFileInputFormat.class);
 	    conf.setOutputFormat(MultiFileOutput.class);
-//	    conf.setNumReduceTasks(0);
+	    
+//	    conf.setNumReduceTasks(0); ???????????????????????????????
 	    
 	    SequenceFileInputFormat.setInputPaths(conf, new Path(features));
 	    MultiFileOutput.setOutputPath(conf, new Path(output));
 		JobClient.runJob(conf);
 	}
-	public static class predivideMap extends MapReduceBase implements Mapper<Text, VectorWritable, Text,  VectorWritable> {
+	public static class predivideMap extends MapReduceBase implements Mapper<Text, VectorWritable, Text,  TextVectorWritable> {
 
 		public static int featureSize = 128;
 		public static int clusterNum = 100;
@@ -239,7 +231,7 @@ public class TopDownFrequency {
 //		public static String features = "";
 		public static double[][] cs = null;
 		
-		private static VectorWritable tvw = new VectorWritable();
+		private static TextVectorWritable tvw = new TextVectorWritable();
 		@Override
 		public void configure(JobConf job) {
 		   clusterNum = Integer.parseInt(job.get("clusterNum"));
@@ -255,7 +247,7 @@ public class TopDownFrequency {
 		}
 		
 		@Override
-		public void map(Text key, VectorWritable value, OutputCollector<Text, VectorWritable> output, Reporter reporter) throws IOException {
+		public void map(Text key, VectorWritable value, OutputCollector<Text, TextVectorWritable> output, Reporter reporter) throws IOException {
 			String file = key.toString();
 			Vector vector = value.get();
 			double[] feature = new double[featureSize];
@@ -263,7 +255,7 @@ public class TopDownFrequency {
 				feature[i] = vector.get(i);
 			//find the toplevel cluster this feature belongs to
 			int index = findBestCluster(feature, cs);
-			tvw.set( vector);
+			tvw.set(file, vector);
 			output.collect(new Text("" + index), tvw);
 			//System.out.println(file + " processed");
 		}
@@ -338,46 +330,12 @@ public class TopDownFrequency {
 	}
 	
 	public static int findGlobalClusterId(double[] feature, String clusters_folder, int topclusterNum, int botclusterNum) throws IOException{
-		int index = -1;
-		double distance = -1.1;
 		//feature = norm(feature);
 		double[][] cs_top = readClusters(clusters_folder+"/0/0.txt", topclusterNum);
-		for(int i = 0; i < cs_top.length; i++){
-			double fl = 0;
-			double cl = 0;
-			double ds = 0;
-			for(int j = 0; j < cs_top[i].length; j++){
-				ds += feature[j] * cs_top[i][j];
-				fl += feature[j] * feature[j];
-				cl += cs_top[i][j] * cs_top[i][j];
-			}
-			ds = ds / (Math.sqrt(fl) * Math.sqrt(cl));
-			
-			if(ds > distance){
-				distance = ds;
-				index = i;
-			}
-		}
-		int topId = index;
+		int topId = findBestCluster(feature, cs_top);
 		
 		double[][] cs_bot = readClusters(clusters_folder+"/1/" + topId + ".txt", botclusterNum);
-		for(int i = 0; i < cs_bot.length; i++){
-			double fl = 0;
-			double cl = 0;
-			double ds = 0;
-			for(int j = 0; j < cs_bot[i].length; j++){
-				ds += feature[j] * cs_bot[i][j];
-				fl += feature[j] * feature[j];
-				cl += cs_bot[i][j] * cs_bot[i][j];
-			}
-			ds = ds / (Math.sqrt(fl) * Math.sqrt(cl));
-			
-			if(ds > distance){
-				distance = ds;
-				index = i;
-			}
-		}
-		int botId = index;
+		int botId = findBestCluster(feature, cs_bot);
 		return topId * botclusterNum + botId;
 	}
 	
