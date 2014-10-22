@@ -14,6 +14,8 @@ public class Pipeline_FE_seq{
 
 	// the main entry point for the Pipeline execution
 	/** Setup
+	 * @throws NumberFormatException, InstantiationException, IllegalAccessException, ClassNotFoundException, IOException, InterruptedException
+	 * 
 	 * @Java: 1.6
 	 * @Hadoop: 2.2.0
 	 * @Mahout: 0.8
@@ -73,11 +75,11 @@ public class Pipeline_FE_seq{
 		//before run indexing, need to copy the frequency.txt file to local filesystem(index part reads from localfilesystem)---done 
 		int clusterNum = topK * botK;
 		
-		Search.init(dst + "/data/frequency.txt", clusterNum, dst + "/cluster/clusters.txt", topK, botK);
-		Search.runIndexing(dst + "/data/frequency.txt");
+	//	Search.init(dst + "/data/frequency.txt", clusterNum, dst + "/cluster/clusters.txt", topK, botK);
+	//	Search.runIndexing(dst + "/data/frequency.txt");
 		
-//		Search.init(dst + "/data/frequency_new.txt", clusterNum, dst + "/cluster/clusters", topK, botK);
-//		Search.runIndexing(dst + "/data/frequency_new.txt");
+		Search.init(dst + "/data/frequency_new.txt", clusterNum, dst + "/cluster/clusters", topK, botK);
+		Search.runIndexing(dst + "/data/frequency_new.txt");
 		
 		long EndTime3 = new Date().getTime();
 		//to test or evaluate here

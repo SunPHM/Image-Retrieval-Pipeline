@@ -39,10 +39,6 @@ public class TopDownFrequency {
 	//input: clusters/level/clusterid, features
 	//output: a file containing both the name of file and the cluster id
 	public static int featureSize = 128;
-//	public static int topclusterNum = 10;
-//	public static int botclusterNum = 10;
-//	public static String clusters = "";
-//	public static String features = "";
 
 
 	public static void main(String[] args) throws IOException{
@@ -59,13 +55,14 @@ public class TopDownFrequency {
 		predivide(features, clusters + "/0/0.txt", dividedfeatures, topclusterNum);
 		//runJob(features, botclusterNum, topclusterNum, clusters, temp, output);
 	}
-	
-	//parameter needed :
-	// features folder
-	// clusters folder : containers layers of clusters.txt
-	// topclusterNum
-	// botclusterNum
-	// outputpath of frequency.txt
+	/**Setup
+	 * @param
+	 * features folder
+	 * clusters folder : containers layers of clusters.txt
+	 * topclusterNum
+	 * botclusterNum
+	 * @throws IOException
+	 * */
 	public static void runJob (String features, int topclusterNum, int botclusterNum, String clusters, String temp, String output) 
 			throws IOException{
 		
@@ -213,7 +210,6 @@ public class TopDownFrequency {
 		conf.setOutputKeyClass(Text.class);
 		conf.setOutputValueClass(TextVectorWritable.class);
 		conf.setMapperClass(predivideMap.class);
-//		conf.setReducerClass(predivideReduce.class);
 		conf.setInputFormat(SequenceFileInputFormat.class);
 	    conf.setOutputFormat(MultiFileOutput.class);
 	    
@@ -330,7 +326,7 @@ public class TopDownFrequency {
 	}
 	
 	public static int findGlobalClusterId(double[] feature, String clusters_folder, int topclusterNum, int botclusterNum) throws IOException{
-		//feature = norm(feature);
+		///feature = norm(feature);
 		double[][] cs_top = readClusters(clusters_folder+"/0/0.txt", topclusterNum);
 		int topId = findBestCluster(feature, cs_top);
 		
