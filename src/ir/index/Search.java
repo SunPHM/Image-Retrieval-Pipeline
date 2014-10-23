@@ -58,7 +58,7 @@ public class Search {
 		// run indexing
 		//runIndexing("test/data/frequency.txt");
 		//search("data/images/all_souls_000000.jpg");
-		loadConfiguration("test/conf.xml");
+//		loadConfiguration("test/conf.xml");
 		loadConfiguration_topdown("test/conf_new.xml");
 		System.out.println(terms);
 		System.out.println(clusters);
@@ -71,6 +71,10 @@ public class Search {
 		Search.clusters = clusters;
 		Search.topclusterNum = topclusterNum;
 		Search.botclusterNum = botclusterNum;
+		
+		//init the static cache files -- important
+		Search.topcluster =null;
+		Search.botclusters.clear();
 	}
 	
 	public static void loadConfiguration(String path){

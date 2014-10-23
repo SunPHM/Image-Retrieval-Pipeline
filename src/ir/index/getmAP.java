@@ -22,15 +22,22 @@ import ir.util.HadoopUtil;
 public class getmAP {
 
 	public static void main(String args[]) throws IOException{
-		String pipeline_output = args[0];
-		int    topk = Integer.parseInt(args[1]);
-		int    botk = Integer.parseInt(args[2]);
-		String images = args[3];
-		String gt = args[4];
+		String pipeline_output = "oxbuild_100_100_oct22";
+		int    topk = 100;
+		int    botk = 100;
+		String images = "/home/xiaofeng/workspace/oxe/oxbuild_images";
+		String gt = "/home/xiaofeng/workspace/oxe/gt";
 		
 		String dst = pipeline_output;
-		Search.init(dst + "/data/frequency.txt", topk * botk, dst + "/cluster/clusters.txt", topk, botk);
-		long num_docs = Search.runIndexing(dst + "/data/frequency.txt");
+		Search.init(dst + "/data/frequency_new.txt", topk * botk, dst + "/cluster/clusters", topk, botk);
+		long num_docs = Search.runIndexing(dst + "/data/frequency_new.txt");
+		
+		String[] search_results = Search.search_topdown("all_souls_000000.jpg");
+		for(String str : search_results){
+			System.out.println(str);
+		}
+		
+		
 		getmAP(images,gt, num_docs);
 	}
 	

@@ -88,7 +88,7 @@ public class FeatureExtraction_seq {
 		}
 		
 		FileOutputFormat.setOutputPath(job, new Path(outfile));
-		job.setNumReduceTasks(0);
+//		job.setNumReduceTasks(0);
 		
 		try {
 			try {
