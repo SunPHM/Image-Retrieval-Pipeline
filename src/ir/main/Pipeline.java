@@ -48,8 +48,8 @@ public class Pipeline {
 		//Feature Extraction
 		rt.writeMsg("$FEStart$ "+new Date().getTime());
 		System.out.println("\n\nFeature Extraction");
-		String features = dst + "/data/features.seq";// the feature folder
-		FeatureExtraction.extractFeatures(src, features, dst + "/temp/fe/");
+		String features = dst + "/data/features";// the feature folder
+		FeatureExtraction.extractFeatures(src, features);
 		//FeatureExtractionSeqFile.extractFeatures(src, features, dst + "/temp/fe/");
 		System.out.println("Features folder:" + features);
 		rt.writeMsg("$FEEnd$ "+new Date().getTime());

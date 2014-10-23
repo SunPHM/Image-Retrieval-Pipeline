@@ -71,9 +71,9 @@ public class Pipeline_ImageNet_Evaluation {
 		//Feature Extraction
 		rt.writeMsg("$FEStart$ "+new Date().getTime());
 		System.out.println("\n\nFeature Extraction");
-		String features = dst + "/data/features.seq";// the feature folder
+		String features = dst + "/data/features";// the feature folder
 		//FeatureExtraction.extractFeatures(src, features, dst + "/temp/fe/");
-		FeatureExtraction_seq.extractFeatures(src, features, dst + "/temp/fe/");
+		FeatureExtraction_seq.extractFeatures(src, features);
 		System.out.println("Features folder:" + features);
 		rt.writeMsg("$FEEnd$ "+new Date().getTime());
 		long EndTime1 = new Date().getTime();

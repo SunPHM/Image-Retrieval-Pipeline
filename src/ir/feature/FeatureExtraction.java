@@ -28,20 +28,14 @@ public class FeatureExtraction {
 	public static final Integer split_size = 1024*1024*20;//30MB
 	
 	public static void main(String[] args) {
-		extractFeatures(args[0], args[1], args[2]);
+		extractFeatures(args[0], args[1]);
 	}
 	
-	public static void extractFeatures(String images,  String features, String temp){ // the main entry point for Feature Extraction to be called
+	public static void extractFeatures(String images,  String features){ // the main entry point for Feature Extraction to be called
 	System.out.println("debuggg111");
 		img_folder = images;
-		HadoopUtil.delete(temp);
-		//
-		extractMR(images, temp);
-		//extractMR(images, features);
-		HadoopUtil.delete(temp+"/_SUCCESS");
-		System.out.println("deleted path: "+temp+"/_SUCCESS");
-		HadoopUtil.cpFile(temp+"/test-m-00000", features);
-//		HadoopUtil.copyMerge(temp, features);-- probably causing kmeansdriver fail to read the seqfile properly dont know why yet
+		HadoopUtil.delete(features);
+		extractMR(images, features);
 		System.out.println("feature extraction is done");
 	}
 	

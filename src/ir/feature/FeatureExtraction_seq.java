@@ -33,19 +33,16 @@ public class FeatureExtraction_seq {
 	public static final Integer split_size = (int) (1024*1024*20);//30MB
 	
 	public static void main(String[] args) {
-		extractFeatures(args[0], args[1], args[2]);
+		extractFeatures(args[0], args[1]);
 	}
 	
-	public static void extractFeatures(String in_seqfile,  String features, String temp){ // the main entry point for Feature Extraction to be called
+	public static void extractFeatures(String in_seqfile,  String features){ // the main entry point for Feature Extraction to be called
 		//no need for temp folders to put feautres
 		seqfile=in_seqfile;
 		feature_folder = features;
-		temp=features;
-		HadoopUtil.delete(temp);
-		extractMR(seqfile, temp);
-		HadoopUtil.delete(temp+"/_SUCCESS");
-		System.out.println("deleted path: "+temp+"/_SUCCESS");
-		System.out.println("feature extraction is done, featres output to "+temp);
+		HadoopUtil.delete(features);
+		extractMR(seqfile, features);
+		System.out.println("feature extraction is done, featres output to " + features);
 	}
 	
 	// extract features using Map-Reduce
