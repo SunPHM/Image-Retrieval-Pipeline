@@ -42,7 +42,7 @@ public class TopDownClustering {
 	private  static int cluster_capacity = 15; // in number of containers, change this 
 	private  static int num_jobs_botlevelclustering = 100;
 	
-	private static double delta = 0.001; //0.001; // need to vary this to explore
+	private static double delta = 0.0001; //0.001; // need to vary this to explore
 //	delta = 0.0005;
 	private static int x = 100;
 	
