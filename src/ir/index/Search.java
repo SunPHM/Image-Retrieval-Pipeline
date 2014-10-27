@@ -160,6 +160,7 @@ public class Search {
 			String qs = Search.createQuery_topdown(features);
 			results = query(qs);
 			System.out.println("results length = " + results.length);
+			System.out.println(results[0] + "\t" + results[1] + "\t" + results[3]);
 		} catch (SolrServerException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

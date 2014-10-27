@@ -78,10 +78,6 @@ public class FeatureExtraction {
 		
 		FileOutputFormat.setOutputPath(job, new Path(outfile));
 		
-		 // Defines additional sequence-file based output 'sequence' for the job
-		 MultipleOutputs.addNamedOutput(job, "seq",
-		   SequenceFileOutputFormat.class,
-		   Text.class, VectorWritable.class);
 		try {
 			try {
 				job.waitForCompletion(true);
@@ -103,13 +99,11 @@ public class FeatureExtraction {
 		public static int feature_num = 128;
 		public static String outfile=null;
 		
-		private MultipleOutputs<Text, VectorWritable> mos;
 		@Override
 		public void setup( Context context) {
 			Configuration conf=context.getConfiguration();
 		   img_folder=conf.get("img_folder");
 		   outfile=conf.get("outfile");
-		   mos = new MultipleOutputs<Text, VectorWritable>(context);
 		}
 
 		@Override
@@ -128,10 +122,7 @@ public class FeatureExtraction {
 					double[] feature= getPoints(features[i].split(" "), feature_num);
 					vec.assign(feature);		
 					vw.set(vec);
-					//
-					
-					mos.write("seq",new Text(file), vw, outfile);
-					//context.write(new Text(file), vw);
+					context.write(new Text(file), vw);
 				}
 			} catch (java.lang.IllegalArgumentException e){
 				System.out.println("the image causing exception: " + file);
@@ -148,9 +139,6 @@ public class FeatureExtraction {
 				e.printStackTrace();
 			}
 		}
-		 public void cleanup(Context con) throws IOException, InterruptedException {
-			 mos.close();
-			 }
 		
 		public static double[] getPoints(String[] args, int size){// get the feature vector from the 
 			//System.out.println(args.length);
