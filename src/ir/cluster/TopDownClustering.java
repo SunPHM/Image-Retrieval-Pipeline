@@ -38,14 +38,12 @@ public class TopDownClustering {
 	private  static int cluster_capacity = 15; // in number of containers, change this 
 	private  static int num_jobs_botlevelclustering = 25;
 	
-	private static double delta = 0.0001; //0.001; // need to vary this to explore
-//	delta = 0.0005;
-	private static int x = 100;
+	private static double delta = 0.001; //0.0001; // need to vary this to explore
+	private static int maxIterations = 100;
 	
 	private static int topK = 0;
 	private static int botK = 0;
 	
-	private static int maxIterations = 100;
 	private static final CosineDistanceMeasure distance_measure = new CosineDistanceMeasure();
 	
 
@@ -151,7 +149,7 @@ public class TopDownClustering {
 	
 	public static void topLevelProcess(String input, String cls, String top, int topK)
 			throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException, InterruptedException {
-		kmeans(input, cls, top, topK, delta, x,true);
+		kmeans(input, cls, top, topK, delta, maxIterations,true);
 	}
 	
 	public static void midLevelProcess(String top, String mid) throws IOException, InterruptedException {
@@ -169,7 +167,7 @@ public class TopDownClustering {
 			String output = bot + "/" + i;
 			int k = botK;
 			double cd = delta;
-			kmeans(input,clusters,output,k,cd,x,false);
+			kmeans(input,clusters, output, k, cd, maxIterations,false);
 			log("botlevel mahout kmeans clustering " + i + "> ends");
 		}
 	}
@@ -193,7 +191,7 @@ public class TopDownClustering {
 				int k = botK;
 				double cd = delta;
 				
-				String param = input + " " + clusters + " " + output + " " + k + " " + cd + " " + x;
+				String param = input + " " + clusters + " " + output + " " + k + " " + cd + " " + maxIterations;
 				params.add(param);
 			}
 			writeBotLevelParameters(""+i,params, output_folder + "/" + i + ".txt");			
@@ -229,7 +227,7 @@ public class TopDownClustering {
 			int k = botK;
 			double cd = delta;
 			
-			threads[i % num_jobs_botlevelclustering].addParams(new Kmeans_Params(i, input, clusters, output, k, cd, x));
+			threads[i % num_jobs_botlevelclustering].addParams(new Kmeans_Params(i, input, clusters, output, k, cd, maxIterations));
 		}
 		
 		//start all kmeans threads

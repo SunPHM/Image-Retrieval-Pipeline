@@ -107,9 +107,7 @@ public class FeatureExtraction_seq {
 		public static String img_folder = null;
 		public static String fn = null;
 		public static String feature_folder =null;
-		private static VectorWritable vw = new VectorWritable();
 		private static final int feature_length=128;
-		private static Vector vec = new DenseVector(feature_length);
 		public static String outfile=null;
 		
 		private MultipleOutputs<Text, VectorWritable> mos;
@@ -136,6 +134,8 @@ public class FeatureExtraction_seq {
 					String[] features = SIFTExtraction.getFeatures(img);
 					for(int i = 0; i < features.length; i++){
 						double[]  feature=getPoints(features[i].split(" "), feature_length);
+						VectorWritable vw = new VectorWritable();
+						Vector vec = new DenseVector(feature_length);
 						vec.assign(feature);
 						vw.set(vec);
 						context.write(new Text(file), vw);

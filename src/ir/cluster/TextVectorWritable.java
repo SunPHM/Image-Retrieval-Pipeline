@@ -18,7 +18,6 @@ public class TextVectorWritable  implements Writable {
 		// TODO Auto-generated method stub
 		filepath.readFields(in);
 		vw.readFields(in);
-		
 	}
 
 	@Override
@@ -26,16 +25,19 @@ public class TextVectorWritable  implements Writable {
 		// TODO Auto-generated method stub
 		filepath.write(out);
 		vw.write(out);
-		
 	}
+	
 	public void set(String file, Vector vw){
 		this.filepath.set(file);
 		this.vw.set(vw);
 	}
+	
 	public String toString(){
 		return filepath.toString() + "\t" + vw.toString();
 	}
+	
 	public Text getText(){return filepath;}
+	
 	public VectorWritable getVectorWritable(){return vw;}
 
 }

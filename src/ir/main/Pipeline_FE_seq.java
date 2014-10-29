@@ -81,16 +81,10 @@ public class Pipeline_FE_seq{
 		
 		long EndTime3 = new Date().getTime();
 		//to test or evaluate here
-		for (int i = 0; i <= 3; i ++){
-			String[] search_results = Search.search_topdown("all_souls_000000.jpg");
-			for(String str : search_results){
-				System.out.println(str);
-			}
-		}
-		//Search.search("all_souls_000000.jpg");
+		Search.search_topdown("data/images/all_souls_000001.jpg");
 		long EndTime4 = new Date().getTime();
 		
-		rt.writeMsg("$ISEnd$ "+new Date().getTime());
+		rt.writeMsg("$ISEnd$ " + new Date().getTime());
 		
 		System.out.println("\n\n*******************************************  Running Time in minutes ********************************************");
 		System.out.println("Total Running Time: "+ (double)(EndTime3 - startTime) / N 

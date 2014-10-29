@@ -159,7 +159,6 @@ public class Frequency {
 		public static int findBestCluster(double[] feature, double[][] clusters){
 			int index = -1;
 			double distance = -1.1;
-			//feature = norm(feature);
 			for(int i = 0; i < clusters.length; i++){
 				double fl = 0;
 				double cl = 0;
@@ -179,17 +178,6 @@ public class Frequency {
 			return index;
 		}
 		
-		public static double[] norm(double[] feature){
-			double len = 0;
-			for(int i = 0; i < feature.length; i++){
-				len += feature[i] * feature[i];
-			}
-			len = Math.sqrt(len);
-			for(int i = 0; i < feature.length; i++){
-				feature[i] /= len;
-			}
-			return feature;
-		}
 	}
 
 	public static class FreReduce extends MapReduceBase implements Reducer<Text, Text, Text, Text> {
@@ -200,10 +188,11 @@ public class Frequency {
 			int total = 0;
 			while (values.hasNext()) {
 				String s = values.next().toString();
-				if(!s.equals(""))
+				if(!s.equals("")){
 					if (sum.length() == 0) sum = s.split("\t")[1];
 					else sum = sum + " " + s.split("\t")[1];
 					total += Integer.parseInt(s.split("\t")[0]);
+				}
 			}
 			//System.out.println(sum);
 			output.collect(key, new Text(total + "\t" + sum));

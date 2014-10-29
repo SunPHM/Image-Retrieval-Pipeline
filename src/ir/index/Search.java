@@ -39,7 +39,7 @@ public class Search {
 	public static int clusterNum = 100;
 	public static int topclusterNum = 10;
 	public static int botclusterNum = 10;
-	public static String clusters = "test/cluster/clusters.txt";
+	public static String clusters = "test/cluster/clusters/";
 	public static String terms = "data/features/frequency.txt";
 	
 	public static String urlString = "http://localhost:8989/solr";
@@ -59,10 +59,12 @@ public class Search {
 		//runIndexing("test/data/frequency.txt");
 		//search("data/images/all_souls_000000.jpg");
 //		loadConfiguration("test/conf.xml");
-		loadConfiguration_topdown("test/conf_new.xml");
-		System.out.println(terms);
-		System.out.println(clusters);
-		System.out.println(clusterNum);
+		//loadConfiguration_topdown("test/conf_new.xml");
+		//System.out.println(terms);
+		//System.out.println(clusters);
+		//System.out.println(clusterNum);
+		Search.loadConfiguration_topdown("test/conf_new.xml");
+		Search.search_topdown("data/images/all_souls_000000.jpg");
 	}
 	
 	public static void init(String terms, int clusterNum, String clusters, int topclusterNum, int botclusterNum){
@@ -130,7 +132,6 @@ public class Search {
 		return docs_indexed;
 	}
 	
-/*	
  	public static String[] search(String image){
 		String[] results=null;
 		try {
@@ -149,7 +150,6 @@ public class Search {
 		return results;
 		
 	}
-	*/
 	
 	// search using the topdown frequency approach
 	public static String[] search_topdown(String image){
@@ -160,7 +160,7 @@ public class Search {
 			String qs = Search.createQuery_topdown(features);
 			results = query(qs);
 			System.out.println("results length = " + results.length);
-			System.out.println(results[0] + "\t" + results[1] + "\t" + results[3]);
+			System.out.println(results[0] + "\n" + results[1] + "\n" + results[2] + "\n" + results[3] + "\n" + results[4] + "\n" + results[5]);
 		} catch (SolrServerException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -186,7 +186,7 @@ public class Search {
 		return null;
 	}
 	
-/*	public static String createQuery(String[] features) throws IOException{//transform an image into a Solr document or a field
+	public static String createQuery(String[] features) throws IOException{//transform an image into a Solr document or a field
 
 		double[][] clusters = Frequency.FreMap.readClusters(Search.clusters, Search.clusterNum);
 		int[] marks = new int[Search.clusterNum];
@@ -210,7 +210,7 @@ public class Search {
 		//System.out.println("query string: " + result);
 		return result;
 	}
-	*/
+	
 	//for dealing with topdown frequency approach
 	public static String createQuery_topdown(String[] features) throws IOException{//transform an image into a Solr document or a field
 

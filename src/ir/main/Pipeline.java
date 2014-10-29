@@ -72,7 +72,7 @@ public class Pipeline {
 		Search.runIndexing(dst + "/data/frequency_new.txt");
 		long EndTime3 = new Date().getTime();
 		//to test or evaluate here
-		Search.search_topdown(src + "/all_souls_000000.jpg");
+		Search.search_topdown(src + "/all_souls_000001.jpg");
 		long EndTime4 = new Date().getTime();
 		rt.writeMsg("$ISEnd$ " + new Date().getTime());
 		 
