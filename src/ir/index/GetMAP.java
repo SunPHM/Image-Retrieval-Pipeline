@@ -19,7 +19,7 @@ import org.apache.solr.client.solrj.SolrServerException;
 import ir.util.HadoopUtil;
 
 // for oxbuilding data set out put, get the mAP of the results
-public class getmAP {
+public class GetMAP {
 
 	public static void main(String args[]) throws IOException{
 		String pipeline_output = "oxbuild_100_100_oct22";
@@ -43,8 +43,7 @@ public class getmAP {
 	
 
 	public static double getmAP(String images,String gt, long total_images) throws IOException{
-		
-		
+			
 		// read all the files with "query"
 		String[] files = HadoopUtil.getListOfFiles(gt);
 		// store the image/mAP pairs
@@ -53,7 +52,7 @@ public class getmAP {
 		for(String file : files){			
 			if(file.contains("query")){
 				BufferedReader reader;
-//				System.out.println("Calculating mAP for query file: " + file);
+				//System.out.println("Calculating mAP for query file: " + file);
 				FileSystem fs = FileSystem.get(new Configuration());
 				reader = new BufferedReader(new InputStreamReader(fs.open(new Path(file))));
 				String line = reader.readLine();
@@ -65,19 +64,7 @@ public class getmAP {
 				double lowY = Double.parseDouble(array[2]);
 				double highX = Double.parseDouble(array[3]);
 				double highY = Double.parseDouble(array[4]);
-					//System.out.println(line);
-					//System.out.println(queryImage + " " + lowX + " " + lowY + " " + highX + " " + highY);
 				String[] features = EvaluateOxbuilds.getPartialImageFeatures(images + "/" + queryImage, lowX, lowY, highX, highY);
-					// search the image features
-					//System.out.println(file.substring(0, file.length() - "_query.txt".length()));
-					
-/*					//change the num_results and get the precision/recall curve
-				HashMap<Double,Double> rec_pre = new HashMap<Double,Double>();
-				for(int num_results = 1; num_results <= 5000; num_results = num_results + 30){
-					F1Score f1s = EvaluateOxbuilds.searchFeatures(features, file.substring(0, file.length() - "_query.txt".length()),num_results);
-					rec_pre.put(f1s.getRec(), f1s.getPre());
-				}
-*/
 				String query = Search.createQuery_topdown(features);
 				// run query
 				String[] files_search_results = null;

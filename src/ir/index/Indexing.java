@@ -48,12 +48,7 @@ public class Indexing {
 				docs.clear();
 			}
 		}
-		
 		br.close();
-		
-		//System.out.println(docs.toArray()[0]);
-		//System.out.println(docs.toArray()[1]);
-		
 		server.add(docs);
 	    server.commit();
 	    docs_total_size=docs_total_size+docs.size();

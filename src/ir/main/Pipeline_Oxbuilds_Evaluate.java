@@ -11,7 +11,7 @@ import ir.feature.FeatureExtraction;
 import ir.feature.FeatureExtraction_seq;
 import ir.index.EvaluateOxbuilds;
 import ir.index.Search;
-import ir.index.getmAP;
+import ir.index.GetMAP;
 import ir.util.HadoopUtil;
 import ir.util.MeasureContainers;
 import ir.util.RecordTime;
@@ -107,7 +107,7 @@ public class Pipeline_Oxbuilds_Evaluate {
 		rt.writeMsg("$ISEnd$ " + new Date().getTime());
 		 
 		//get the mAP
-		double mAP = getmAP.getmAP(testImgFolder, gt, total_images);
+		double mAP = GetMAP.getmAP(testImgFolder, gt, total_images);
 		
 		
 		String string_result="Total Running Time: "+ (double)(EndTime3 - startTime) / N 

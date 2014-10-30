@@ -5,6 +5,8 @@ import ir.util.HadoopUtil;
 import java.io.IOException;
 import java.util.Iterator;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.*;
 import org.apache.hadoop.mapred.FileInputFormat;
@@ -19,6 +21,7 @@ import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapred.SequenceFileInputFormat;
 import org.apache.hadoop.mapred.lib.MultipleSequenceFileOutputFormat;
 import org.apache.mahout.clustering.classify.WeightedVectorWritable;
+import org.apache.mahout.clustering.iterator.ClusterWritable;
 import org.apache.mahout.math.VectorWritable;
 
 
@@ -26,6 +29,32 @@ public class ClusterPP {
 	public static void main(String args[]) throws IOException, InterruptedException{
 		//run_clusterpp("data/cluster/top/clusteredPoints", "data/cluster/tmpmid/");
 		//TopDownClustering.merge("data/cluster/level/res", "temptemp");
+		test("test/cluster/mid/7/part-m-0");
+	}
+	
+	public static void test(String path) throws IOException{
+		// first test
+		Configuration conf = new Configuration();
+		FileSystem fs = FileSystem.get(conf);
+		SequenceFile.Reader reader = new SequenceFile.Reader(fs, new Path(path), conf);
+		LongWritable key = new LongWritable();
+		VectorWritable value = new VectorWritable();
+		reader.next(key, value);
+		System.out.println(key.toString());
+		double[][] clusters = Frequency.FreMap.readClusters("test/cluster/clusters/0/0.txt", 10);
+		double[] x = new double[128];
+		for(int i = 0; i < 128; i++) x[i] = value.get().get(i);
+		int index = Frequency.FreMap.findBestCluster(x, clusters);
+		System.out.println(index);
+		
+		// second test
+		reader = new SequenceFile.Reader(fs, new Path("test/cluster/top/clusters-9-final/part-r-00000"), conf);
+		System.out.println(reader.getKeyClassName());
+		System.out.println(reader.getValueClassName());
+		IntWritable ins = new IntWritable();
+		ClusterWritable cls = new ClusterWritable();
+		reader.next(ins, cls);
+		System.out.println(cls.getValue().getId());
 	}
 	
 	static class MultiFileOutput extends MultipleSequenceFileOutputFormat<LongWritable, VectorWritable> {
