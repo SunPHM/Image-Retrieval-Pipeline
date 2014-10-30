@@ -22,6 +22,7 @@ import org.apache.hadoop.mapred.SequenceFileInputFormat;
 import org.apache.hadoop.mapred.lib.MultipleSequenceFileOutputFormat;
 import org.apache.mahout.clustering.classify.WeightedVectorWritable;
 import org.apache.mahout.clustering.iterator.ClusterWritable;
+import org.apache.mahout.math.Arrays;
 import org.apache.mahout.math.VectorWritable;
 
 
@@ -29,10 +30,10 @@ public class ClusterPP {
 	public static void main(String args[]) throws IOException, InterruptedException{
 		//run_clusterpp("data/cluster/top/clusteredPoints", "data/cluster/tmpmid/");
 		//TopDownClustering.merge("data/cluster/level/res", "temptemp");
-		test("test/cluster/mid/7/part-m-0");
+		test("test/cluster/mid/3/part-m-0", "test/cluster/clusters/0/0.txt");
 	}
 	
-	public static void test(String path) throws IOException{
+	public static void test(String path, String cls) throws IOException{
 		// first test
 		Configuration conf = new Configuration();
 		FileSystem fs = FileSystem.get(conf);
@@ -40,21 +41,24 @@ public class ClusterPP {
 		LongWritable key = new LongWritable();
 		VectorWritable value = new VectorWritable();
 		reader.next(key, value);
-		System.out.println(key.toString());
-		double[][] clusters = Frequency.FreMap.readClusters("test/cluster/clusters/0/0.txt", 10);
+		//System.out.println(key.toString());
+		//reader.next(key, value);
+		System.out.println("key = " + key.toString());
+		System.out.println(value.toString());
+		double[][] clusters = TopDownFrequency.readClusters(cls, 10);
+		for(int c = 0; c < clusters.length; c++){
+		//	System.out.println(Arrays.toString(clusters[c]));
+		}
 		double[] x = new double[128];
 		for(int i = 0; i < 128; i++) x[i] = value.get().get(i);
-		int index = Frequency.FreMap.findBestCluster(x, clusters);
-		System.out.println(index);
+		int index = TopDownFrequency.findBestCluster(x, clusters);
+		System.out.println("index = " + index);
 		
-		// second test
-		reader = new SequenceFile.Reader(fs, new Path("test/cluster/top/clusters-9-final/part-r-00000"), conf);
-		System.out.println(reader.getKeyClassName());
-		System.out.println(reader.getValueClassName());
+		reader  = new SequenceFile.Reader(fs, new Path("test/cluster/top/clusters-8-final/part-r-00000"), conf);
 		IntWritable ins = new IntWritable();
-		ClusterWritable cls = new ClusterWritable();
-		reader.next(ins, cls);
-		System.out.println(cls.getValue().getId());
+		ClusterWritable cw = new ClusterWritable();
+		reader.next(ins, cw);
+		System.out.println(cw.getValue().getCenter().toString());
 	}
 	
 	static class MultiFileOutput extends MultipleSequenceFileOutputFormat<LongWritable, VectorWritable> {

@@ -99,7 +99,7 @@ public class ClusterDump {
 				IntWritable key = new IntWritable();
 				ClusterWritable value = new ClusterWritable();
 				while(reader.next(key, value)){
-					bw.write(key.toString() + "   " + value.getValue().toString() + "\n");
+					bw.write(value.getValue().getId() + "\t" + value.getValue().getCenter().toString() + "\n");
 				}
 				reader.close();
 			}
@@ -140,8 +140,7 @@ public class ClusterDump {
 		@Override
 		public void map(IntWritable key, ClusterWritable value, OutputCollector<Text, Text> output, Reporter reporter) 
 				throws IOException {
-			//System.out.println(value.getValue().toString());
-			output.collect(new Text(value.getValue().toString()), new Text(""));
+			output.collect( new Text("" + value.getValue().getId()), new Text(value.getValue().getCenter().toString()));
 		}
 	}
 }

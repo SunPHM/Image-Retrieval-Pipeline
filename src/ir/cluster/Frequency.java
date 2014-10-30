@@ -122,17 +122,13 @@ public class Frequency {
 			double[][] cs = new double[clusterNum][featureSize];
 			String line;
 			//System.out.println(clusters);
-			for(int i = 0; i < clusterNum; i ++){
+			while((line = input.readLine()) != null){
 				line = input.readLine();
-				
-				String center = line.split("\\]")[0].split("c=\\[")[1];
-				String[] array = center.split(", ");
-				//debug
-				//System.out.println(line);
-				
+				int i = Integer.parseInt(line.split("\t")[0]);
+				String center = line.split("\\}")[0].split("\\{")[1];
+				String[] array = center.split(",");
 				//if normal case, correct format
 				if(center.contains(":") == false) {
-
 					for(int j = 0; j < featureSize; j++){
 						String[] co = array[j].split(":"); // adding regex patterns to solve the wrong format problem
 						cs[i][j] = Double.parseDouble(co[co.length - 1]);
