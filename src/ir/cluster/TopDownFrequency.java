@@ -31,8 +31,10 @@ import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
 
 public class TopDownFrequency {
+	
 	//input: clusters/level/clusterid, features
 	//output: a file containing both the name of file and the cluster id
+	private static  boolean Use_Cosine_distance = true;
 	public static int featureSize = 128;
 	
 
@@ -274,24 +276,46 @@ public class TopDownFrequency {
 	}
 	
 	public static int findBestCluster(double[] feature, double[][] clusters){
-		int index = -1;
-		double distance = -1.1;
-		for(int i = 0; i < clusters.length; i++){
-			double fl = 0;
-			double cl = 0;
-			double ds = 0;
-			for(int j = 0; j < clusters[i].length; j++){
-				ds += feature[j] * clusters[i][j];
-				fl += feature[j] * feature[j];
-				cl += clusters[i][j] * clusters[i][j];
+		if (Use_Cosine_distance == true){
+			int index = -1;
+			double distance = -1.1;
+			//feature = norm(feature);
+			for(int i = 0; i < clusters.length; i++){
+				double fl = 0;
+				double cl = 0;
+				double ds = 0;
+				for(int j = 0; j < clusters[i].length; j++){
+					ds += feature[j] * clusters[i][j];
+					fl += feature[j] * feature[j];
+					cl += clusters[i][j] * clusters[i][j];
+				}
+				ds = ds / (Math.sqrt(fl) * Math.sqrt(cl));
+				
+				if(ds > distance){
+					distance = ds;
+					index = i;
+				}
 			}
-			ds = ds / (Math.sqrt(fl) * Math.sqrt(cl));
 			
-			if(ds > distance){
-				distance = ds;
-				index = i;
-			}
+			return index;
 		}
-		return index;
+		else {
+			int index = -1;
+			double distance = Double.MAX_VALUE;
+			//feature = norm(feature);
+			for(int i = 0; i < clusters.length; i++){
+				double ds = 0;
+				for(int j = 0; j < clusters[i].length; j++){
+					ds += (feature[j] - clusters[i][j]) * (feature[j] - clusters[i][j]);
+				}
+				ds = Math.sqrt(ds);
+				
+				if(ds < distance){
+					distance = ds;
+					index = i;
+				}
+			}
+			return index;
+		}
 	}
 }

@@ -5,7 +5,11 @@ import ir.util.HadoopUtil;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.ContentSummary;
@@ -288,31 +292,58 @@ public class TopDownClustering {
 	
 	public static void kmeans_init(String input,Path clusters_path,int k,Configuration conf, boolean is_input_directory) 
 			throws IOException, InstantiationException, IllegalAccessException{
-		//read first K points from input folder as initial K clusters
-		Path initial_path=null;
-		
-		if(is_input_directory==true){//is directory
-			String[] input_all_files=HadoopUtil.getListOfFiles(input);
-			System.out.println("\n!!!Generate initial cls from path "+input_all_files[0]+"\n");
-			 initial_path=new Path(input_all_files[0]);
-		}
-		else{
-			 initial_path=new Path(input);
-		}			
-		
-		SequenceFile.Reader reader = new SequenceFile.Reader(FileSystem.get(conf), initial_path, conf);
-		WritableComparable key = (WritableComparable)reader.getKeyClass().newInstance();
-		VectorWritable value = (VectorWritable) reader.getValueClass().newInstance();
-		SequenceFile.Writer writer = new SequenceFile.Writer(FileSystem.get(conf), conf, clusters_path, Text.class,Kluster.class);
-		for (int i = 0; i < k; i++){
-			reader.next(key, value);	 
-			Vector vec = value.get();
-			Kluster cluster = new Kluster(vec, i, distance_measure);
-			writer.append(new Text(cluster.getIdentifier()), cluster);
-		}
-		reader.close(); 
-		writer.close();
-	}
+				//read first K points from input folder as initial K clusters
+				Path initial_path=null;
+				
+				if(is_input_directory==true){//is directory
+					String[] input_all_files=HadoopUtil.getListOfFiles(input);
+					System.out.println("\n!!!Generate random initial cls from path "+input_all_files[0]+"\n");
+					 initial_path=new Path(input_all_files[0]);
+				}
+				else{
+					 initial_path=new Path(input);
+				}			
+				
+				SequenceFile.Reader reader = new SequenceFile.Reader(FileSystem.get(conf), initial_path, conf);
+				WritableComparable in_key = (WritableComparable)reader.getKeyClass().newInstance();
+				VectorWritable in_value = (VectorWritable) reader.getValueClass().newInstance();
+				
+				//Get random K cluster, store in hashmap
+				HashMap<Integer, Kluster> Random_K_cluster = new HashMap<Integer, Kluster>();
+				int cluster_id = 0;
+				Random rand = new Random();
+				while(reader.next(in_key, in_value)){
+					if(Random_K_cluster.size() < k){ //fill hashmap with k clusters
+						Vector vec = in_value.get();
+						Kluster cluster = new Kluster(vec, cluster_id, distance_measure);
+						Random_K_cluster.put(cluster_id, cluster);
+						cluster_id = cluster_id + 1;
+					}
+					else {//randomly replace some of the clusters.
+						int flag = rand.nextInt(2);
+						if(flag % 2 == 0){ //even, replace an existing random kluster.
+							int index = rand.nextInt(k);// the cluster to replace 
+							Vector vec = in_value.get();
+							Kluster cluster = new Kluster(vec, index, distance_measure);
+							Random_K_cluster.put(index, cluster);
+						}
+					}
+				}
+				reader.close(); 
+				
+				if(Random_K_cluster.size() != k){
+					throw new IOException("kmeans init error, wrong number of initial clusters");
+				}
+				
+
+				SequenceFile.Writer writer = new SequenceFile.Writer(FileSystem.get(conf), conf, clusters_path, Text.class,Kluster.class);
+				SortedSet<Integer> keys = new TreeSet<Integer>(Random_K_cluster.keySet());
+				for (Integer out_key : keys) { 
+					   Kluster out_value = Random_K_cluster.get(out_key);
+					   writer.append(new Text(out_value.getIdentifier()), out_value);
+				}
+				writer.close();
+			}
 	
 	public static void kmeans(String input, String clusters, String output, int k, double cd, int x,boolean is_input_directory) 
 			throws InstantiationException, IllegalAccessException, IOException, ClassNotFoundException, InterruptedException {
