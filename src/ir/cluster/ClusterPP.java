@@ -30,7 +30,7 @@ public class ClusterPP {
 	public static void main(String args[]) throws IOException, InterruptedException{
 		//run_clusterpp("data/cluster/top/clusteredPoints", "data/cluster/tmpmid/");
 		//TopDownClustering.merge("data/cluster/level/res", "temptemp");
-		test("test/cluster/mid/3/part-m-0", "test/cluster/clusters/0/0.txt");
+		test("test/cluster/mid/0/part-m-0", "test/cluster/clusters/0/0.txt");
 	}
 	
 	public static void test(String path, String cls) throws IOException{
@@ -42,19 +42,19 @@ public class ClusterPP {
 		VectorWritable value = new VectorWritable();
 		reader.next(key, value);
 		//System.out.println(key.toString());
-		//reader.next(key, value);
+		reader.next(key, value);
 		System.out.println("key = " + key.toString());
 		System.out.println(value.toString());
 		double[][] clusters = TopDownFrequency.readClusters(cls, 10);
-		for(int c = 0; c < clusters.length; c++){
+		//for(int c = 0; c < clusters.length; c++){
 		//	System.out.println(Arrays.toString(clusters[c]));
-		}
+		//}
 		double[] x = new double[128];
 		for(int i = 0; i < 128; i++) x[i] = value.get().get(i);
 		int index = TopDownFrequency.findBestCluster(x, clusters);
 		System.out.println("index = " + index);
 		
-		reader  = new SequenceFile.Reader(fs, new Path("test/cluster/top/clusters-8-final/part-r-00000"), conf);
+		reader  = new SequenceFile.Reader(fs, new Path("test/cluster/top/clusters-6-final/part-r-00000"), conf);
 		IntWritable ins = new IntWritable();
 		ClusterWritable cw = new ClusterWritable();
 		reader.next(ins, cw);

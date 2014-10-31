@@ -26,6 +26,7 @@ import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapred.SequenceFileInputFormat;
 import org.apache.hadoop.mapred.TextOutputFormat;
 import org.apache.hadoop.mapred.lib.MultipleSequenceFileOutputFormat;
+import org.apache.mahout.math.Arrays;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
 
@@ -36,19 +37,18 @@ public class TopDownFrequency {
 	
 
 	public static void main(String[] args) throws IOException{
-	//	features = args[0];
-	//	clusters = args[1];
-	//	topclusterNum = Integer.parseInt(args[2]);
-	//	botclusterNum = Integer.parseInt(args[3]);
-	//	String temp = args[4];
-	//	String output = args[5];
-		String features = "test_fe_seq2seq_100images/data/features.seq";
-		String clusters = "test_fe_seq2seq_100images/cluster/clusters";
-		String dividedfeatures = "test_fe_seq2seq_100images/data/dividedfeatures";
-		int topclusterNum = 10;
-		predivide(features, clusters + "/0/0.txt", dividedfeatures, topclusterNum);
+		double[][] cs = readClusters("test/cluster/clusters/0/0.txt", 10);
+		for(int c = 0; c < cs.length; c++){
+			System.out.println(Arrays.toString(cs[c]));
+		}
+		//String features = "test_fe_seq2seq_100images/data/features.seq";
+		//String clusters = "test_fe_seq2seq_100images/cluster/clusters";
+		//String dividedfeatures = "test_fe_seq2seq_100images/data/dividedfeatures";
+		//int topclusterNum = 10;
+		//predivide(features, clusters + "/0/0.txt", dividedfeatures, topclusterNum);
 		//runJob(features, botclusterNum, topclusterNum, clusters, temp, output);
 	}
+	
 	/**Setup
 	 * @param
 	 * features folder
@@ -234,7 +234,6 @@ public class TopDownFrequency {
 
 	
 	public static double[][] readClusters(String clusters, int clusterNum) throws IOException{
-		//TODO: in current stage, I only concern about the cluster centers not the radiuses
 		Configuration conf = new Configuration();
 		FileSystem fs = FileSystem.get(conf);
 		Path path = new Path(clusters);
@@ -243,9 +242,11 @@ public class TopDownFrequency {
 		String line;
 		//System.out.println(clusters);
 		while((line = input.readLine()) != null){
-			line = input.readLine();
+			//System.out.println("the start of processing one line");
 			int i = Integer.parseInt(line.split("\t")[0]);
+			//System.out.println("id = " + i);
 			String center = line.split("\\}")[0].split("\\{")[1];
+			//System.out.println(center);
 			String[] array = center.split(",");
 			//if normal case, correct format
 			if(center.contains(":") == false) {
@@ -256,7 +257,7 @@ public class TopDownFrequency {
 			}
 			else { // abnormal case, fill those missing dimensions with zeros
 				String[] result_array = new String[featureSize];
-				for (int k =0; k < featureSize; k ++){
+				for (int k = 0; k < featureSize; k ++){
 					result_array[k] = "0";
 				}
 				for(String str : array){

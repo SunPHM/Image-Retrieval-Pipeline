@@ -114,7 +114,6 @@ public class Frequency {
 		}
 		
 		public static double[][] readClusters(String clusters, int clusterNum) throws IOException{
-			//TODO: in current stage, I only concern about the cluster centers not the radiuses
 			Configuration conf = new Configuration();
 			FileSystem fs = FileSystem.get(conf);
 			Path path = new Path(clusters);
@@ -123,9 +122,11 @@ public class Frequency {
 			String line;
 			//System.out.println(clusters);
 			while((line = input.readLine()) != null){
-				line = input.readLine();
+				//System.out.println("the start of processing one line");
 				int i = Integer.parseInt(line.split("\t")[0]);
+				//System.out.println("id = " + i);
 				String center = line.split("\\}")[0].split("\\{")[1];
+				//System.out.println(center);
 				String[] array = center.split(",");
 				//if normal case, correct format
 				if(center.contains(":") == false) {
@@ -136,7 +137,7 @@ public class Frequency {
 				}
 				else { // abnormal case, fill those missing dimensions with zeros
 					String[] result_array = new String[featureSize];
-					for (int k =0; k < featureSize; k ++){
+					for (int k = 0; k < featureSize; k ++){
 						result_array[k] = "0";
 					}
 					for(String str : array){
