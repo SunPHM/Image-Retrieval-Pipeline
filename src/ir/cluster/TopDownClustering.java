@@ -290,6 +290,34 @@ public class TopDownClustering {
 		else return tmp_folders;
 	}
 	
+	public static void kmeans_init_old(String input,Path clusters_path,int k,Configuration conf, boolean is_input_directory) 
+			throws IOException, InstantiationException, IllegalAccessException{
+				//read first K points from input folder as initial K clusters
+				Path initial_path=null;
+				
+				if(is_input_directory==true){//is directory
+					String[] input_all_files=HadoopUtil.getListOfFiles(input);
+					System.out.println("\n!!!Generate initial cls from path "+input_all_files[0]+"\n");
+					 initial_path=new Path(input_all_files[0]);
+				}
+				else{
+					 initial_path=new Path(input);
+				}			
+				
+				SequenceFile.Reader reader = new SequenceFile.Reader(FileSystem.get(conf), initial_path, conf);
+				WritableComparable key = (WritableComparable)reader.getKeyClass().newInstance();
+				VectorWritable value = (VectorWritable) reader.getValueClass().newInstance();
+				SequenceFile.Writer writer = new SequenceFile.Writer(FileSystem.get(conf), conf, clusters_path, Text.class,Kluster.class);
+				for (int i = 0; i < k; i++){
+					reader.next(key, value);	 
+					Vector vec = value.get();
+					Kluster cluster = new Kluster(vec, i, distance_measure);
+					writer.append(new Text(cluster.getIdentifier()), cluster);
+				}
+				reader.close(); 
+				writer.close();
+	}
+	
 	public static void kmeans_init(String input,Path clusters_path,int k,Configuration conf, boolean is_input_directory) 
 			throws IOException, InstantiationException, IllegalAccessException{
 				//read first K points from input folder as initial K clusters
