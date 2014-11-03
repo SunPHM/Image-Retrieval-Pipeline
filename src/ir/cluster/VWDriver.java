@@ -4,6 +4,7 @@ import ir.util.XMLUtil;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.HashMap;
 
 /**
  * The driver class for transformation, top-down clustering, and visual word frequency extraction
@@ -11,11 +12,21 @@ import java.util.Date;
  */
 public class VWDriver {
 	
-	public static void main(String[] args){
-		
+	public static void main(String[] args) throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException, InterruptedException{
+		// args[0] feature folder
+		// args[1] result folder
+		// args[2] delta
+		// args[3] distance measure type, 0 cosine, 1 euclidean
+		// args[4] clusterInitType, 0 serial, 1 random
+		KMeans.init(Double.parseDouble(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]));
+		String[] fixedArgs = {args[0], args[1], 100 + "", 100 + ""};
+		run(fixedArgs, 0, true);
+		HashMap<String, String> map = new HashMap<String, String>();
+		map.put("delta", args[2]); map.put("dmType", args[3]); map.put("clusterInitType", args[4]);
+		XMLUtil.storeParameters(args[1] + "/parameters.xml", map);
 	}
 	
-	public static String run(String[] args,int botlvlcluster_type,boolean runTopdownClustering) 
+	public static String run(String[] args, int botlvlcluster_type, boolean runTopdownClustering) 
 			throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException, InterruptedException{
 		// args[0]: the features folder
 		// args[1]: the result folder
@@ -56,7 +67,7 @@ public class VWDriver {
 		String s = 	"clsutering time = " + (double)(EndTime1 - startTime)/N + "\n" +
 					t + "frequency time = " + (double)(EndTime2 - EndTime1)/N + "\n";
 		
-		
+		System.out.println(s);
 		return s;
 	}
 	

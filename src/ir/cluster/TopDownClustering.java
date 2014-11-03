@@ -5,11 +5,7 @@ import ir.util.HadoopUtil;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Random;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.ContentSummary;
@@ -18,7 +14,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapred.FileInputFormat;
 import org.apache.hadoop.mapred.FileOutputFormat;
 import org.apache.hadoop.mapred.JobClient;
@@ -30,11 +25,6 @@ import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapred.SequenceFileInputFormat;
 import org.apache.hadoop.mapred.TextOutputFormat;
 import org.apache.mahout.clustering.iterator.ClusterWritable;
-import org.apache.mahout.clustering.kmeans.KMeansDriver;
-import org.apache.mahout.clustering.kmeans.Kluster;
-import org.apache.mahout.common.distance.CosineDistanceMeasure;
-import org.apache.mahout.math.Vector;
-import org.apache.mahout.math.VectorWritable;
 
 
 public class TopDownClustering {
@@ -42,15 +32,9 @@ public class TopDownClustering {
 	private  static int cluster_capacity = 15; // in number of containers, change this 
 	private  static int num_jobs_botlevelclustering = 25;
 	
-	private static double delta = 0.001; //0.0001; // need to vary this to explore
-	private static int maxIterations = 100;
-	
 	private static int topK = 0;
 	private static int botK = 0;
 	
-	private static final CosineDistanceMeasure distance_measure = new CosineDistanceMeasure();
-	
-
 	//example args: data/cluster/fs.seq data/cluster/level  10 10
 	public static void main(String[] args) 
 			throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException{
@@ -153,7 +137,7 @@ public class TopDownClustering {
 	
 	public static void topLevelProcess(String input, String cls, String top, int topK)
 			throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException, InterruptedException {
-		kmeans(input, cls, top, topK, delta, maxIterations,true);
+		KMeans.kmeans(input, cls, top, topK, true);
 	}
 	
 	public static void midLevelProcess(String top, String mid) throws IOException, InterruptedException {
@@ -170,8 +154,7 @@ public class TopDownClustering {
 			String clusters = bot + "/" + i + "/cls";
 			String output = bot + "/" + i;
 			int k = botK;
-			double cd = delta;
-			kmeans(input,clusters, output, k, cd, maxIterations,false);
+			KMeans.kmeans(input,clusters, output, k, false);
 			log("botlevel mahout kmeans clustering " + i + "> ends");
 		}
 	}
@@ -193,9 +176,7 @@ public class TopDownClustering {
 				String clusters = bot + "/" + index + "/cls";
 				String output = bot + "/" + index;
 				int k = botK;
-				double cd = delta;
-				
-				String param = input + " " + clusters + " " + output + " " + k + " " + cd + " " + maxIterations;
+				String param = input + " " + clusters + " " + output + " " + k;
 				params.add(param);
 			}
 			writeBotLevelParameters(""+i,params, output_folder + "/" + i + ".txt");			
@@ -229,9 +210,7 @@ public class TopDownClustering {
 			String clusters = bot + "/" + i + "/cls";
 			String output = bot + "/" + i;
 			int k = botK;
-			double cd = delta;
-			
-			threads[i % num_jobs_botlevelclustering].addParams(new Kmeans_Params(i, input, clusters, output, k, cd, maxIterations));
+			threads[i % num_jobs_botlevelclustering].addParams(new Kmeans_Params(i, input, clusters, output, k));
 		}
 		
 		//start all kmeans threads
@@ -290,105 +269,6 @@ public class TopDownClustering {
 		else return tmp_folders;
 	}
 	
-	public static void kmeans_init_old(String input,Path clusters_path,int k,Configuration conf, boolean is_input_directory) 
-			throws IOException, InstantiationException, IllegalAccessException{
-				//read first K points from input folder as initial K clusters
-				Path initial_path=null;
-				
-				if(is_input_directory==true){//is directory
-					String[] input_all_files=HadoopUtil.getListOfFiles(input);
-					System.out.println("\n!!!Generate initial cls from path "+input_all_files[0]+"\n");
-					 initial_path=new Path(input_all_files[0]);
-				}
-				else{
-					 initial_path=new Path(input);
-				}			
-				
-				SequenceFile.Reader reader = new SequenceFile.Reader(FileSystem.get(conf), initial_path, conf);
-				WritableComparable key = (WritableComparable)reader.getKeyClass().newInstance();
-				VectorWritable value = (VectorWritable) reader.getValueClass().newInstance();
-				SequenceFile.Writer writer = new SequenceFile.Writer(FileSystem.get(conf), conf, clusters_path, Text.class,Kluster.class);
-				for (int i = 0; i < k; i++){
-					reader.next(key, value);	 
-					Vector vec = value.get();
-					Kluster cluster = new Kluster(vec, i, distance_measure);
-					writer.append(new Text(cluster.getIdentifier()), cluster);
-				}
-				reader.close(); 
-				writer.close();
-	}
-	
-	public static void kmeans_init(String input,Path clusters_path,int k,Configuration conf, boolean is_input_directory) 
-			throws IOException, InstantiationException, IllegalAccessException{
-				//read first K points from input folder as initial K clusters
-				Path initial_path=null;
-				
-				if(is_input_directory==true){//is directory
-					String[] input_all_files=HadoopUtil.getListOfFiles(input);
-					System.out.println("\n!!!Generate random initial cls from path "+input_all_files[0]+"\n");
-					 initial_path=new Path(input_all_files[0]);
-				}
-				else{
-					 initial_path=new Path(input);
-				}			
-				
-				SequenceFile.Reader reader = new SequenceFile.Reader(FileSystem.get(conf), initial_path, conf);
-				WritableComparable in_key = (WritableComparable)reader.getKeyClass().newInstance();
-				VectorWritable in_value = (VectorWritable) reader.getValueClass().newInstance();
-				
-				//Get random K cluster, store in hashmap
-				HashMap<Integer, Kluster> Random_K_cluster = new HashMap<Integer, Kluster>();
-				int cluster_id = 0;
-				Random rand = new Random();
-				while(reader.next(in_key, in_value)){
-					if(Random_K_cluster.size() < k){ //fill hashmap with k clusters
-						Vector vec = in_value.get();
-						Kluster cluster = new Kluster(vec, cluster_id, distance_measure);
-						Random_K_cluster.put(cluster_id, cluster);
-						cluster_id = cluster_id + 1;
-					}
-					else {//randomly replace some of the clusters.
-						int flag = rand.nextInt(2);
-						if(flag % 2 == 0){ //even, replace an existing random kluster.
-							int index = rand.nextInt(k);// the cluster to replace 
-							Vector vec = in_value.get();
-							Kluster cluster = new Kluster(vec, index, distance_measure);
-							Random_K_cluster.put(index, cluster);
-						}
-					}
-				}
-				reader.close(); 
-				
-				if(Random_K_cluster.size() != k){
-					throw new IOException("kmeans init error, wrong number of initial clusters");
-				}
-				
-
-				SequenceFile.Writer writer = new SequenceFile.Writer(FileSystem.get(conf), conf, clusters_path, Text.class,Kluster.class);
-				SortedSet<Integer> keys = new TreeSet<Integer>(Random_K_cluster.keySet());
-				for (Integer out_key : keys) { 
-					   Kluster out_value = Random_K_cluster.get(out_key);
-					   writer.append(new Text(out_value.getIdentifier()), out_value);
-				}
-				writer.close();
-			}
-	
-	public static void kmeans(String input, String clusters, String output, int k, double cd, int x,boolean is_input_directory) 
-			throws InstantiationException, IllegalAccessException, IOException, ClassNotFoundException, InterruptedException {
-		org.apache.hadoop.conf.Configuration conf = new Configuration();
-
-			Path input_path = new Path(input);
-			Path clusters_path = new Path(clusters + "/part-r-00000");
-			Path output_path = new Path(output);
-			HadoopUtil.delete(output);
-			double clusterClassificationThreshold = 0; 
-			 
-			kmeans_init( input, clusters_path,k,conf,  is_input_directory);
-			//System.out.println("initial " + k + "  clusters written to file: " + clusters);			
-			KMeansDriver.run(conf, input_path, clusters_path, output_path, 
-					distance_measure, cd, maxIterations, true, clusterClassificationThreshold, false);		
-	}
-	
 	@SuppressWarnings("deprecation")
 	public static void log(String msg){
 		Date now = new Date();
@@ -444,7 +324,7 @@ class runBotLevelClustering{
 			String[] splits=args.split(" ");
 			
 			try {
-				TopDownClustering.kmeans(splits[0], splits[1], splits[2], Integer.parseInt(splits[3]), Double.parseDouble(splits[4]), Integer.parseInt(splits[5]),false);
+				KMeans.kmeans(splits[0], splits[1], splits[2], Integer.parseInt(splits[3]), false);
 			} catch (NumberFormatException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -480,7 +360,7 @@ class KmeansThread extends Thread
    {
     	  for(Kmeans_Params param : params){
 	    		try {
-					TopDownClustering.kmeans(param.input, param.clusters, param.output, param.k, param.cd, param.x,false);
+					KMeans.kmeans(param.input, param.clusters, param.output, param.k,false);
 				} catch (InstantiationException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -508,16 +388,11 @@ class Kmeans_Params{
 	public String clusters;
 	public String output;
 	public int k;
-	public double cd;
-	public int x;
-	public Kmeans_Params(int id, String input, String clusters, String output, int k, double cd, int x){
+	public Kmeans_Params(int id, String input, String clusters, String output, int k){
 		  this.id = id;
 	      this.input = input;
 	      this.clusters = clusters;
 	      this.output = output;
 	      this.k = k;
-	      this.cd = cd;
-	      this.x = x;
 	}
 }
-

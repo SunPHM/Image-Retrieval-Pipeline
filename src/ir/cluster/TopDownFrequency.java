@@ -276,6 +276,7 @@ public class TopDownFrequency {
 	}
 	
 	public static int findBestCluster(double[] feature, double[][] clusters){
+		if(KMeans.dmType == 0) Use_Cosine_distance = true; else Use_Cosine_distance = false;
 		if (Use_Cosine_distance == true){
 			int index = -1;
 			double distance = -1.1;

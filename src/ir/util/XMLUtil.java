@@ -2,6 +2,8 @@ package ir.util;
 
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map.Entry;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -37,6 +39,7 @@ public class XMLUtil {
 		}    
 
 	}
+	
 	public static void createConfiguration(String path, String terms, String clusters, int topclusterNum, int botclusterNum){
 		
 		Document document = DocumentHelper.createDocument();
@@ -55,7 +58,22 @@ public class XMLUtil {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}    
-
 	}
 	
+	public static void storeParameters(String path, HashMap<String, String> args){
+		Document document = DocumentHelper.createDocument();
+	    Element root = document.addElement( "root" );
+	    for(Entry<String, String> entry:args.entrySet()){
+	    	root.addAttribute(entry.getKey(), entry.getValue());
+	    }
+		try {
+			FileSystem fs = FileSystem.get(new Configuration());
+		    XMLWriter writer = new XMLWriter(fs.create(new Path(path)));
+		    writer.write(document);
+		    writer.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}    
+	}
 }
