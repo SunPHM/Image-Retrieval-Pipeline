@@ -39,7 +39,7 @@ public class TopDownClustering {
 	public static void main(String[] args) 
 			throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException{
 		//run(args, 1);
-		setParallelDegree("test_fe_seq2seq_100images/cluster/mid/", 10, 1);
+		//setParallelDegree("test_fe_seq2seq_100images/cluster/mid/", 10, 1);
 	}
 	
 	public static String run(String[] args, int botlvlcluster_type) 
@@ -67,9 +67,9 @@ public class TopDownClustering {
 			ts1 = new Date().getTime();
 			// medium processing between top-level and bottom-level clustering
 			midLevelProcess(top, mid);
-			//bottom level clustering
-			setParallelDegree(mid, topK, botlvlcluster_type);
 			
+			//bottom level clustering
+			//setParallelDegree(mid, topK, botlvlcluster_type);
 			ts2 = new Date().getTime();
 			if(botlvlcluster_type == 0) botLevelProcess_Serial(mid, bot, topK, botK);
 			else if(botlvlcluster_type == 1) botLevelProcess_MRJob(mid, bot, topK, botK);
