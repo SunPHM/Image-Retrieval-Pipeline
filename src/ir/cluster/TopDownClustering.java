@@ -183,6 +183,8 @@ public class TopDownClustering {
 		}
 		
 		runBotLevelClustering.run(output_folder, bot + "/whatever");
+		HadoopUtil.delete(bot + "/whatever");
+		HadoopUtil.delete(bot + "/temp");
 	}
 	
 	public static void writeBotLevelParameters(String key, List<String> values, String filename) throws IOException{

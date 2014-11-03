@@ -20,7 +20,7 @@ public class VWDriver {
 		// args[4] clusterInitType, 0 serial, 1 random
 		KMeans.init(Double.parseDouble(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]));
 		String[] fixedArgs = {args[0], args[1], 100 + "", 100 + ""};
-		run(fixedArgs, 0, true);
+		run(fixedArgs, 2, true);
 		HashMap<String, String> map = new HashMap<String, String>();
 		map.put("delta", args[2]); map.put("dmType", args[3]); map.put("clusterInitType", args[4]);
 		XMLUtil.storeParameters(args[1] + "/parameters.xml", map);
