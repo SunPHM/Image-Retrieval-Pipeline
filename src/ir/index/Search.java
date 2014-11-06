@@ -63,7 +63,7 @@ public class Search {
 		//System.out.println(clusterNum);
 		//Search.loadConfiguration_topdown("test/conf_new.xml");
 		//Search.search_topdown("data/images/all_souls_000000.jpg");
-		test("/home/yp/Desktop/results/test13");
+		test("/home/yp/Desktop/results/test14");
 	}
 	
 	public static void test(String f){
