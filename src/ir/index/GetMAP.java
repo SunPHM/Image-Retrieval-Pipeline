@@ -57,7 +57,7 @@ public class GetMAP {
 					String[] files_search_results = null;
 					files_search_results = Search.query(query,(int)total_images);	
 					System.out.println("bucket size: " + total_images +"\t actual searched result size: " + files_search_results.length);
-					double AP = getMAP(file, files_search_results);
+					double AP = calculateMAP(file, files_search_results);
 					images_AP.put(file, AP);
 				} catch (SolrServerException e) {
 					// TODO Auto-generated catch block
@@ -84,7 +84,7 @@ public class GetMAP {
 		return avg_mAP;
 	}
 	
-	public static double getMAP(String file, String[] files_search_results){
+	public static double calculateMAP(String file, String[] files_search_results){
 		// calculate mAP
 		String query_image_prefix = file.substring(0, file.length() - "_query.txt".length());
 		HashSet<String> goodSet = EvaluateOxbuilds.getFiles( query_image_prefix+ "_good.txt");

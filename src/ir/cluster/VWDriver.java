@@ -14,16 +14,28 @@ public class VWDriver {
 	
 	public static void main(String[] args) throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException, InterruptedException{
 		// args[0] feature folder
-		// args[1] result folder
+		// args[1] result folder prefix
 		// args[2] delta
 		// args[3] distance measure type, 0 cosine, 1 euclidean
 		// args[4] clusterInitType, 0 serial, 1 random
-		KMeans.init(Double.parseDouble(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]));
-		String[] fixedArgs = {args[0], args[1], 100 + "", 100 + ""};
-		run(fixedArgs, 2, true);
-		HashMap<String, String> map = new HashMap<String, String>();
-		map.put("delta", args[2]); map.put("dmType", args[3]); map.put("clusterInitType", args[4]);
-		XMLUtil.storeParameters(args[1] + "/parameters.xml", map);
+		double[] deltas = {0.001, 0.0005, 0.0001, 0.00005, 0.00001, 0.000005, 0.000001};
+		for(int i = 0; i < deltas.length; i++){
+			// run cluster serial
+			KMeans.init(deltas[i], 0, 0);
+			String[] fixedArgs = {args[0], args[1] + "0" + i, 100 + "", 100 + ""};
+			run(fixedArgs, 2, true);
+			HashMap<String, String> map = new HashMap<String, String>();
+			map.put("delta", "" + deltas[i]); map.put("dmType", "0"); map.put("clusterInitType", "0");
+			XMLUtil.storeParameters(args[1] + "0" + i + "/parameters.xml", map);
+			
+			// run cluster random
+			KMeans.init(deltas[i], 0, 1);
+			String[] fixedArgs2 = {args[0], args[1] + "1" + i, 100 + "", 100 + ""};
+			run(fixedArgs2, 2, true);
+			HashMap<String, String> map2 = new HashMap<String, String>();
+			map2.put("delta", "" + deltas[i]); map2.put("dmType", "0"); map2.put("clusterInitType", "1");
+			XMLUtil.storeParameters(args[1] + "1" + i + "/parameters.xml", map2);
+		}
 	}
 	
 	public static String run(String[] args, int botlvlcluster_type, boolean runTopdownClustering) 

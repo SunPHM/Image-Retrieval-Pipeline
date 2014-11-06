@@ -51,8 +51,6 @@ public class Search {
 	static HashMap<Integer, double[][]> botclusters = new HashMap<Integer, double[][]>();
 	static final int max_number_botclusters = 200; //200 cache to store the bot level clusters
 	//static int index_to_be_deleted = 0; // the  clusters to be deleted when hashmap is full
-
-	
 	
 	public static void main(String[] args) throws IOException, SolrServerException{
 		// run indexing
@@ -63,8 +61,16 @@ public class Search {
 		//System.out.println(terms);
 		//System.out.println(clusters);
 		//System.out.println(clusterNum);
-		Search.loadConfiguration_topdown("test/conf_new.xml");
-		Search.search_topdown("data/images/all_souls_000000.jpg");
+		//Search.loadConfiguration_topdown("test/conf_new.xml");
+		//Search.search_topdown("data/images/all_souls_000000.jpg");
+		test("/home/yp/Desktop/results/test13");
+	}
+	
+	public static void test(String f){
+		Search.init(f + "/frequency_new.txt", 10000, f + "/clusters/", 100, 100);
+		long num = Search.runIndexing(f + "/frequency_new.txt");
+		double mAP = GetMAP.getmAP("/home/yp/Desktop/oxbuild_images", "data/gt", num);
+		System.out.println("mAP = " + mAP);
 	}
 	
 	public static void init(String terms, int clusterNum, String clusters, int topclusterNum, int botclusterNum){
