@@ -122,7 +122,7 @@ public class GetMAP {
 		reader.close();
 		String[] array = line.split(" ");
 		String queryImage = array[0].substring("oxc1_".length()) + ".jpg";
-		System.out.println("Calculating AP for query image " + queryImage);
+		System.out.println("query image " + queryImage);
 		double lowX = Double.parseDouble(array[1]);
 		double lowY = Double.parseDouble(array[2]);
 		double highX = Double.parseDouble(array[3]);

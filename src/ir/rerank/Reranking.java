@@ -1,13 +1,92 @@
 package ir.rerank;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
+
+import org.apache.solr.client.solrj.SolrServerException;
+
+import ir.index.GetMAP;
+import ir.index.Search;
+import ir.util.HadoopUtil;
+
 public class Reranking {
 	
+	public static int numOfRerankedImages = 100;
+	
 	public static void main(String[] args){
-		
+		test();
 	}
 	
 	public static void test(){
-		
+		String f = "/home/hadoop/Desktop/results/test14";
+		Search.init(f + "/frequency_new.txt", 10000, f + "/clusters/", 100, 100);
+		long num = Search.runIndexing(f + "/frequency_new.txt");
+		double mAP = getRerankedMAP("/home/hadoop/Desktop/oxbuild_images", "data/gt", num);
+		System.out.println("mAP = " + mAP);
+	}
+	
+	public static double getRerankedMAP(String images,String gt, long total_images){
+		// read all the files with "query"
+		String[] files = HadoopUtil.getListOfFiles(gt);
+		// store the image/mAP pairs
+		HashMap<String,Double> images_AP = new HashMap<String,Double>();
+		for(String file : files){			
+			if(file.contains("query")){
+				try {
+					// get features and create query
+					String[] features = GetMAP.getFeatures(file, images);
+					String query = Search.createQuery_topdown(features);
+					// run query
+					String[] files_search_results = null;
+					files_search_results = Search.query(query,(int)total_images);	
+					//System.out.println("bucket size: " + total_images +"\t actual searched result size: " + files_search_results.length);
+					rerank(query, files_search_results, images);
+					// add the rerank here
+					
+					// double AP = GetMAP.calculateMAP(file, files_search_results);
+					// images_AP.put(file, AP);
+				} catch (SolrServerException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		// get the average mAP of all queries' mAP
+		double avg_mAP = 0;
+		double num_images = 0;
+		for (Map.Entry<String, Double> entry : images_AP.entrySet()) {
+		    num_images ++;
+		    avg_mAP += entry.getValue();
+		}
+		avg_mAP = avg_mAP / num_images;
+		System.out.println("avg mAP is " + avg_mAP);
+		return avg_mAP;
+	}
+	
+	public static String[] rerank(String q, String[] searched_results, String images){
+		String[] reranked_results = new String[searched_results.length];
+		TreeMap<Double, String> tmap = new TreeMap<Double, String>(); // used for sorting
+		double[] qh = stringToDoubleArray(q, Search.clusterNum);
+		for(int i = 0; i < numOfRerankedImages; i++){
+			String filename = searched_results[i].split("//")[1];
+			double distance = getDistance(qh, images + "/" + filename);
+			tmap.put(distance, filename);
+		}
+		tmap.values().toArray(reranked_results);
+		for(int j = numOfRerankedImages; j < searched_results.length; j++) reranked_results[j] = searched_results[j];
+		return reranked_results;
+	}
+	
+	public static double getDistance (double[] qh, String file){
+		double distance = 0;
+		System.out.println(file);
+		return distance;
 	}
 	
 	public static double tfidfSimilarity(double[] a, double[] b){
@@ -96,4 +175,3 @@ public class Reranking {
 		return distance;
 	}
 }
-
