@@ -18,9 +18,9 @@ import ir.util.HadoopUtil;
 
 public class Reranking {
 	
-	public static int numOfRerankedImages = 10;
-	public static int normType = 1;
-	public static int similarityType = 2;
+	public static int numOfRerankedImages = 1000;
+	public static int normType = 2;
+	public static int similarityType = 1;
 	public static Map<String, String> map = null;
 	public static int num = 5058;
 	
@@ -94,12 +94,14 @@ public class Reranking {
 		ValueComparator vc = new ValueComparator(hmap);
 		TreeMap<String, Double> tmap = new TreeMap<String, Double>(vc); // used for sorting
 		tmap.putAll(hmap);
+		//System.out.println("map sorting results");
+		//System.out.println(tmap);
 		String[] temp = new String[numOfRerankedImages];
 		tmap.keySet().toArray(temp);
 		//System.out.println(tmap.size());
 		for(int x = 0; x < numOfRerankedImages; x++) reranked_results[x] = temp[x];
 		for(int j = numOfRerankedImages; j < searched_results.length; j++) reranked_results[j] = searched_results[j];
-		System.out.println("rerank ends");
+		//System.out.println("rerank ends");
 		return reranked_results;
 	}
 	
@@ -227,9 +229,9 @@ class ValueComparator implements Comparator<String> {
     // Note: this comparator imposes orderings that are inconsistent with equals.    
     public int compare(String a, String b) {
         if (base.get(a) >= base.get(b)) {
-            return -1;
-        } else {
             return 1;
+        } else {
+            return -1;
         } // returning 0 would merge keys
     }
 }
