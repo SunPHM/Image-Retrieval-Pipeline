@@ -1,10 +1,15 @@
 package ir.rerank;
 
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.solr.client.solrj.SolrServerException;
 
 import ir.index.GetMAP;
@@ -13,18 +18,26 @@ import ir.util.HadoopUtil;
 
 public class Reranking {
 	
-	public static int numOfRerankedImages = 100;
+	public static int numOfRerankedImages = 10;
+	public static int normType = 1;
+	public static int similarityType = 2;
+	public static Map<String, String> map = null;
+	public static int num = 5058;
 	
 	public static void main(String[] args){
+		String f = "/home/yp/Desktop/results/test14";
+		Search.init(f + "/frequency_new.txt", 10000, f + "/clusters/", 100, 100);
+		num = (int)Search.runIndexing(f + "/frequency_new.txt");
+		map = readMap(Search.terms);
+		System.out.println("initialization is done");
+		//System.out.println(map.keySet().iterator().next().toString());
+		//System.out.println(map.values().iterator().next().toString());
 		test();
 	}
 	
 	public static void test(){
-		String f = "/home/hadoop/Desktop/results/test14";
-		Search.init(f + "/frequency_new.txt", 10000, f + "/clusters/", 100, 100);
-		long num = Search.runIndexing(f + "/frequency_new.txt");
-		double mAP = getRerankedMAP("/home/hadoop/Desktop/oxbuild_images", "data/gt", num);
-		System.out.println("mAP = " + mAP);
+		double mAP = getRerankedMAP("/home/yp/Desktop/oxbuild_images", "data/gt", num);
+		//System.out.println("mAP = " + mAP);
 	}
 	
 	public static double getRerankedMAP(String images,String gt, long total_images){
@@ -42,11 +55,11 @@ public class Reranking {
 					String[] files_search_results = null;
 					files_search_results = Search.query(query,(int)total_images);	
 					//System.out.println("bucket size: " + total_images +"\t actual searched result size: " + files_search_results.length);
-					rerank(query, files_search_results, images);
 					// add the rerank here
-					
-					// double AP = GetMAP.calculateMAP(file, files_search_results);
-					// images_AP.put(file, AP);
+					String[] reranked_results = rerank(query, files_search_results);
+					double AP = GetMAP.calculateMAP(file, reranked_results);
+					images_AP.put(file, AP);
+					System.out.println(file + ": " + AP);
 				} catch (SolrServerException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -58,34 +71,62 @@ public class Reranking {
 			}
 		}
 		// get the average mAP of all queries' mAP
-		double avg_mAP = 0;
+		double mAP = 0;
 		double num_images = 0;
 		for (Map.Entry<String, Double> entry : images_AP.entrySet()) {
 		    num_images ++;
-		    avg_mAP += entry.getValue();
+		    mAP += entry.getValue();
 		}
-		avg_mAP = avg_mAP / num_images;
-		System.out.println("avg mAP is " + avg_mAP);
-		return avg_mAP;
+		mAP = mAP / num_images;
+		System.out.println("mAP is " + mAP);
+		return mAP;
 	}
 	
-	public static String[] rerank(String q, String[] searched_results, String images){
+	public static String[] rerank(String q, String[] searched_results){
 		String[] reranked_results = new String[searched_results.length];
-		TreeMap<Double, String> tmap = new TreeMap<Double, String>(); // used for sorting
+		HashMap<String, Double> hmap = new HashMap<String, Double>();
 		double[] qh = stringToDoubleArray(q, Search.clusterNum);
 		for(int i = 0; i < numOfRerankedImages; i++){
 			String filename = searched_results[i].split("//")[1];
-			double distance = getDistance(qh, images + "/" + filename);
-			tmap.put(distance, filename);
+			double distance = getDistance(qh, filename);
+			hmap.put(filename, distance);
 		}
-		tmap.values().toArray(reranked_results);
+		ValueComparator vc = new ValueComparator(hmap);
+		TreeMap<String, Double> tmap = new TreeMap<String, Double>(vc); // used for sorting
+		tmap.putAll(hmap);
+		String[] temp = new String[numOfRerankedImages];
+		tmap.keySet().toArray(temp);
+		//System.out.println(tmap.size());
+		for(int x = 0; x < numOfRerankedImages; x++) reranked_results[x] = temp[x];
 		for(int j = numOfRerankedImages; j < searched_results.length; j++) reranked_results[j] = searched_results[j];
+		System.out.println("rerank ends");
 		return reranked_results;
 	}
 	
-	public static double getDistance (double[] qh, String file){
+	public static Map<String, String> readMap(String file){
+		HashMap<String, String> map = new HashMap<String, String>();
+		try {
+			FileSystem fs = FileSystem.get(new Configuration());
+			FSDataInputStream input = fs.open(new Path(file));
+			String line;
+			while( (line = input.readLine()) != null){
+				String key = line.split("\t")[0].split("//")[1];
+				String value = line.split("\t")[2];
+				map.put(key, value);
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return map;
+	}
+	
+	
+	public static double getDistance (double[] qh, String filename){
 		double distance = 0;
-		System.out.println(file);
+		String s = map.get(filename);
+		double[] ah = stringToDoubleArray(s, Search.clusterNum);
+		distance = computeSimilarity(qh, ah, normType, similarityType);
 		return distance;
 	}
 	
@@ -174,4 +215,21 @@ public class Reranking {
 		}
 		return distance;
 	}
+}
+
+class ValueComparator implements Comparator<String> {
+
+    Map<String, Double> base;
+    public ValueComparator(Map<String, Double> base) {
+        this.base = base;
+    }
+
+    // Note: this comparator imposes orderings that are inconsistent with equals.    
+    public int compare(String a, String b) {
+        if (base.get(a) >= base.get(b)) {
+            return -1;
+        } else {
+            return 1;
+        } // returning 0 would merge keys
+    }
 }
