@@ -18,16 +18,18 @@ import ir.util.HadoopUtil;
 
 public class Reranking {
 	
-	public static int numOfRerankedImages = 1000;
-	public static int normType = 2;
-	public static int similarityType = 1;
+	public static int numOfRerankedImages = 0;
+	public static int normType = 0;
+	public static int similarityType = 0;
 	public static Map<String, String> map = null;
 	public static int num = 5058;
 	
 	public static void main(String[] args){
-		String f = "/home/yp/Desktop/results/test14";
-		Search.init(f + "/frequency_new.txt", 10000, f + "/clusters/", 100, 100);
-		num = (int)Search.runIndexing(f + "/frequency_new.txt");
+		String f = "/home/yp/Desktop/test110";
+		//Search.init(f + "/frequency_new.txt", 20000, f + "/clusters/", 100, 200);
+		Search.init(f + "/frequency.txt", 20000, f + "/clusters.txt", 100, 200);
+		//num = (int)Search.runIndexing(f + "/frequency_new.txt");
+		num = (int)Search.runIndexing(f + "/frequency.txt");
 		map = readMap(Search.terms);
 		System.out.println("initialization is done");
 		//System.out.println(map.keySet().iterator().next().toString());
@@ -50,7 +52,8 @@ public class Reranking {
 				try {
 					// get features and create query
 					String[] features = GetMAP.getFeatures(file, images);
-					String query = Search.createQuery_topdown(features);
+					//String query = Search.createQuery_topdown(features);
+					String query = Search.createQuery(features);
 					// run query
 					String[] files_search_results = null;
 					files_search_results = Search.query(query,(int)total_images);	
