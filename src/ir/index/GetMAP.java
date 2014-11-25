@@ -122,7 +122,7 @@ public class GetMAP {
 		reader.close();
 		String[] array = line.split(" ");
 		String queryImage = array[0].substring("oxc1_".length()) + ".jpg";
-		System.out.println("Calculating AP for query image " + queryImage);
+		System.out.println("query image " + queryImage);
 		double lowX = Double.parseDouble(array[1]);
 		double lowY = Double.parseDouble(array[2]);
 		double highX = Double.parseDouble(array[3]);
@@ -148,14 +148,12 @@ public class GetMAP {
 	public static String[] clean_array(String[] array, HashSet<String> junk){
 		ArrayList<String> temp_results = new ArrayList<String>();
 		int index = 0;
-		for(int i =0;i<array.length;i++){
-			String item = array[i].substring(0, array[i].length()-4);
+		for(int i = 0;i < array.length; i++){
+			//if (array[i].isEmpty()) System.out.println("empty");
+			String item = array[i].substring(0, array[i].length() - 4);
 			String splits[] = item.split("/");
 			item = splits[splits.length-1];
-			if(junk.contains(item)){
-				//junk image, skip it
-			}
-			else {
+			if( !junk.contains(item)){
 				temp_results.add(array[i]);
 				index ++;
 			}
