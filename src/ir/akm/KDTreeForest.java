@@ -1,13 +1,31 @@
 package ir.akm;
 
+import ir.feature.FeatureExtraction_seq;
+import ir.feature.SIFTExtraction;
+import ir.util.HadoopUtil;
+
+import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
+
+import javax.imageio.ImageIO;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 
 // forest of KDTrees for approximate nearest neighbor search
 public class KDTreeForest {
-	public static final int num_trees = 8;
-	public static final int num_dimensions = 10;
-	public static double max_comparison = 0.1;// suggestion: should set this to about 5% to 15 % of of the total nodes???
+	public static final int num_trees = 32;
+	public static final int num_dimensions = 30;
+	public static double max_comparison = 0.05;// suggestion: should set this to about 5% to 15 % of of the total nodes???
 	
 	public Node[] roots = null;
 	
@@ -102,8 +120,8 @@ public class KDTreeForest {
 		nn_recursive(nodes_first, varray, nn,  q_vector);
 		// recursively search the other sub trees if necessary
 		for(int i = 0; i < nodes.length; i ++){
-			//skip null nodes
-			if(nodes[i] != null){
+			//skip null nodes AND Leaf Nodes !!!!!
+			if(nodes[i] != null && nodes_last[i] != null){
 				// if the distance in this dimension is already larger than minDistance, no need to check it anymore
 				if(Math.abs(q_vector[nodes[i].split_axis] - nodes[i].split_value) > nn.minDistance){
 					nodes_last[i] = null;
@@ -162,20 +180,62 @@ public class KDTreeForest {
 	}
 	
 	///test main
-	
+	// get sift features from the images and write them to file.
+	public static void get_features() throws IOException{
+		ArrayList<double[]> varray = new ArrayList<double[]>();
+		String[] files = HadoopUtil.getListOfFiles("data/images");
+		FileSystem fs = FileSystem.get(new Configuration());
+		
+		for(String file : files){
+			BufferedImage img = ImageIO.read(fs.open(new Path(file)));
+			System.out.println("extracting sift features from " + file);
+			String[] features = SIFTExtraction.getFeatures(img);
+			for(String feature : features){
+				double[] feature_vector = FeatureExtraction_seq.FEMap.getPoints(feature.split(" "), 128);
+
+					varray.add(feature_vector);
+			}
+		}
+	}
 	public static void main(String args[]) throws Exception{
-		int dim = 100;
+		int dim = 128;
+		
+	//	get_features();
 		
 		Random rand = new Random();
+		//get sift features from images folder
+		ArrayList<double[]> q_vectors = new ArrayList<double[]>();
 		ArrayList<double[]> varray = new ArrayList<double[]>();
+		BufferedReader br = new BufferedReader(new FileReader(new File("data/features_images.txt")));
+		String inline = null;
+		while((inline = br.readLine()) != null){
+			String[] splits = inline.split(" ");
+			double[] vector = new double[128];
+			for(int i = 0; i < 128; i ++ ){
+				vector[i] = Double.parseDouble(splits[i]);
+			}
+			
+			if(q_vectors.size() < 1000){
+				q_vectors.add(vector);
+			}
+			else{
+				varray.add(vector);
+			}
+			
+			
+		}
+		br.close();
+		
+		System.out.println(varray.size());
 		//double[][] marks={{1.0,2,3,4,5},{10.0,9,8,7,6},{5.0,5,5,5,5}};
-		for(int i = 0; i < 100000; i ++){
+/*		for(int i = 0; i < 100000; i ++){
 			double[] arr = new double[dim];
 			for (int j = 0; j < arr.length; j ++){
 				arr[j] = rand.nextDouble() * (rand.nextInt(100) + 1);
 			}
 			varray.add(arr);
 		}
+		*/
 		
 	/*	int[] points =  {0, 1, 2};
 		double median = getApproximateMedian(varray, points, 0);
@@ -184,36 +244,57 @@ public class KDTreeForest {
 		KDTreeForest kdtf = new KDTreeForest();
 		kdtf.build_forest(varray);
 		
-		double[] arr = new double[dim];
-		
-		for (int j = 0; j < arr.length; j ++){
-			arr[j] = rand.nextDouble() * (rand.nextInt(10) + 1);
-		}
-		
-		double[]  q_vector = arr;
-		
-		long startTime = System.nanoTime();
-		int id = kdtf.getNearestNeighborId(varray, q_vector);
-		long endTime = System.nanoTime();
-		System.out.println("Kdtree  forest nns finished in " + ((double)( endTime - startTime )/(1000 * 1000 * 1000)) + "secs \n"
-				+ " distance " + RandomizedKDtree.getDistance(q_vector, varray.get(id)));
-		
-		
-		//serial way to find the nearest vector
-		long startTime1 = System.nanoTime();
-		double min_dist = Double.MAX_VALUE;
-		int nnId = -1;
-		for(int i = 0; i < varray.size(); i ++){
-			double dist = RandomizedKDtree.getDistance(varray.get(i), q_vector);
+		double precision = 0;
+		double speedup = 0;
+		//test the precision and the avg speed up
+		for(double[] q_vector : q_vectors){
 			
-			if(dist < min_dist){
-				nnId = i;
-				min_dist = dist;
+			//generate random query vector
+/*			double[] arr = new double[dim];
+			for (int j = 0; j < arr.length; j ++){
+				arr[j] = rand.nextDouble() * (rand.nextInt(100) + 1);
 			}
+			
+			double[]  q_vector = arr;
+*/
+			
+			long startTime = System.nanoTime();
+			int id = kdtf.getNearestNeighborId(varray, q_vector);
+			long endTime = System.nanoTime();
+			double kdtf_time = ((double)( endTime - startTime )/(1000 * 1000 * 1000));
+//			System.out.println("Kdtree  forest nns finished in " + kdtf_time + "secs \n"
+//					+ " distance " + RandomizedKDtree.getDistance(q_vector, varray.get(id)));
+			
+			
+			
+			//serial way to find the nearest vector
+			long startTime1 = System.nanoTime();
+			double min_dist = Double.MAX_VALUE;
+			int nnId = -1;
+			for(int i = 0; i < varray.size(); i ++){
+				double dist = RandomizedKDtree.getDistance(varray.get(i), q_vector);
+				
+				if(dist < min_dist){
+					nnId = i;
+					min_dist = dist;
+				}
+			}
+			long endTime1 = System.nanoTime();
+			
+			double exact_search_time = ((double)( endTime1 - startTime1)/(1000 * 1000 * 1000));
+//			System.out.println("serial nns finished in " + exact_search_time + "secs ,\n "
+//					+ "nnID : " +  nnId + "   distance: " + min_dist );
+			
+			if (id == nnId){
+				precision ++;
+			}
+			speedup = speedup + exact_search_time/kdtf_time;
 		}
-		long endTime1 = System.nanoTime();
-		System.out.println("serial nns finished in " + ((double)( endTime1 - startTime1)/(1000 * 1000 * 1000)) + "secs ,\n "
-				+ "nnID : " +  nnId + "   distance: " + min_dist );
+		speedup = speedup / q_vectors.size();
+		precision = precision / q_vectors.size();
+		System.out.println(varray.size());
+		System.out.println("avg precision : " + precision + " avg speedup : " + speedup + ""
+				+ "\t for " + num_trees + " trees  and " + num_dimensions + " dmensions and maximum comparisons : " + max_comparison );
 	}
 
 }

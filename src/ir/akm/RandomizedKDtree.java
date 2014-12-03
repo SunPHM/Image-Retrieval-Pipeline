@@ -14,7 +14,7 @@ import java.util.Random;
 public class RandomizedKDtree{
 
 	
-	public static final int partition_size = 10;// the maximum number of points a leaf node can hold
+	public static final int partition_size = 5;// the maximum number of points a leaf node can hold
 	public Node root =null;
 	
 	/*
