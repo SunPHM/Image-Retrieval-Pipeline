@@ -12,7 +12,9 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.Random;
 
 import javax.imageio.ImageIO;
@@ -23,9 +25,9 @@ import org.apache.hadoop.fs.Path;
 
 // forest of KDTrees for approximate nearest neighbor search
 public class KDTreeForest {
-	public static final int num_trees = 32;
+	public static final int num_trees = 8;
 	public static final int num_dimensions = 30;
-	public static double max_comparison = 0.05;// suggestion: should set this to about 5% to 15 % of of the total nodes???
+	public static double max_comparison = 0.1;// suggestion: should set this to about 5% to 15 % of of the total nodes???
 	
 	public Node[] roots = null;
 	
@@ -58,31 +60,6 @@ public class KDTreeForest {
 	public void nn_recursive(Node[] nodes, ArrayList<double[]> varray, NNS nn, double[] q_vector) throws Exception{
 		//check the nodes first
 		boolean all_null_nodes = true;
-		for(Node node : nodes){
-			//not null nodes, should have a list of points that can be compared to
-			if(node != null){
-				all_null_nodes = false;
-				for(int i : node.points){
-					
-					//get the distance of the query vector and the new element in the array
-					double dist = RandomizedKDtree.getDistance(q_vector, varray.get(i));
-					
-					if( dist < nn.minDistance){
-						nn.nnId = i;
-						nn.minDistance = dist;
-						System.out.println(nn.nnId + "\t" + nn.minDistance);
-					}
-					nn.comparisons ++;
-					
-					if(nn.comparisons >= varray.size() * max_comparison){
-						return;
-					}
-				}
-			}
-		}
-		if(all_null_nodes == true){
-			return;
-		}
 		
 		//check the children of the nodes (if there exists)
 		Node[] nodes_first = new Node[nodes.length];
@@ -92,6 +69,8 @@ public class KDTreeForest {
 			nodes_last[i] = null;
 		}
 		all_null_nodes = true;
+		
+		//decide which child to search first
 		for(int i = 0; i < nodes.length; i ++){
 			//check if node[i] is null, skip if its null
 			if(nodes[i] != null){
@@ -113,11 +92,60 @@ public class KDTreeForest {
 			}
 			
 		}
+		//if nodes are not all nulls
+		if(all_null_nodes == false){
+			// recurive search the children sub tree that the q_vector belongs to
+			nn_recursive(nodes_first, varray, nn,  q_vector);
+		}
+		
+		
+		//check the current node -- can be leaf node or non leaf node
+		all_null_nodes = true;
+		for(Node node : nodes){
+			//not null nodes, should have a list of points that can be compared to
+			if(node != null){
+				all_null_nodes = false;
+				for(int i : node.points){
+					//check if the node is in the range of the radius of the minDistance within the vector, if yes, need to check
+					// non-leaf node case
+					if(node.left != null || node.right != null){
+						if(Math.abs(q_vector[node.split_axis] - node.split_value) < nn.minDistance){
+							//get the distance of the query vector and the new element in the array
+							double dist = RandomizedKDtree.getDistance(q_vector, varray.get(i));
+							
+							if( dist < nn.minDistance){
+								nn.nnId = i;
+								nn.minDistance = dist;
+								System.out.println(nn.nnId + "\t" + nn.minDistance);
+							}
+							nn.comparisons ++;
+						}
+					}
+					//else leaf node case, directly check the points in the list
+					else{
+						//get the distance of the query vector and the new element in the array
+						double dist = RandomizedKDtree.getDistance(q_vector, varray.get(i));
+						
+						if( dist < nn.minDistance){
+							nn.nnId = i;
+							nn.minDistance = dist;
+							System.out.println(nn.nnId + "\t" + nn.minDistance);
+						}
+						nn.comparisons ++;
+					}
+					if(nn.comparisons >= varray.size() * max_comparison){
+						return;
+					}
+				}
+			}
+		}
+		//if this is all null nodes (or leaf nodes), should imediately return
 		if(all_null_nodes == true){
 			return;
 		}
-		// recurive search the children sub tree that the q_vector belongs to
-		nn_recursive(nodes_first, varray, nn,  q_vector);
+		
+		
+		
 		// recursively search the other sub trees if necessary
 		for(int i = 0; i < nodes.length; i ++){
 			//skip null nodes AND Leaf Nodes !!!!!
@@ -131,7 +159,89 @@ public class KDTreeForest {
 		nn_recursive(nodes_last, varray, nn,  q_vector);
 		
 	}
-	
+	// nearest neighbor search -- best bin first
+	public int nns_BBF(ArrayList<double[]> varray, double[] q_vector) throws Exception{
+		Comparator<Node_p> nc = new NodeComparator();
+		PriorityQueue<Node_p> queue = new PriorityQueue<Node_p>(100, nc);
+		NNS nn = new NNS();
+		nn.nnId = 0;
+		nn.minDistance = RandomizedKDtree.getDistance(varray.get(nn.nnId), q_vector);
+		nn.comparisons = 0;
+		//enqueue roots first 
+		for(Node node : roots){
+			if(node != null){
+				queue.add(new Node_p(node, 0));
+			}
+		}
+		int max_nn_checks = 100;
+		int checks = 0;
+		while(queue.isEmpty() == false && checks < max_nn_checks){
+			checks++;
+//			System.out.println(checks);
+			Node_p np = queue.poll();
+			
+			// from this node, explore to leaf, and enque those unvisisted other child
+			Node node = np.node;
+			while(node != null){
+//				
+				// if non-leaf node, need to explor down
+				if(node.left != null || node.right != null){
+	//				System.out.println("non leaf");
+					//need explore left first, enque right for later use
+					if(q_vector[node.split_axis] < node.split_value){
+						
+		//				System.out.println("left");
+						
+						if(node.right != null){
+							queue.add(new Node_p(node.right, Math.abs(node.split_value - q_vector[node.split_axis])));
+						}
+						node = node.left;
+					}
+					//else need to explore right first, enqueue left
+					else{
+						if(node.left != null){
+							queue.add(new Node_p(node.left, Math.abs(node.split_value - q_vector[node.split_axis])));
+						}
+						node = node.right;
+					}
+				}
+				//else reached leaf node, no more processing, just let node = null
+				else{
+					explore_node(node, varray, nn, q_vector);
+					for(int point : node.points){
+						double distance = RandomizedKDtree.getDistance(q_vector, varray.get(point));
+						if(distance < nn.minDistance){
+							nn.nnId = point;
+							nn.minDistance = distance;
+						}
+						nn.comparisons ++;
+						if (nn.comparisons > max_comparison * varray.size()){
+							return nn.nnId;
+						}
+					}
+					
+					node = null;
+				}
+			//	System.out.println(node + " " + node.split_axis +node.split_value + node.left + node.right + node.points[0]);
+				
+				
+			}
+		}
+		
+		System.out.println("number of comparisons : " + nn.comparisons / (double)varray.size());
+		return nn.nnId;
+	}
+	// explore the point list of node and update the nearest neighbor if possible
+	public void explore_node(Node node, ArrayList<double[]> varray, NNS nn, double[] q_vector) throws Exception{
+		for(int point : node.points){
+			double distance = RandomizedKDtree.getDistance(q_vector, varray.get(point));
+			if(distance < nn.minDistance){
+				nn.nnId = point;
+				nn.minDistance = distance;
+			}
+			nn.comparisons ++;
+		}
+	}
 
 	//get the top num_d dimensions with the largest variance for splitting the space
 	public static int[] getTopDimensionsWithLargestVariance(int num_d, ArrayList<double[]> varray) {
@@ -215,7 +325,7 @@ public class KDTreeForest {
 				vector[i] = Double.parseDouble(splits[i]);
 			}
 			
-			if(q_vectors.size() < 1000){
+			if(q_vectors.size() < 2000){
 				q_vectors.add(vector);
 			}
 			else{
@@ -259,7 +369,10 @@ public class KDTreeForest {
 */
 			
 			long startTime = System.nanoTime();
-			int id = kdtf.getNearestNeighborId(varray, q_vector);
+			
+			//int id = kdtf.getNearestNeighborId(varray, q_vector);
+			int id = kdtf.nns_BBF(varray, q_vector);
+			
 			long endTime = System.nanoTime();
 			double kdtf_time = ((double)( endTime - startTime )/(1000 * 1000 * 1000));
 //			System.out.println("Kdtree  forest nns finished in " + kdtf_time + "secs \n"
@@ -297,4 +410,24 @@ public class KDTreeForest {
 				+ "\t for " + num_trees + " trees  and " + num_dimensions + " dmensions and maximum comparisons : " + max_comparison );
 	}
 
+}
+//used in priority queue
+class Node_p{
+	public Node node;
+	public double distance;
+	public Node_p(Node n, double d){this.node = n; this.distance = d;}
+}
+class NodeComparator implements Comparator<Node_p>{
+
+	@Override
+	public int compare(Node_p arg0, Node_p arg1) {
+		// TODO Auto-generated method stub
+		if(arg0.distance > arg1.distance)
+			return 1;
+		else if(arg0.distance < arg1.distance)
+			return -1;
+		else 
+			return 0;
+	}
+	
 }

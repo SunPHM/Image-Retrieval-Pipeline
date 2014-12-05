@@ -7,6 +7,7 @@ package ir.akm;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -14,7 +15,7 @@ import java.util.Random;
 public class RandomizedKDtree{
 
 	
-	public static final int partition_size = 5;// the maximum number of points a leaf node can hold
+	public static final int partition_size = 10;// the maximum number of points a leaf node can hold
 	public Node root =null;
 	
 	/*
@@ -46,7 +47,7 @@ public class RandomizedKDtree{
 	 * @param varry: the array to build kdtree upon
 	 * @param points: list of integers indicate the vectors in varray that we need to build kdtree on
 	 * 
-	 * 
+	 * internal nodes should not contain actual points though
 	 * 
 	 * */
 	private Node buildKDTree(int[] dim, int level, ArrayList<double[]> varray, int[] points) {
@@ -76,40 +77,70 @@ public class RandomizedKDtree{
 		else{
 			//choose split axis randomly here
 			n.split_axis = dim[new Random().nextInt(dim.length)];
-			///n.split_axis = dim[level % dim.length];			
+			//used median for splitting		
 			n.split_value = getExactMedian( varray, points, n.split_axis);
-			
-			ArrayList<Integer> left_points = new ArrayList<Integer>();
-			ArrayList<Integer> right_points = new ArrayList<Integer>();
-			ArrayList<Integer> splitting_points = new ArrayList<Integer>();
-			
-			// divide the points into left child  or right or to the current node itself
-			for(int i = 0; i < points.length; i ++){
-				//right node
-				
-				if(varray.get(points[i])[n.split_axis] > n.split_value){
-					right_points.add(points[i]);
+			//get count of points not greater than the split value
+			int num_not_greater_than_median = 0;
+			for(int point : points){
+				if(varray.get(point)[n.split_axis] <= n.split_value){
+					num_not_greater_than_median ++;
 				}
-				//left node
-				else if(varray.get(points[i])[n.split_axis] < n.split_value) {
-					left_points.add(points[i]);
+					
+			}
+			int[] left_p = null;
+			int[] right_p = null;
+			// ----rare possibility that num_not_greater_than_median = points.length or 0, to prevent infinite recursion, 
+			// need to force split both array into at least one element
+			if(num_not_greater_than_median == 0 || num_not_greater_than_median == points.length){
+				boolean filled = false;
+				int[] more_p = new int[points.length - 1];
+				int[] less_p = new int[1];
+				for(int i = 0; i < points.length; i ++){
+					// if the less array has not been filled and the current point equals to median, add the node to the less array
+					// and set fille = true so that only one element would be added to the lesser array
+					if(filled == false && varray.get(points[i])[n.split_axis] == n.split_value ){
+						less_p[0] = points[i];
+						filled = true;
+					}
+					else{
+						int k = i;
+						if(filled == true){
+							k--;
+						}
+						more_p[k] = points[k];
+					}
+				}
+				//decide which child should have the less array.
+				if(num_not_greater_than_median == 0){
+					left_p = less_p;
+					right_p = more_p;
 				}
 				else{
-					splitting_points.add(points[i]);
+					left_p = more_p;
+					right_p = less_p;
 				}
 			}
-//			System.out.println("\t " + left_points.size() + "\t " + right_points.size() + "\t " + splitting_points.size());
-		
-			int[] left_p = convertIntegers(left_points);
-			int[] right_p = convertIntegers(right_points);
-			int[] splitting_p = convertIntegers(splitting_points);
-			
-			n.points = splitting_p;
-			
-			//build left tree
-//			System.out.println("level : " + level);
+			//normal case where left_p and right_p would both have elements
+			else{
+
+				left_p = new int[num_not_greater_than_median];
+				right_p = new int[points.length - num_not_greater_than_median];
+				int left_i = 0;
+				int right_i = 0;
+				for(int point : points){
+					if(varray.get(point)[n.split_axis] <= n.split_value){
+						left_p[left_i ++] = point;
+					}
+					else{
+						right_p[right_i ++] = point;
+					}
+						
+				}
+			}
+			//recursive build the left tree and right tree
 			n.left = buildKDTree(dim, level + 1, varray, left_p);
 			n.right = buildKDTree(dim, level + 1, varray, right_p);
+			
 		}
 		
 		return n;
@@ -138,21 +169,19 @@ public class RandomizedKDtree{
 		if(node == null){
 			return ;
 		}
-		
-		for(int i : node.points){
-			nn.comparisons ++;
-			//get the distance of the query vector and the new element in the array
-			double dist = getDistance(q_vector, varray.get(i));
-			
-			if( dist < nn.minDistance){
-				nn.nnId = i;
-				nn.minDistance = dist;
-				System.out.println(nn.nnId + "\t" + nn.minDistance);
-			}
-		}
-		//leaf node case
+		// leaf node
 		if(node.left == null && node.right == null){
-			return;
+			for(int i : node.points){
+				nn.comparisons ++;
+				//get the distance of the query vector and the new element in the array
+				double dist = getDistance(q_vector, varray.get(i));
+				
+				if( dist < nn.minDistance){
+					nn.nnId = i;
+					nn.minDistance = dist;
+					System.out.println(nn.nnId + "\t" + nn.minDistance);
+				}
+			}
 		}
 		//internal node
 		else {
@@ -249,12 +278,12 @@ public class RandomizedKDtree{
 	    return ret;
 	}
 	public static void main(String args[]) throws Exception{
-		int dim = 100;
+		int dim = 7;
 		
 		Random rand = new Random();
 		ArrayList<double[]> varray = new ArrayList<double[]>();
 		//double[][] marks={{1.0,2,3,4,5},{10.0,9,8,7,6},{5.0,5,5,5,5}};
-		for(int i = 0; i < 10000; i ++){
+		for(int i = 0; i < 100000; i ++){
 			double[] arr = new double[dim];
 			for (int j = 0; j < arr.length; j ++){
 				arr[j] = rand.nextDouble() * (rand.nextInt(100) + 1);
@@ -313,10 +342,32 @@ class NNS{
 
 class Node {
 	
-public	int split_axis =0;
-public	double split_value = 0;
+public	int split_axis =-1;
+public	double split_value = Double.MIN_VALUE;
 public	Node left = null;
 public	Node right = null;
 public	int[] points = null;
+	
+}
+class Index_Value{
+	public int index;
+	public double value;
+	public Index_Value(int i, double v){
+		this.index = i;
+		this.value = v;
+	}
+}
+
+class Index_ValueC implements Comparator<Index_Value>{
+
+	@Override
+	public int compare( Index_Value arg0, Index_Value arg1) {
+		// TODO Auto-generated method stub
+		if(arg0.value >= arg1.value)
+			return 1;
+		else 
+			return -1;
+		
+	}
 	
 }
