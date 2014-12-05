@@ -59,10 +59,6 @@ public class RandomizedKDtree{
 			return null;
 		}
 		
-//		System.out.println("points length : " + points.length);
-//		for(int point : points){
-//			System.out.print("  " + point);
-//		}
 		Node n = new Node();
 		
 		// if poins.length <= partitions_size, reach leaf node
@@ -75,10 +71,22 @@ public class RandomizedKDtree{
 		}
 		//else need to split further into smaller partitions
 		else{
+			
 			//choose split axis randomly here
-			n.split_axis = dim[new Random().nextInt(dim.length)];
-			//used median for splitting		
+			int s_a = new Random().nextInt(dim.length);
+			n.split_axis = dim[s_a];
+//			System.out.println("split axis " + s_a);
+			
+			/*TODO change here to decide split on median or mean
+			 * */
+			/*use median for splitting	
+			 */
 			n.split_value = getExactMedian( varray, points, n.split_axis);
+			
+			/*test use mean as splitting value
+			 */
+		//	n.split_value = getMean( varray, points, n.split_axis);
+			
 			//get count of points not greater than the split value
 			int num_not_greater_than_median = 0;
 			for(int point : points){
@@ -137,9 +145,11 @@ public class RandomizedKDtree{
 						
 				}
 			}
+			int[] dim_left = KDTreeForest.getTopDimensionsWithLargestVariance(5, left_p, varray);
+			int[] dim_right = KDTreeForest.getTopDimensionsWithLargestVariance(5, right_p, varray);
 			//recursive build the left tree and right tree
-			n.left = buildKDTree(dim, level + 1, varray, left_p);
-			n.right = buildKDTree(dim, level + 1, varray, right_p);
+			n.left = buildKDTree(dim_left, level + 1, varray, left_p);
+			n.right = buildKDTree(dim_right, level + 1, varray, right_p);
 			
 		}
 		
@@ -148,9 +158,22 @@ public class RandomizedKDtree{
 
 
 
+	// get the mean of points in the varray of the split_axis
+	private double getMean(ArrayList<double[]> varray, int[] points, int split_axis) {
+		// TODO Auto-generated method stub
+		double sum = 0;
+		for(int i = 0; i < points.length; i ++){
+			sum += varray.get(points[i])[split_axis];
+		}
+		return sum / points.length;
+		
+	}
+
+
 
 	/*
 	 * get the neareast neighbor Id
+	 * keep it for test use only
 	 * */
 	public  int getNearestNeighborId(Node root, ArrayList<double[]> varray, double[] q_vector) throws Exception{
 		//initialize global variables --  vector[0] as the current nearest neighbor
@@ -164,6 +187,7 @@ public class RandomizedKDtree{
 		System.out.println("comparisons: " + nn.comparisons);
 		return nn.nnId;
 	};
+	
 	//recursive method to get the nearest neighbor Id
 	public  void nn_recursive(Node node, ArrayList<double[]> varray, double[] q_vector, NNS nn) throws Exception{
 		if(node == null){
@@ -206,12 +230,10 @@ public class RandomizedKDtree{
 					nn_recursive(node.left, varray, q_vector, nn);
 				}
 			}
-			//debugging
-			/*else{
-				System.out.println("!!!!!!");
-			}*/
+			
 		}
 	}
+	//get the Euclidean distance of two vectors
 	static double getDistance(double[] v1, double[] v2) throws Exception {
 		// TODO Auto-generated method stub
 		if(v1 == null || v2 == null){
@@ -263,27 +285,13 @@ public class RandomizedKDtree{
 		return temp_array[(temp_array.length)/2];
 	}
 
-
-
-	
-	//convert ArrayList to int[]
-	public static int[] convertIntegers(List<Integer> integers)
-	{
-	    int[] ret = new int[integers.size()];
-	    Iterator<Integer> iterator = integers.iterator();
-	    for (int i = 0; i < ret.length; i++)
-	    {
-	        ret[i] = iterator.next().intValue();
-	    }
-	    return ret;
-	}
 	public static void main(String args[]) throws Exception{
-		int dim = 7;
+		int dim = 128;
 		
 		Random rand = new Random();
 		ArrayList<double[]> varray = new ArrayList<double[]>();
 		//double[][] marks={{1.0,2,3,4,5},{10.0,9,8,7,6},{5.0,5,5,5,5}};
-		for(int i = 0; i < 100000; i ++){
+		for(int i = 0; i < 100; i ++){
 			double[] arr = new double[dim];
 			for (int j = 0; j < arr.length; j ++){
 				arr[j] = rand.nextDouble() * (rand.nextInt(100) + 1);
@@ -296,7 +304,11 @@ public class RandomizedKDtree{
 		System.out.println(median);
 		*/
 		RandomizedKDtree rt = new RandomizedKDtree();
-		int[] dims = KDTreeForest.getTopDimensionsWithLargestVariance(10, varray);
+		int[] points = new int[varray.size()];
+		for(int i = 0; i < points.length; i ++){
+			points[i] = i;
+		}
+		int[] dims = KDTreeForest.getTopDimensionsWithLargestVariance(10,points, varray);
 		Node root = rt.buildTree(dims, varray);
 		
 		double[] arr = new double[dim];
@@ -356,18 +368,4 @@ class Index_Value{
 		this.index = i;
 		this.value = v;
 	}
-}
-
-class Index_ValueC implements Comparator<Index_Value>{
-
-	@Override
-	public int compare( Index_Value arg0, Index_Value arg1) {
-		// TODO Auto-generated method stub
-		if(arg0.value >= arg1.value)
-			return 1;
-		else 
-			return -1;
-		
-	}
-	
 }

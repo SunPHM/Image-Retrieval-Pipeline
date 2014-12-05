@@ -6,17 +6,12 @@ import ir.util.HadoopUtil;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 import java.util.PriorityQueue;
-import java.util.Random;
-
 import javax.imageio.ImageIO;
 
 import org.apache.hadoop.conf.Configuration;
@@ -26,8 +21,8 @@ import org.apache.hadoop.fs.Path;
 // forest of KDTrees for approximate nearest neighbor search
 public class KDTreeForest {
 	public static final int num_trees = 8;
-	public static final int num_dimensions = 30;
-	public static double max_comparison = 0.1;// suggestion: should set this to about 5% to 15 % of of the total nodes???
+	public static final int num_dimensions = 5;
+	public static double max_comparison = 0.05;// suggestion: should set this to about 5% to 15 % of of the total nodes???
 	
 	public Node[] roots = null;
 	
@@ -39,159 +34,61 @@ public class KDTreeForest {
 	 * */
 	public void build_forest(ArrayList<double[]>  varray){
 		this.roots = new Node[num_trees];
-		int[] dims = getTopDimensionsWithLargestVariance(num_dimensions, varray);
+		int[] points = new int[varray.size()];
+		for(int i = 0; i < points.length; i ++){
+			points[i] = i;
+		}
+		int[] dims = getTopDimensionsWithLargestVariance(num_dimensions, points, varray);
 		for(int i = 0; i < num_trees; i ++){
 			RandomizedKDtree rt = new RandomizedKDtree();
 			roots[i] = rt.buildTree(dims, varray);
 		}
-	};
-	public int getNearestNeighborId(ArrayList<double[]> varray, double[] q_vector) throws Exception{
-		//initialize global variables --  vector[0] as the current nearest neighbor
-		NNS nn = new NNS();
-		nn.nnId = 0;
-		nn.minDistance = RandomizedKDtree.getDistance(varray.get(nn.nnId), q_vector);
-		nn.comparisons = 0;
-		nn_recursive(roots,  varray, nn, q_vector);
-		
-		System.out.println("number of comparisons  " + nn.comparisons);
-		return nn.nnId;
-		
 	}
-	public void nn_recursive(Node[] nodes, ArrayList<double[]> varray, NNS nn, double[] q_vector) throws Exception{
-		//check the nodes first
-		boolean all_null_nodes = true;
-		
-		//check the children of the nodes (if there exists)
-		Node[] nodes_first = new Node[nodes.length];
-		Node[] nodes_last = new Node[nodes.length];
-		for(int i = 0; i < nodes.length; i ++){
-			nodes_first[i] = null;
-			nodes_last[i] = null;
-		}
-		all_null_nodes = true;
-		
-		//decide which child to search first
-		for(int i = 0; i < nodes.length; i ++){
-			//check if node[i] is null, skip if its null
-			if(nodes[i] != null){
-				//internal node case
-				if(nodes[i].left != null || nodes[i].right != null){
-					all_null_nodes = false;
-					// examine if query node position to the hyperplane of the node
-					//left first
-					if(q_vector[nodes[i].split_axis] < nodes[i].split_value){
-						nodes_first[i] = nodes[i].left;
-						nodes_last[i] = nodes[i].right;
-					}
-					//right first
-					else{
-						nodes_first[i] = nodes[i].right;
-						nodes_last[i] = nodes[i].left;
-					}
-				}
-			}
-			
-		}
-		//if nodes are not all nulls
-		if(all_null_nodes == false){
-			// recurive search the children sub tree that the q_vector belongs to
-			nn_recursive(nodes_first, varray, nn,  q_vector);
-		}
-		
-		
-		//check the current node -- can be leaf node or non leaf node
-		all_null_nodes = true;
-		for(Node node : nodes){
-			//not null nodes, should have a list of points that can be compared to
-			if(node != null){
-				all_null_nodes = false;
-				for(int i : node.points){
-					//check if the node is in the range of the radius of the minDistance within the vector, if yes, need to check
-					// non-leaf node case
-					if(node.left != null || node.right != null){
-						if(Math.abs(q_vector[node.split_axis] - node.split_value) < nn.minDistance){
-							//get the distance of the query vector and the new element in the array
-							double dist = RandomizedKDtree.getDistance(q_vector, varray.get(i));
-							
-							if( dist < nn.minDistance){
-								nn.nnId = i;
-								nn.minDistance = dist;
-								System.out.println(nn.nnId + "\t" + nn.minDistance);
-							}
-							nn.comparisons ++;
-						}
-					}
-					//else leaf node case, directly check the points in the list
-					else{
-						//get the distance of the query vector and the new element in the array
-						double dist = RandomizedKDtree.getDistance(q_vector, varray.get(i));
-						
-						if( dist < nn.minDistance){
-							nn.nnId = i;
-							nn.minDistance = dist;
-							System.out.println(nn.nnId + "\t" + nn.minDistance);
-						}
-						nn.comparisons ++;
-					}
-					if(nn.comparisons >= varray.size() * max_comparison){
-						return;
-					}
-				}
-			}
-		}
-		//if this is all null nodes (or leaf nodes), should imediately return
-		if(all_null_nodes == true){
-			return;
-		}
-		
-		
-		
-		// recursively search the other sub trees if necessary
-		for(int i = 0; i < nodes.length; i ++){
-			//skip null nodes AND Leaf Nodes !!!!!
-			if(nodes[i] != null && nodes_last[i] != null){
-				// if the distance in this dimension is already larger than minDistance, no need to check it anymore
-				if(Math.abs(q_vector[nodes[i].split_axis] - nodes[i].split_value) > nn.minDistance){
-					nodes_last[i] = null;
-				}
-			}
-		}
-		nn_recursive(nodes_last, varray, nn,  q_vector);
-		
-	}
-	// nearest neighbor search -- best bin first
+	
+	
+	/* nearest neighbor search -- best bin first
+	 * 
+	 */
 	public int nns_BBF(ArrayList<double[]> varray, double[] q_vector) throws Exception{
 		Comparator<Node_p> nc = new NodeComparator();
 		PriorityQueue<Node_p> queue = new PriorityQueue<Node_p>(100, nc);
+		
+		//nn store the nearest neighbor found so far
 		NNS nn = new NNS();
 		nn.nnId = 0;
 		nn.minDistance = RandomizedKDtree.getDistance(varray.get(nn.nnId), q_vector);
 		nn.comparisons = 0;
-		//enqueue roots first 
+		
+		/*visited information about the nodes
+		 * */
+		boolean[] visited = new boolean[varray.size()];
+		for(int i = 0; i < visited.length; i ++){
+			visited[i] = false;
+		}
+		//enqueue roots first with 0 -- highest priority
 		for(Node node : roots){
 			if(node != null){
 				queue.add(new Node_p(node, 0));
 			}
 		}
-		int max_nn_checks = 100;
-		int checks = 0;
-		while(queue.isEmpty() == false && checks < max_nn_checks){
-			checks++;
-//			System.out.println(checks);
+		
+		// while loop for visiting the nodes util maximum comparison number reached Or  nearest neighbor found.
+		while(queue.isEmpty() == false){// && checks < max_nn_checks){
 			Node_p np = queue.poll();
 			
-			// from this node, explore to leaf, and enque those unvisisted other child
+			//the current found min distance is already smaller that the distance to the nearest hyperplance, terminate search
+			if(nn.minDistance <= np.distance){
+				return nn.nnId;
+			}
+			
+			// from this node, explore to leaf, and enqueue those unvisited other child
 			Node node = np.node;
 			while(node != null){
 //				
-				// if non-leaf node, need to explor down
+				// if non-leaf node, need to explore further down
 				if(node.left != null || node.right != null){
-	//				System.out.println("non leaf");
-					//need explore left first, enque right for later use
+					//need explore left first, enqueue right for later use
 					if(q_vector[node.split_axis] < node.split_value){
-						
-		//				System.out.println("left");
-						
 						if(node.right != null){
 							queue.add(new Node_p(node.right, Math.abs(node.split_value - q_vector[node.split_axis])));
 						}
@@ -205,21 +102,28 @@ public class KDTreeForest {
 						node = node.right;
 					}
 				}
-				//else reached leaf node, no more processing, just let node = null
+				//else reached leaf node, explore the leaf node
 				else{
-					explore_node(node, varray, nn, q_vector);
 					for(int point : node.points){
-						double distance = RandomizedKDtree.getDistance(q_vector, varray.get(point));
-						if(distance < nn.minDistance){
-							nn.nnId = point;
-							nn.minDistance = distance;
-						}
-						nn.comparisons ++;
-						if (nn.comparisons > max_comparison * varray.size()){
-							return nn.nnId;
+						if( visited[point] == false){
+							double distance = RandomizedKDtree.getDistance(q_vector, varray.get(point));
+							if(distance < nn.minDistance){
+								nn.nnId = point;
+								nn.minDistance = distance;
+							}
+							nn.comparisons ++;
+							if(visited[point] == true) {
+							}
+							visited[point] = true;
+							// if reached maximum comparisons, need to terminate search
+							if (nn.comparisons > max_comparison * varray.size()){
+//								System.out.println("number of comparisons : " + nn.comparisons  + ""
+//										+ " wasted calculations " + wasted_calculation);
+								return nn.nnId;
+							}
 						}
 					}
-					
+					//setting null to exit while loop
 					node = null;
 				}
 			//	System.out.println(node + " " + node.split_axis +node.split_value + node.left + node.right + node.points[0]);
@@ -228,23 +132,13 @@ public class KDTreeForest {
 			}
 		}
 		
-		System.out.println("number of comparisons : " + nn.comparisons / (double)varray.size());
+//s		System.out.println("number of comparisons : " + nn.comparisons  + " wasted calculations " + wasted_calculation);
 		return nn.nnId;
-	}
-	// explore the point list of node and update the nearest neighbor if possible
-	public void explore_node(Node node, ArrayList<double[]> varray, NNS nn, double[] q_vector) throws Exception{
-		for(int point : node.points){
-			double distance = RandomizedKDtree.getDistance(q_vector, varray.get(point));
-			if(distance < nn.minDistance){
-				nn.nnId = point;
-				nn.minDistance = distance;
-			}
-			nn.comparisons ++;
-		}
 	}
 
 	//get the top num_d dimensions with the largest variance for splitting the space
-	public static int[] getTopDimensionsWithLargestVariance(int num_d, ArrayList<double[]> varray) {
+	//the points will contain the indexes of the valid data points in varray.
+	public static int[] getTopDimensionsWithLargestVariance(int num_d, int[] points, ArrayList<double[]> varray) {
 		// TODO Auto-generated method stub
 		int[] dims = new int[num_d];
 		double[] variance_num_d = new double[num_d];
@@ -260,9 +154,9 @@ public class KDTreeForest {
 			//calc variance for dim = i
 			double variance = 0;
 			double mean = 0;
-			for(int j = 0; j < varray.size(); j++){
-				variance = variance + varray.get(j)[i] * varray.get(j)[i];
-				mean = mean + varray.get(j)[i];
+			for(int j = 0; j < points.length; j++){
+				variance = variance + varray.get(points[j])[i] * varray.get(points[j])[i];
+				mean = mean + varray.get(points[j])[i];
 			}
 			mean = mean / varray.size();
 			variance = variance - varray.size() * mean * mean;
@@ -308,12 +202,11 @@ public class KDTreeForest {
 		}
 	}
 	public static void main(String args[]) throws Exception{
-		int dim = 128;
+		
 		
 	//	get_features();
 		
-		Random rand = new Random();
-		//get sift features from images folder
+		//read features from file
 		ArrayList<double[]> q_vectors = new ArrayList<double[]>();
 		ArrayList<double[]> varray = new ArrayList<double[]>();
 		BufferedReader br = new BufferedReader(new FileReader(new File("data/features_images.txt")));
@@ -325,6 +218,17 @@ public class KDTreeForest {
 				vector[i] = Double.parseDouble(splits[i]);
 			}
 			
+			//normalize the vector -- euclidean norm
+			double sq_sum = 0;
+			for(int i = 0; i < vector.length; i ++){
+				sq_sum += vector[i]*vector[i];
+			}
+			sq_sum = Math.sqrt(sq_sum);
+//			System.out.println(sq_sum);
+			for(int i = 0; i < vector.length; i ++){
+				vector[i] = vector[i] / sq_sum;
+			}
+			//use first 2000 as query, the rest as cluster data to build trees upon
 			if(q_vectors.size() < 2000){
 				q_vectors.add(vector);
 			}
@@ -336,49 +240,27 @@ public class KDTreeForest {
 		}
 		br.close();
 		
-		System.out.println(varray.size());
-		//double[][] marks={{1.0,2,3,4,5},{10.0,9,8,7,6},{5.0,5,5,5,5}};
-/*		for(int i = 0; i < 100000; i ++){
-			double[] arr = new double[dim];
-			for (int j = 0; j < arr.length; j ++){
-				arr[j] = rand.nextDouble() * (rand.nextInt(100) + 1);
-			}
-			varray.add(arr);
-		}
-		*/
+		System.out.println("varray size:" + varray.size());
 		
-	/*	int[] points =  {0, 1, 2};
-		double median = getApproximateMedian(varray, points, 0);
-		System.out.println(median);
-		*/
-		KDTreeForest kdtf = new KDTreeForest();
+		KDTreeForest kdtf = new KDTreeForest();//kdtf = kdtreeforest
 		kdtf.build_forest(varray);
 		
 		double precision = 0;
-		double speedup = 0;
+		double time_kdtf = 0;
+		double time_serial = 0;
+		
 		//test the precision and the avg speed up
+		//run all the queries
+		System.out.println("query starts, can take a little bit of time...");
 		for(double[] q_vector : q_vectors){
-			
-			//generate random query vector
-/*			double[] arr = new double[dim];
-			for (int j = 0; j < arr.length; j ++){
-				arr[j] = rand.nextDouble() * (rand.nextInt(100) + 1);
-			}
-			
-			double[]  q_vector = arr;
-*/
-			
 			long startTime = System.nanoTime();
 			
-			//int id = kdtf.getNearestNeighborId(varray, q_vector);
+			//get the approximate nearest neighbor  with BBF method
 			int id = kdtf.nns_BBF(varray, q_vector);
 			
 			long endTime = System.nanoTime();
-			double kdtf_time = ((double)( endTime - startTime )/(1000 * 1000 * 1000));
-//			System.out.println("Kdtree  forest nns finished in " + kdtf_time + "secs \n"
-//					+ " distance " + RandomizedKDtree.getDistance(q_vector, varray.get(id)));
-			
-			
+			time_kdtf += ((double)( endTime - startTime )/(1000 * 1000 * 1000));
+
 			
 			//serial way to find the nearest vector
 			long startTime1 = System.nanoTime();
@@ -394,19 +276,18 @@ public class KDTreeForest {
 			}
 			long endTime1 = System.nanoTime();
 			
-			double exact_search_time = ((double)( endTime1 - startTime1)/(1000 * 1000 * 1000));
-//			System.out.println("serial nns finished in " + exact_search_time + "secs ,\n "
-//					+ "nnID : " +  nnId + "   distance: " + min_dist );
+			time_serial += ((double)( endTime1 - startTime1)/(1000 * 1000 * 1000));
+			
 			
 			if (id == nnId){
 				precision ++;
 			}
-			speedup = speedup + exact_search_time/kdtf_time;
+			//speedup = speedup + exact_search_time/kdtf_time;
 		}
-		speedup = speedup / q_vectors.size();
+		double speedup =  time_serial / time_kdtf;
 		precision = precision / q_vectors.size();
-		System.out.println(varray.size());
-		System.out.println("avg precision : " + precision + " avg speedup : " + speedup + ""
+		
+		System.out.println("avg precision : " + precision + " avg speedup : " + speedup 
 				+ "\t for " + num_trees + " trees  and " + num_dimensions + " dmensions and maximum comparisons : " + max_comparison );
 	}
 
