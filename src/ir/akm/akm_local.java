@@ -8,7 +8,6 @@ import java.util.Random;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import ir.cluster.KMeans;
 import ir.util.HadoopUtil;
 
 import org.apache.hadoop.conf.Configuration;
@@ -33,6 +32,7 @@ public class akm_local {
 	int maxIterations = 10;
 	int cluster_num = 100;
 	double CovergenceDelta = 0.001;
+	int dim = 128;
 	DistanceMeasure dm = new EuclideanDistanceMeasure();
 	
 	
@@ -50,10 +50,11 @@ public class akm_local {
 		// run akm iteraterations until maximam iterations reached or cd reached
 		int iteration_num = 0;
 		while(iteration_num < maxIterations){
+			System.out.println("AKM iteration : " + (iteration_num + 1));
 			Path clusters_in = new Path(output_path + "/" + iteration_num);
 			Path clusters_out = new Path(output_path + "/" + (iteration_num + 1));
 			//read the clusters into memory
-			ArrayList<double[]> clusters = getClusterFromFile(conf, clusters_in);
+			double[][] clusters = getClusterFromFile(conf, clusters_in, cluster_num);
 			
 			double[][] new_clusters = run_akm_one_iteration(input_data_path, clusters, conf);
 			
@@ -80,7 +81,7 @@ public class akm_local {
 		
 		while(reader.next(key, value)){
 	         StringBuilder sb=new StringBuilder();
-	         sb.append(key.toString() + "    " + value.get().toString() + "\n");
+	         sb.append(key.toString() + "\t" + value.get().toString() + "\n");
 	         byte[] byt=sb.toString().getBytes();
 	         fsOutStream.write(byt);
 		}
@@ -111,16 +112,16 @@ public class akm_local {
 	 * @PARAM conf
 	 * @return the new clusters calculated 
 	 * */
-	private double[][] run_akm_one_iteration(String input_data_path, ArrayList<double[]> clusters, Configuration conf) 
+	private double[][] run_akm_one_iteration(String input_data_path, double[][] clusters, Configuration conf) 
 			throws Exception {
 		// TODO Auto-generated method stub
 		// the number of elements assigned to each cluster
-		int[] num_elements = new int[clusters.size()];
+		int[] num_elements = new int[clusters.length];
 		for(int i =0; i< num_elements.length; i ++){
 			num_elements[i] = 0;
 		}
 		
-		double[][] new_clusters = new double[clusters.size()][128];
+		double[][] new_clusters = new double[clusters.length][128];
 		
 		//build random KDTree Forest
 		KDTreeForest kdtf = new KDTreeForest();
@@ -170,7 +171,7 @@ public class akm_local {
 		return new_clusters;
 	}
 	
-	public void clusters_init_random(String input, Path clusters_path, int k, Configuration conf, boolean is_input_directory) 
+	public static void clusters_init_random(String input, Path clusters_path, int k, Configuration conf, boolean is_input_directory) 
 			throws IOException, InstantiationException, IllegalAccessException{
 		
 		Path initial_path = null;
@@ -221,20 +222,21 @@ public class akm_local {
 
 	/*read clusters into ArrayList from sequencefile
 	 * */
-	private ArrayList<double[]> getClusterFromFile(Configuration conf,	Path initial_cluster_path) 
+	private double[][] getClusterFromFile(Configuration conf,	Path initial_cluster_path, int K) 
 			throws IOException, InstantiationException, IllegalAccessException {
 		// TODO Auto-generated method stub
-		ArrayList<double[]> clusters = new ArrayList();
+		double[][] clusters = new double[K][dim];
 		SequenceFile.Reader reader = new SequenceFile.Reader(FileSystem.get(conf), initial_cluster_path, conf);
 		Text key =(Text) reader.getKeyClass().newInstance();
 		VectorWritable value = (VectorWritable) reader.getValueClass().newInstance();
+		int index = 0;
 		while(reader.next(key, value)){
-			double[] new_cluster = new double[128];
+			clusters[index] = new double[128];
 			Vector v = value.get();
 			for(int i = 0; i < 128; i ++){
-				new_cluster[i] = v.get(i);
+				clusters[index][i] = v.get(i);
 			}
-			clusters.add(new_cluster);
+			index ++;
 		}
 		return clusters;
 	}

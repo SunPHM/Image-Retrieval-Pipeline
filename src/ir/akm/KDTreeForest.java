@@ -32,9 +32,9 @@ public class KDTreeForest {
 	 * build num_trees of trees
 	 * 
 	 * */
-	public void build_forest(ArrayList<double[]>  varray){
+	public void build_forest(double[][]  varray){
 		this.roots = new Node[num_trees];
-		int[] points = new int[varray.size()];
+		int[] points = new int[varray.length];
 		for(int i = 0; i < points.length; i ++){
 			points[i] = i;
 		}
@@ -49,19 +49,19 @@ public class KDTreeForest {
 	/* nearest neighbor search -- best bin first
 	 * 
 	 */
-	public int nns_BBF(ArrayList<double[]> varray, double[] q_vector) throws Exception{
+	public int nns_BBF(double[][] varray, double[] q_vector) throws Exception{
 		Comparator<Node_p> nc = new NodeComparator();
 		PriorityQueue<Node_p> queue = new PriorityQueue<Node_p>(100, nc);
 		
 		//nn store the nearest neighbor found so far
 		NNS nn = new NNS();
 		nn.nnId = 0;
-		nn.minDistance = RandomizedKDtree.getDistance(varray.get(nn.nnId), q_vector);
+		nn.minDistance = RandomizedKDtree.getDistance(varray[nn.nnId], q_vector);
 		nn.comparisons = 0;
 		
 		/*visited information about the nodes
 		 * */
-		boolean[] visited = new boolean[varray.size()];
+		boolean[] visited = new boolean[varray.length];
 		for(int i = 0; i < visited.length; i ++){
 			visited[i] = false;
 		}
@@ -106,7 +106,7 @@ public class KDTreeForest {
 				else{
 					for(int point : node.points){
 						if( visited[point] == false){
-							double distance = RandomizedKDtree.getDistance(q_vector, varray.get(point));
+							double distance = RandomizedKDtree.getDistance(q_vector, varray[point]);
 							if(distance < nn.minDistance){
 								nn.nnId = point;
 								nn.minDistance = distance;
@@ -116,7 +116,7 @@ public class KDTreeForest {
 							}
 							visited[point] = true;
 							// if reached maximum comparisons, need to terminate search
-							if (nn.comparisons > max_comparison * varray.size()){
+							if (nn.comparisons > max_comparison * varray.length){
 //								System.out.println("number of comparisons : " + nn.comparisons  + ""
 //										+ " wasted calculations " + wasted_calculation);
 								return nn.nnId;
@@ -138,28 +138,28 @@ public class KDTreeForest {
 
 	//get the top num_d dimensions with the largest variance for splitting the space
 	//the points will contain the indexes of the valid data points in varray.
-	public static int[] getTopDimensionsWithLargestVariance(int num_d, int[] points, ArrayList<double[]> varray) {
+	public static int[] getTopDimensionsWithLargestVariance(int num_d, int[] points, double[][] varray) {
 		// TODO Auto-generated method stub
 		int[] dims = new int[num_d];
 		double[] variance_num_d = new double[num_d];
 		
-		double[] all_variances = new double[varray.get(0).length];
+		double[] all_variances = new double[varray[0].length];
 		
 		for(int k = 0; k < num_d; k ++){
 			variance_num_d[k] = 0;
 		}
 		
-		for(int i = 0; i < varray.get(0).length; i ++){
+		for(int i = 0; i < varray[0].length; i ++){
 			
 			//calc variance for dim = i
 			double variance = 0;
 			double mean = 0;
 			for(int j = 0; j < points.length; j++){
-				variance = variance + varray.get(points[j])[i] * varray.get(points[j])[i];
-				mean = mean + varray.get(points[j])[i];
+				variance = variance + varray[points[j]][i] * varray[points[j]][i];
+				mean = mean + varray[points[j]][i];
 			}
-			mean = mean / varray.size();
-			variance = variance - varray.size() * mean * mean;
+			mean = mean / varray.length;
+			variance = variance - varray.length * mean * mean;
 			
 			all_variances[i] = variance;
 			//update the dims array
@@ -242,8 +242,15 @@ public class KDTreeForest {
 		
 		System.out.println("varray size:" + varray.size());
 		
+		double[][] dataset = new double[varray.size()][128];
+		for(int i = 0; i < varray.size(); i ++){
+			dataset[i] = varray.get(i);
+		}
+		
+		
+		
 		KDTreeForest kdtf = new KDTreeForest();//kdtf = kdtreeforest
-		kdtf.build_forest(varray);
+		kdtf.build_forest(dataset);
 		
 		double precision = 0;
 		double time_kdtf = 0;
@@ -256,7 +263,7 @@ public class KDTreeForest {
 			long startTime = System.nanoTime();
 			
 			//get the approximate nearest neighbor  with BBF method
-			int id = kdtf.nns_BBF(varray, q_vector);
+			int id = kdtf.nns_BBF(dataset, q_vector);
 			
 			long endTime = System.nanoTime();
 			time_kdtf += ((double)( endTime - startTime )/(1000 * 1000 * 1000));
@@ -266,8 +273,8 @@ public class KDTreeForest {
 			long startTime1 = System.nanoTime();
 			double min_dist = Double.MAX_VALUE;
 			int nnId = -1;
-			for(int i = 0; i < varray.size(); i ++){
-				double dist = RandomizedKDtree.getDistance(varray.get(i), q_vector);
+			for(int i = 0; i < dataset.length; i ++){
+				double dist = RandomizedKDtree.getDistance(dataset[i], q_vector);
 				
 				if(dist < min_dist){
 					nnId = i;

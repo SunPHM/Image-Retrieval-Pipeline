@@ -23,10 +23,10 @@ public class RandomizedKDtree{
 	 * split axis will be chosen from top random num_d dimensions that have the largest variance.s (currently it's not random though)
 	 * each level of split dimension will be chosen randomly from those top dimensions
 	 * */
-	public Node buildTree( int[] dimensions, ArrayList<double[]> varray){
+	public Node buildTree( int[] dimensions, double[][] varray){
 		
-		int[] points = new int[varray.size()];
-		for(int i = 0; i < varray.size(); i++)
+		int[] points = new int[varray.length];
+		for(int i = 0; i < varray.length; i++)
 			points[i] = i;
 		
 		long startTime1 = System.nanoTime();
@@ -50,7 +50,7 @@ public class RandomizedKDtree{
 	 * internal nodes should not contain actual points though
 	 * 
 	 * */
-	private Node buildKDTree(int[] dim, int level, ArrayList<double[]> varray, int[] points) {
+	private Node buildKDTree(int[] dim, int level, double[][] varray, int[] points) {
 		// TODO Auto-generated method stub
 		
 		
@@ -90,7 +90,7 @@ public class RandomizedKDtree{
 			//get count of points not greater than the split value
 			int num_not_greater_than_median = 0;
 			for(int point : points){
-				if(varray.get(point)[n.split_axis] <= n.split_value){
+				if(varray[point][n.split_axis] <= n.split_value){
 					num_not_greater_than_median ++;
 				}
 					
@@ -106,7 +106,7 @@ public class RandomizedKDtree{
 				for(int i = 0; i < points.length; i ++){
 					// if the less array has not been filled and the current point equals to median, add the node to the less array
 					// and set fille = true so that only one element would be added to the lesser array
-					if(filled == false && varray.get(points[i])[n.split_axis] == n.split_value ){
+					if(filled == false && varray[points[i]][n.split_axis] == n.split_value ){
 						less_p[0] = points[i];
 						filled = true;
 					}
@@ -136,7 +136,7 @@ public class RandomizedKDtree{
 				int left_i = 0;
 				int right_i = 0;
 				for(int point : points){
-					if(varray.get(point)[n.split_axis] <= n.split_value){
+					if(varray[point][n.split_axis] <= n.split_value){
 						left_p[left_i ++] = point;
 					}
 					else{
@@ -175,11 +175,11 @@ public class RandomizedKDtree{
 	 * get the neareast neighbor Id
 	 * keep it for test use only
 	 * */
-	public  int getNearestNeighborId(Node root, ArrayList<double[]> varray, double[] q_vector) throws Exception{
+	public  int getNearestNeighborId(Node root, double[][] varray, double[] q_vector) throws Exception{
 		//initialize global variables --  vector[0] as the current nearest neighbor
 		NNS nn = new NNS();
 		nn.nnId = 0;
-		nn.minDistance = getDistance(varray.get(nn.nnId), q_vector);
+		nn.minDistance = getDistance(varray[nn.nnId], q_vector);
 		nn.comparisons = 0;
 		
 		nn_recursive(root, varray, q_vector, nn);
@@ -189,7 +189,7 @@ public class RandomizedKDtree{
 	};
 	
 	//recursive method to get the nearest neighbor Id
-	public  void nn_recursive(Node node, ArrayList<double[]> varray, double[] q_vector, NNS nn) throws Exception{
+	public  void nn_recursive(Node node, double[][] varray, double[] q_vector, NNS nn) throws Exception{
 		if(node == null){
 			return ;
 		}
@@ -198,7 +198,7 @@ public class RandomizedKDtree{
 			for(int i : node.points){
 				nn.comparisons ++;
 				//get the distance of the query vector and the new element in the array
-				double dist = getDistance(q_vector, varray.get(i));
+				double dist = getDistance(q_vector, varray[i]);
 				
 				if( dist < nn.minDistance){
 					nn.nnId = i;
@@ -274,11 +274,11 @@ public class RandomizedKDtree{
 		
 		
 	}
-	private double getExactMedian(ArrayList<double[]> varray, int[] points, int split_axis) {
+	private double getExactMedian(double[][] varray, int[] points, int split_axis) {
 		// TODO Auto-generated method stub
 		double[] temp_array = new double[points.length];
 		for(int i = 0; i < temp_array.length; i ++){
-			temp_array[i] = varray.get(points[i])[split_axis];
+			temp_array[i] = varray[points[i]][split_axis];
 		}
 		Arrays.sort(temp_array);
 		
@@ -308,8 +308,13 @@ public class RandomizedKDtree{
 		for(int i = 0; i < points.length; i ++){
 			points[i] = i;
 		}
-		int[] dims = KDTreeForest.getTopDimensionsWithLargestVariance(10,points, varray);
-		Node root = rt.buildTree(dims, varray);
+		double[][] dataset = new double[varray.size()][dim];
+		for(int i = 0; i < varray.size(); i ++){
+			dataset[i] = varray.get(i);
+		}
+		
+		int[] dims = KDTreeForest.getTopDimensionsWithLargestVariance(10,points, dataset);
+		Node root = rt.buildTree(dims, dataset);
 		
 		double[] arr = new double[dim];
 		
@@ -320,7 +325,7 @@ public class RandomizedKDtree{
 		double[]  q_vector = arr;
 		
 		long startTime = System.nanoTime();
-		int id = rt.getNearestNeighborId(root, varray, q_vector );
+		int id = rt.getNearestNeighborId(root, dataset, q_vector );
 		long endTime = System.nanoTime();
 		System.out.println("Kdtree nns finished in " + ((double)( endTime - startTime )/(1000 * 1000 * 1000)) + "secs \n distance " + getDistance(q_vector, varray.get(id)));
 		
@@ -329,8 +334,8 @@ public class RandomizedKDtree{
 		long startTime1 = System.nanoTime();
 		double min_dist = Double.MAX_VALUE;
 		int nnId = -1;
-		for(int i = 0; i < varray.size(); i ++){
-			double dist = getDistance(varray.get(i), q_vector);
+		for(int i = 0; i < dataset.length; i ++){
+			double dist = getDistance(dataset[i], q_vector);
 			
 			if(dist < min_dist){
 				nnId = i;
