@@ -97,17 +97,17 @@ public class RandomizedKDtree{
 			}
 			int[] left_p = null;
 			int[] right_p = null;
-			// ----rare possibility that num_not_greater_than_median = points.length or 0, to prevent infinite recursion, 
+			// ----rare possibility that num_not_greater_than_median = points.length, i.e. all data points not greater than median
+			///to prevent infinite recursion, 
 			// need to force split both array into at least one element
-			if(num_not_greater_than_median == 0 || num_not_greater_than_median == points.length){
+			if(num_not_greater_than_median == points.length){
 				boolean filled = false;
-				int[] more_p = new int[points.length - 1];
-				int[] less_p = new int[1];
+				 left_p = new int[points.length - 1];
+				 right_p = new int[1];
+				 // iterate thought the points, and assign just one element equal to median to right array, the rest to left array
 				for(int i = 0; i < points.length; i ++){
-					// if the less array has not been filled and the current point equals to median, add the node to the less array
-					// and set fille = true so that only one element would be added to the lesser array
 					if(filled == false && varray[points[i]][n.split_axis] == n.split_value ){
-						less_p[0] = points[i];
+						right_p[0] = points[i];
 						filled = true;
 					}
 					else{
@@ -115,17 +115,8 @@ public class RandomizedKDtree{
 						if(filled == true){
 							k--;
 						}
-						more_p[k] = points[k];
+						left_p[k] = points[k];
 					}
-				}
-				//decide which child should have the less array.
-				if(num_not_greater_than_median == 0){
-					left_p = less_p;
-					right_p = more_p;
-				}
-				else{
-					left_p = more_p;
-					right_p = less_p;
 				}
 			}
 			//normal case where left_p and right_p would both have elements

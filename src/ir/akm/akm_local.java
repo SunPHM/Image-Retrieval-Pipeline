@@ -14,6 +14,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
@@ -30,11 +31,16 @@ import org.apache.mahout.math.VectorWritable;
 public class akm_local {
 
 	int maxIterations = 10;
-	int cluster_num = 100;
+	int cluster_num = 100*100*5;
 	double CovergenceDelta = 0.001;
-	int dim = 128;
+	final static int dim = 128;
 	DistanceMeasure dm = new EuclideanDistanceMeasure();
 	
+	///test use
+	public static void main(String[] args) throws Exception{
+		akm_local al = new akm_local();
+		al.run_akm("test_fe_seq2seq_100images/data/features", "test_akm");
+	}
 	
 	/*entry point of running akm
 	 * @input_data_path: String, the input extractred features folder
@@ -73,7 +79,7 @@ public class akm_local {
 		// TODO Auto-generated method stub
 		 FileSystem fs =FileSystem.get(conf);
 		SequenceFile.Reader reader = new SequenceFile.Reader(fs, new Path(infile), conf);
-		Text key =(Text) reader.getKeyClass().newInstance();
+		IntWritable key =(IntWritable) reader.getKeyClass().newInstance();
 		VectorWritable value = (VectorWritable) reader.getValueClass().newInstance();
 		
 		
@@ -95,11 +101,11 @@ public class akm_local {
 	 * */
 	private void outputToFile(Path clusters_out, double[][] new_clusters,	Configuration conf) throws IOException {
 		// TODO Auto-generated method stub
-		Text key = new Text();
+		IntWritable key = new IntWritable();
 		VectorWritable value = new VectorWritable();
-		SequenceFile.Writer writer = new SequenceFile.Writer(FileSystem.get(conf), conf, clusters_out, Text.class,VectorWritable.class);
+		SequenceFile.Writer writer = new SequenceFile.Writer(FileSystem.get(conf), conf, clusters_out, IntWritable.class,VectorWritable.class);
 		for(int i = 0; i < new_clusters.length; i ++){
-			key.set("" + i);
+			key.set( i);
 			value.set(new DenseVector(new_clusters[i]));
 			writer.append(key, value);
 		}
@@ -148,29 +154,48 @@ public class akm_local {
 			}
 		}
 		// need to check empty clusters, i.e. that num_elements[i] = 0 clusters
-		// set those clusters to the average of two random elements in the new_clusters
+		// set those clusters to random features in the dataset
 		//!!!!!! questionable approach, might lead to undesirable fluctuations
 		for(int i = 0; i < num_elements.length; i ++){
 			if(num_elements[i] == 0){
-				Random rand = new Random();
-				int one = rand.nextInt(new_clusters.length);
-				while(one == i){
-					one = rand.nextInt(new_clusters.length);
-				}
-				int two = rand.nextInt(new_clusters.length);
-				while(two == i || two == one){
-					two = rand.nextInt(new_clusters.length);
-				}
-				for(int j = 0; j < 128; j ++){
-					new_clusters[i][j] = (new_clusters[one][j] + new_clusters[two][j]) / 2;
-				}
+				new_clusters[i] = getRandomFeature(input_data_path, clusters.length, conf);
 			}
 		}
 
 		
 		return new_clusters;
 	}
-	
+	// get random feature from the data set
+	// random feature would be chosen from the first "length" features
+	public static double[] getRandomFeature(String input_data_path, int length, Configuration conf) 
+					throws IOException, InstantiationException, IllegalAccessException {
+		// TODO Auto-generated method stub
+		double[] feature = new double[dim];
+		String[] files = HadoopUtil.getListOfFiles(input_data_path);
+		Random rand = new Random();
+		int index = rand.nextInt(length);
+		int i = 0;
+		WritableComparable in_key = new Text();
+		VectorWritable in_value = new VectorWritable();
+		
+		for(String file : files){
+			SequenceFile.Reader reader = new SequenceFile.Reader(FileSystem.get(conf), new Path(file), conf);
+			
+			while(reader.next(in_key, in_value) && i < index){
+				i ++;
+			}
+			reader.close();
+			if( i == index){
+				break;
+			}
+		}
+		for(int j = 0; j < dim; j ++){
+			feature[j] = in_value.get().get(j);
+		}
+		
+		return feature;
+	}
+
 	public static void clusters_init_random(String input, Path clusters_path, int k, Configuration conf, boolean is_input_directory) 
 			throws IOException, InstantiationException, IllegalAccessException{
 		
@@ -211,23 +236,23 @@ public class akm_local {
 		if(Random_K_cluster.size() != k)
 			throw new IOException("kmeans init error, wrong number of initial clusters");
 				
-		SequenceFile.Writer writer = new SequenceFile.Writer(FileSystem.get(conf), conf, clusters_path, Text.class,VectorWritable.class);
+		SequenceFile.Writer writer = new SequenceFile.Writer(FileSystem.get(conf), conf, clusters_path, IntWritable.class,VectorWritable.class);
 		SortedSet<Integer> keys = new TreeSet<Integer>(Random_K_cluster.keySet());
 		for (Integer out_key : keys) { 
 			VectorWritable out_value = Random_K_cluster.get(out_key);
-			writer.append(new Text("" + out_key), out_value);
+			writer.append(new IntWritable(out_key), out_value);
 		}
 		writer.close();
 	}
 
-	/*read clusters into ArrayList from sequencefile
+	/*read clusters into double array from sequencefile
 	 * */
 	private double[][] getClusterFromFile(Configuration conf,	Path initial_cluster_path, int K) 
 			throws IOException, InstantiationException, IllegalAccessException {
 		// TODO Auto-generated method stub
 		double[][] clusters = new double[K][dim];
 		SequenceFile.Reader reader = new SequenceFile.Reader(FileSystem.get(conf), initial_cluster_path, conf);
-		Text key =(Text) reader.getKeyClass().newInstance();
+		IntWritable key =(IntWritable) reader.getKeyClass().newInstance();
 		VectorWritable value = (VectorWritable) reader.getValueClass().newInstance();
 		int index = 0;
 		while(reader.next(key, value)){
@@ -238,12 +263,9 @@ public class akm_local {
 			}
 			index ++;
 		}
+		reader.close();
 		return clusters;
 	}
-	///test use
-	public static void main(String[] args) throws Exception{
-		akm_local al = new akm_local();
-		al.run_akm("test_fe_seq2seq_100images/data/features", "test_akm");
-	}
+
 	
 }
