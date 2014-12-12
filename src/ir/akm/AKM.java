@@ -3,6 +3,7 @@ package ir.akm;
 import ir.util.HadoopUtil;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Random;
 
 import org.apache.hadoop.conf.Configuration;
@@ -29,7 +30,7 @@ import org.apache.mahout.math.VectorWritable;
 public class AKM {
 	public static final int dim = 128;
 	int maxIterations = 100;
-	int cluster_num = 100*10;
+	int cluster_num = 100*100;
 	double ConvergenceDelta = 0.1;
 	DistanceMeasure dm = new EuclideanDistanceMeasure();
 	
@@ -42,7 +43,6 @@ public class AKM {
 		
 		AKM akm = new AKM();
 		akm.runClustering("test_akm_MR/normalizedfeatures", "test_akm_MR");
-		
 		
 	}
 	
@@ -101,65 +101,20 @@ public class AKM {
 			runIteration(input_dataset, clusters_in, clusters_out);
 			
 			iteration_num ++;
-			
-			// check if the data has converged or not
-			if(isConverged(clusters_out, clusters_in, conf, ConvergenceDelta, input_dataset) == true){
+			// eliminate empty clusters, fill them with the old clusters
+			eliminate_empty_clusters(clusters_out, clusters_in);
+
+			// check if the clusters has converged or not
+			if(isConverged(clusters_out + "/isConverged") == true){
 				break;
 			}
 		}
-		// need to convert the cluster centroids to a txt file "clusters.txt"
+		//convert the cluster centroids to a txt file "clusters.txt"
 		getFinalResult(conf, output + "/" + iteration_num, output + "/clusters.txt", input_dataset);
 		
 	}
  
-	// compare the two sets of clusters and check if converged or not
-	private boolean isConverged(String clusters_new, String clusters_old, Configuration conf, double cd, String features) 
-			throws Exception {
-		// TODO Auto-generated method stub
-	//	boolean converged = false;
-		double[][] new_clusters = getClustersFromPath(conf, clusters_new,  cluster_num, features);
-		// reading the old clusters and compare one - one with the new clusters
-		String[] files = HadoopUtil.getListOfFiles(clusters_old);
-		for(String file : files){
-			SequenceFile.Reader reader = new SequenceFile.Reader(FileSystem.get(conf), new Path(file), conf);
-			IntWritable key =(IntWritable) reader.getKeyClass().newInstance();
-			VectorWritable value = (VectorWritable) reader.getValueClass().newInstance();
-			while(reader.next(key, value)){
-				int clusterId = key.get();
-				double[] old = new double[dim];
-				for(int i = 0 ; i < dim; i ++){
-					old[i] = value.get().get(i);
-				}
-				// not converged if any pair 
-				if(RandomizedKDtree.getDistance(old, new_clusters[clusterId]) > cd){
-					reader.close();
-					return false;
-				}
-			}
-			reader.close();
-		}
-		
-		return true;
-	}
 
-	// get the final result to file "clusters.txt"
-	private void getFinalResult(Configuration conf, String inputfolder,	String outputfile, String features_folder) 
-			throws IOException, InstantiationException, IllegalAccessException {
-		// TODO Auto-generated method stub
-		FileSystem fs =FileSystem.get(conf);
-		//get the clusters in to mem.
-		double[][] clusters = getClustersFromPath(conf, inputfolder, cluster_num, features_folder);
-		FSDataOutputStream writer = fs.create(new Path(outputfile));
-		for(int i = 0; i < clusters.length; i ++){
-			StringBuilder sb=new StringBuilder();
-			sb.append("" + i + "\t" + new DenseVector(clusters[i]).toString() + "\n");
-			byte[] byt=sb.toString().getBytes();
-			writer.write(byt);
-		}
-		writer.flush();
-		writer.close();
-		
-	}
 
 	//running one iteration of akm
 	// @PARAM: input_dataset: the features extracted
@@ -172,6 +127,8 @@ public class AKM {
 			conf.set("K", "" + cluster_num);
 			conf.set("clusters_in", clusters_in);
 			conf.set("features", input_dataset);
+			conf.set("cd", "" + ConvergenceDelta);
+			conf.set("clusters_out", clusters_out);
 			
 			Job job = new Job(conf);
 			
@@ -192,6 +149,7 @@ public class AKM {
 		
 	}
 	
+	// read in the old clusters, assign each feature to a cluster based on random kdtree foest NNS
 	public static class AKM_Mapper extends  Mapper<Text, VectorWritable, IntWritable, VectorWritable> {
 		public static KDTreeForest kdtf= null;
 	//	public static final int dim = 128;
@@ -209,12 +167,12 @@ public class AKM {
 			Configuration conf=context.getConfiguration();
 			K = Integer.parseInt(conf.get("K"));
 			clusters_in = conf.get("clusters_in");
-			String features = conf.get("features");
+//			String features = conf.get("features");
 			
 			//TODO
 			//read in the clusters and store then in the varry
 			try {
-				varray = getClustersFromPath(conf, clusters_in, K, features);
+				varray = getClustersFromPath(conf, clusters_in, K);
 			} catch (InstantiationException e) {
 				// T Auto-generated catch block
 				e.printStackTrace();
@@ -228,8 +186,6 @@ public class AKM {
 			kdtf = new KDTreeForest();
 			kdtf.build_forest(varray);
 		}
-
-
 		@Override
 		public void map(Text key, VectorWritable value, Context context) 
 				throws IOException, InterruptedException {	
@@ -249,14 +205,199 @@ public class AKM {
 			out_value.set(v);
 			context.write(out_key, out_value);
 		}
-
+	}
+	
+	// calculate the new clusters based on the newly assigned features
+	// will output to output/isConverged folder  if converged or not(if all the clusters have converged, no files will be output to this folder)
+	// output/processed_clusters will contain those new clusters(that have features assigned to them), can be used to find the empty clusters
+	public static class AKM_Reducer extends  Reducer<IntWritable, VectorWritable, IntWritable, VectorWritable> {
+		static VectorWritable out_value = new VectorWritable();
+		static Vector vector = new DenseVector(new double[dim]);
+		static int K = 0;
+		static String clusters_in = null;
+		static double[][] old_clusters = null; // clusters array
+		static ArrayList<Integer> processed_clusters = null;
+		static boolean isConverged = true;
+		static double cd = 0;
+		static String clusters_out = null;
+		
+		@Override
+		public void setup( Context context) throws IOException {
+			Configuration conf=context.getConfiguration();
+			K = Integer.parseInt(conf.get("K"));
+			clusters_in = conf.get("clusters_in");
+			clusters_out = conf.get("clusters_out");
+			cd = Double.parseDouble(conf.get("cd"));
+			isConverged = true;
+			processed_clusters = new ArrayList<Integer>();
+			
+			//TODO
+			//read in the clusters and store then in the varry
+			try {
+				old_clusters = getClustersFromPath(conf, clusters_in, K);
+			} catch (InstantiationException e) {
+				// T Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				// TOD Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 
 		
+		public void reduce(IntWritable key, Iterable<VectorWritable> values, Context context) 
+				throws IOException, InterruptedException {
+			int num_values = 0;
+			double[] new_cluster = new double[dim];
+			for(int i = 0; i < dim; i ++){
+				new_cluster[i] = 0;
+			}
+			for(VectorWritable vw : values){
+				num_values ++;
+				for(int i = 0; i < dim; i ++){
+					new_cluster[i] += vw.get().get(i) ;
+				}
+			}
+			for(int i = 0; i < dim; i ++){
+				new_cluster[i] = new_cluster[i] / num_values;
+			}
+			vector.assign(new_cluster);
+			out_value.set(vector);
+			context.write(key, out_value);
+			
+			//check if the cluster have converged or not
+			//and add the cluster id to the processed_clusters 
+			processed_clusters.add(key.get());
+			try {
+				if(RandomizedKDtree.getDistance(new_cluster, old_clusters[key.get()]) > cd){
+					isConverged = false;
+				}
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		  }
+		
+		// output the isConverge value to output/isConverged---
+		//only output if false, i.e. there are unconverged clusters in this clusters processed by this reducer
+		// output the processed_clusters to output/processed_clusters
+		@Override
+		protected void cleanup(Context context) throws IOException {
+			if(processed_clusters.size() > 0){
+				Configuration conf = context.getConfiguration();
+				FileSystem fs =FileSystem.get(conf);
+				String isConverged_path = clusters_out + "/isConverged/";
+				String processed_clusters_path = clusters_out + "/processed_clusters/";
+				HadoopUtil.mkdir(isConverged_path);
+				HadoopUtil.mkdir(processed_clusters_path);
+				if(isConverged == false){
+					FSDataOutputStream writer = fs.create(new Path(isConverged_path + "/" + processed_clusters.get(0)));
+					writer.writeChars("false");
+					writer.close();
+				}
+				SequenceFile.Writer writer = new SequenceFile.Writer(fs, conf, new Path(processed_clusters_path + "/" + processed_clusters.get(0)), 
+						IntWritable.class,IntWritable.class);
+				IntWritable clusterId = new IntWritable();
+				for(Integer i : processed_clusters){
+					clusterId.set(i);
+					writer.append(clusterId, clusterId);
+				}
+				writer.close();
+				
+			}
+		}
 	}
+	
+	// read the processed_clusters and get those empty clusters, set them as the old clusters ids 
+	private void eliminate_empty_clusters(String clusters_out,	String clusters_in) 
+			throws IOException, InstantiationException, IllegalAccessException {
+		// TODO Auto-generated method stub
+		Configuration conf = new Configuration();
+		
+		// read the files in "processed_clusters", get the empty cluster ids
+		ArrayList<Integer> empty_clusterIds = new ArrayList<Integer>();
+		boolean[] processed = new boolean[cluster_num];
+		for(int i = 0; i < processed.length; i ++){
+			processed[i] = false;
+		}
+		
+		String processed_clusters = clusters_out + "/processed_clusters";
+		String[] files = HadoopUtil.getListOfFiles(processed_clusters);
+		for(String file : files){
+			SequenceFile.Reader reader = new SequenceFile.Reader(FileSystem.get(conf), new Path(file), conf);
+			IntWritable key =(IntWritable) reader.getKeyClass().newInstance();
+			IntWritable value = (IntWritable) reader.getValueClass().newInstance();
+			while(reader.next(key, value)){
+				if(processed[key.get()] == true){
+					reader.close();
+					throw new IOException("duplicate clusterID !!!" + key.get());
+					
+				}
+				else{
+					processed[key.get()] = true;
+				}
+			}
+			reader.close();
+		}
+		//get empty clusters
+		for(int i = 0; i < processed.length; i ++){
+			if(processed[i] == false){
+				empty_clusterIds.add(i);
+			}
+		}
+		//if there is no empty clusters, can directly return
+		if(empty_clusterIds.size() == 0){
+			return;
+		}
+		else {
+			System.out.println("empty_clusters exist  " + empty_clusterIds.size());
+			double[][] old_clusters =getClustersFromPath( conf, clusters_in, cluster_num) ;
+			//
+			SequenceFile.Writer writer = new SequenceFile.Writer(FileSystem.get(conf), conf, new Path(clusters_out + "/emptyclusters"),
+					IntWritable.class,VectorWritable.class);
+			for(int i : empty_clusterIds){
+				writer.append(new IntWritable(i), new VectorWritable(new DenseVector(old_clusters[i])));
+			}
+			writer.close();
+		}
+	}
+
+	//check if the output  is converged or not
+	//only need to examinne if cluster_out/isConverged is empty folder or not: empty -- converged, else not converged
+	private boolean isConverged(String isConvergedFolder) 
+			throws Exception {
+		// TODO Auto-generated method stub
+		
+		String[] files = HadoopUtil.getListOfFiles(isConvergedFolder);
+		if(files == null || files.length == 0)
+			return true;
+		else
+			return false;
+	}
+
+	// get the final result to file "clusters.txt"
+	private void getFinalResult(Configuration conf, String inputfolder,	String outputfile, String features_folder) 
+			throws IOException, InstantiationException, IllegalAccessException {
+		// TODO Auto-generated method stub
+		FileSystem fs =FileSystem.get(conf);
+		//get the clusters in to mem.
+		double[][] clusters = getClustersFromPath(conf, inputfolder, cluster_num);
+		FSDataOutputStream writer = fs.create(new Path(outputfile));
+		for(int i = 0; i < clusters.length; i ++){
+			StringBuilder sb=new StringBuilder();
+			sb.append("" + i + "\t" + new DenseVector(clusters[i]).toString() + "\n");
+			byte[] byt=sb.toString().getBytes();
+			writer.write(byt);
+		}
+		writer.flush();
+		writer.close();
+		
+	}
+	
 	// read in the clusters into double[][] from a folder of sequencefile
-	// the sequencefile should have the key/value = IntWritable/VectorWritable
-	// if there are empty clusters, i.e. the number of read-in clusters is smaller that k2(the clusters num), need to reinit some clusters
-	private static double[][] getClustersFromPath(Configuration conf, String clusters_in2, int k2, String features_folder) 
+	// the sequencefile should have the key/value = IntWritable/VectorWritable, where the key is the cluster ID
+	// will check for duplicate cluster ID and empty cluster ID
+	private static double[][] getClustersFromPath(Configuration conf, String clusters_in2, int k2) 
 			throws IOException, InstantiationException, IllegalAccessException {
 		// TODO Auto-generated method stub
 		double[][] dataset = new double[k2][dim];
@@ -293,42 +434,15 @@ public class AKM {
 			}
 			reader.close();
 		}
-		//if there are clusters with no data points assigned to them, set them to random features in the dataset
+		//check we have all clusters
 		for(int i = 0; i < k2; i ++){
 			// this cluster has not been assigned any features, need to re-initialize it
 			if(flag[i] == false) {
-				dataset[i] = akm_local.getRandomFeature(features_folder, k2, conf);
-				System.out.println("Cluster " + i + " has no assigned feature, re-initialized");
+				throw new IOException("empty cluster ID: " + i);
 			}
 		}
 		
 		return dataset;
 	}
-	// calculate the new clusters based on the newly assigned features
-	public static class AKM_Reducer extends  Reducer<IntWritable, VectorWritable, IntWritable, VectorWritable> {
-		static VectorWritable out_value = new VectorWritable();
-		//static IntWritable out_key = new IntWritable();
-		static Vector vector = new DenseVector(new double[dim]);
-		
-		public void reduce(IntWritable key, Iterable<VectorWritable> values, Context context) 
-				throws IOException, InterruptedException {
-			int num_values = 0;
-			double[] new_cluster = new double[dim];
-			for(int i = 0; i < dim; i ++){
-				new_cluster[i] = 0;
-			}
-			for(VectorWritable vw : values){
-				num_values ++;
-				for(int i = 0; i < dim; i ++){
-					new_cluster[i] += vw.get().get(i) ;
-				}
-			}
-			for(int i = 0; i < dim; i ++){
-				new_cluster[i] = new_cluster[i] / num_values;
-			}
-			vector.assign(new_cluster);
-			out_value.set(vector);
-			context.write(key, out_value);
-		  }
-	}
+
 }
