@@ -2,11 +2,14 @@ package ir.akm;
 
 import ir.util.HadoopUtil;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Random;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -29,9 +32,10 @@ import org.apache.mahout.math.VectorWritable;
 // map-reduce implementation of AKM using random KDTree forest
 public class AKM {
 	public static final int dim = 128;
-	int maxIterations = 100;
-	int cluster_num = 100*10;
-	double ConvergenceDelta = 0.05;
+	int maxIterations = 20;
+	int cluster_num = 1000;
+	double ConvergenceDelta = 0.01;
+	double rss_threshold = 0.001;
 	DistanceMeasure dm = new EuclideanDistanceMeasure();
 	
 	//test main
@@ -39,10 +43,10 @@ public class AKM {
 		///test use
 		HadoopUtil.delete("test_akm_MR");
 		//normalize the features
-		normalize("test_fe_seq2seq_100images/data/features", "test_akm_MR/normalizedfeatures/seq");
+	//	normalize("test_fe_seq2seq_100images/data/features", "test_akm_MR/normalizedfeatures/seq");
 		
 		AKM akm = new AKM();
-		akm.runClustering("test_akm_MR/normalizedfeatures", "test_akm_MR");
+		akm.runClustering("test_fe_seq2seq_100images/data/features", "test_akm_MR");
 		
 	}
 	
@@ -93,7 +97,7 @@ public class AKM {
 		// get the inital clusters
 		Path initial_cluster_path = new Path(output + "/0/0");
 		akm_local.clusters_init_random(input_dataset, initial_cluster_path, cluster_num, conf , true);
-		
+		ArrayList<Double> rss_list = new ArrayList<Double>();
 		// run iterations
 		// run akm iteraterations until maximam iterations reached or cd reached
 		int iteration_num = 0;
@@ -112,13 +116,44 @@ public class AKM {
 			if(isConverged(clusters_out + "/isConverged") == true){
 				break;
 			}
+			//get rss
+			rss_list.add(getRss(clusters_out + "/rss"));
+			if(rss_list.size() >= 3){
+				double current_rss = rss_list.get(rss_list.size() - 1);
+				double avg_former_two = (rss_list.get(rss_list.size() - 2) + rss_list.get(rss_list.size() - 3)) / 2;
+				if(Math.abs(current_rss - avg_former_two) /avg_former_two < rss_threshold){
+					break;
+				}
+			}
 		}
 		//convert the cluster centroids to a txt file "clusters.txt"
 		getFinalResult(conf, output + "/" + iteration_num, output + "/clusters.txt", input_dataset);
+		for(double rss : rss_list){
+			System.out.println(rss);
+		}
 		
 	}
  
 
+	// get the rss of the output folder
+	// the folder should contain serveral files, each have a double number in plain text format
+	private double  getRss(String rss_folder) throws IOException {
+		// TODO Auto-generated method stub
+		Configuration conf = new Configuration();
+		FileSystem fs = FileSystem.get(conf);
+		String[] files = HadoopUtil.getListOfFiles(rss_folder);
+		double rss = 0;
+		for(String file : files){
+			BufferedReader br=new BufferedReader(new InputStreamReader(fs.open(new Path(file))));
+			String inline = null;
+			while((inline = br.readLine()) != null){
+				rss += Double.parseDouble(inline);
+			}
+			br.close();
+		}
+		return rss;
+		
+	}
 
 	//running one iteration of akm
 	// @PARAM: input_dataset: the features extracted
@@ -146,6 +181,21 @@ public class AKM {
 			job.setInputFormatClass(SequenceFileInputFormat.class);
 			job.setOutputFormatClass(SequenceFileOutputFormat.class);
 			//job.setOutputFormatClass(SequenceFileOutputFormat.class);
+			//setting number of reducers adaptively
+			System.out.println("!!!!Setting number of reducer adaptively!!!");
+		      int default_num_reducer = 100;
+				try {
+					FileSystem fs = FileSystem.get(conf);
+					ContentSummary cs =fs.getContentSummary(new Path(input_dataset));
+					long input_size=cs.getLength();//cs.getSpaceConsumed();
+					default_num_reducer=(int)(Math.ceil( ((double)input_size)/(1024*1024*64) ));//50MB PER REducer
+					System.out.println("Path: "+input_dataset+" size "+input_size+", will use "+default_num_reducer+" reducer(s)\n\n");
+				} catch (IOException e3) {
+					// TODO Auto-generated catch block
+					e3.printStackTrace();
+				}
+				job.setNumReduceTasks(default_num_reducer);
+		      
 			
 			FileInputFormat.addInputPath(job, new Path(input_dataset));
 			FileOutputFormat.setOutputPath(job, new Path(clusters_out));
@@ -214,6 +264,7 @@ public class AKM {
 	// calculate the new clusters based on the newly assigned features
 	// will output to output/isConverged folder  if converged or not(if all the clusters have converged, no files will be output to this folder)
 	// output/processed_clusters will contain those new clusters(that have features assigned to them), can be used to find the empty clusters
+	// RSS will be calcuated to output/rss folder, in plain text file
 	public static class AKM_Reducer extends  Reducer<IntWritable, VectorWritable, IntWritable, VectorWritable> {
 		static VectorWritable out_value = new VectorWritable();
 		static Vector vector = new DenseVector(new double[dim]);
@@ -333,7 +384,7 @@ public class AKM {
 					writer.writeChars("false");
 					writer.close();
 				}
-				
+				//processed cluster Ids
 				SequenceFile.Writer writer = new SequenceFile.Writer(fs, conf, new Path(processed_clusters_path + "/" + processed_clusters.get(0)), 
 						IntWritable.class,IntWritable.class);
 				IntWritable clusterId = new IntWritable();

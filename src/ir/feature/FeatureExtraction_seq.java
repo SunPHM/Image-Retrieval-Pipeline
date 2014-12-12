@@ -30,7 +30,7 @@ import org.apache.mahout.math.VectorWritable;
 public class FeatureExtraction_seq {
 	public static String seqfile = "data/images";
 	public static String feature_folder = "test/data/features.txt";
-	public static final Integer split_size = (int) (1024*1024*20);//30MB
+	public static final Integer split_size = (int) (1024*1024*15);//30MB
 	
 	public static void main(String[] args) {
 		extractFeatures(args[0], args[1]);
@@ -133,7 +133,8 @@ public class FeatureExtraction_seq {
 					BufferedImage img = ImageIO.read(new ByteArrayInputStream(value.getBytes()));
 					String[] features = SIFTExtraction.getFeatures(img);
 					for(int i = 0; i < features.length; i++){
-						double[]  feature=getPoints(features[i].split(" "), feature_length);
+						double[]  feature = getPoints(features[i].split(" "), feature_length);
+//						normalize(feature);
 						VectorWritable vw = new VectorWritable();
 						Vector vec = new DenseVector(feature_length);
 						vec.assign(feature);
@@ -160,7 +161,21 @@ public class FeatureExtraction_seq {
 			}
 			
 		}
-		
+		/*
+		// normalize the feature
+		private void normalize(double[] feature) {
+			// TODO Auto-generated method stub
+			double sum = 0;
+			for(int i = 0; i < feature.length; i ++){
+				sum = sum + feature[i] * feature[i];
+			}
+			sum = Math.sqrt(sum);
+			for(int i = 0; i < feature.length; i ++){
+				feature[i] = feature[i] / sum;
+			}
+		}
+		*/
+
 		public static double[] getPoints(String[] args, int size){// get the feature vector from the 
 			//System.out.println(args.length);
 			double[] points = new double[size];

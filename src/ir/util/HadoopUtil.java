@@ -68,6 +68,8 @@ public class HadoopUtil {
 			e.printStackTrace();
 		}
 	}
+	
+	// get list of files and filter out filenames starting with "_"
 	public static String[] getListOfFiles(String folder_path){
 		ArrayList<String> ListOfFolders=new ArrayList<String>();
 		try {

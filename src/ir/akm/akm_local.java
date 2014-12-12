@@ -205,13 +205,15 @@ public class akm_local {
 			System.out.println("\n!!!Generate random initial cls from path " + input_all_files[0] + "\n");
 			initial_path = new Path(input_all_files[0]);
 		}
-		else initial_path = new Path(input);			
+		else 
+			initial_path = new Path(input);		
+		//Get random K cluster, store in hashmap
+		HashMap<Integer, VectorWritable> Random_K_cluster = new HashMap<Integer, VectorWritable>();
 				
 		SequenceFile.Reader reader = new SequenceFile.Reader(FileSystem.get(conf), initial_path, conf);
 		WritableComparable in_key = (WritableComparable)reader.getKeyClass().newInstance();
 		VectorWritable in_value = (VectorWritable) reader.getValueClass().newInstance();
-		//Get random K cluster, store in hashmap
-		HashMap<Integer, VectorWritable> Random_K_cluster = new HashMap<Integer, VectorWritable>();
+		
 		int cluster_id = 0;
 		Random rand = new Random();
 		while(reader.next(in_key, in_value)){
@@ -222,8 +224,9 @@ public class akm_local {
 				cluster_id = cluster_id + 1;
 			}
 			else {//randomly replace some of the clusters.
-				int flag = rand.nextInt(2);
-				if(flag % 2 == 0){ //even, replace an existing random kluster.
+				// need to modify the probability
+				int flag = rand.nextInt(10);
+				if(flag % 10 == 0){ //even, replace an existing random kluster.
 					int index = rand.nextInt(k);// the cluster to replace 
 					Vector vec = in_value.get();
 					VectorWritable cluster = new VectorWritable(vec);

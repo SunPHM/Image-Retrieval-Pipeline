@@ -1,5 +1,7 @@
 package ir.cluster;
 
+import ir.akm.AKM;
+import ir.akm.akm_local;
 import ir.util.XMLUtil;
 
 import java.io.IOException;
@@ -54,8 +56,20 @@ public class VWDriver {
 				t = TopDownClustering.run(args1, botlvlcluster_type);
 		}
 		else{//kmeans clustering
+		//	int k = Integer.parseInt(args[2])*Integer.parseInt(args[3]);
+		//	t = NormalKmeansClustering.runKmeansClustering(args[0], args[1]+"/cluster/", k);
+			
+			//akm clustering
 			int k = Integer.parseInt(args[2])*Integer.parseInt(args[3]);
-			t = NormalKmeansClustering.runKmeansClustering(args[0], args[1]+"/cluster/", k);
+			AKM akm = new AKM();
+			akm.setParam(k, 0.001);
+			try {
+			//	al.run_akm(args[0], args[1] + "/cluster/");
+				akm.runClustering(args[0], args[1] + "/cluster/");
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		
 		long EndTime1 = new Date().getTime();
@@ -65,14 +79,14 @@ public class VWDriver {
 		int clusterNum = Integer.parseInt(args[2]) * Integer.parseInt(args[3]);
 		
 		//old frequency job 
-//		Frequency.runJob(args[0], clusterNum, args[1] + "/cluster/clusters.txt", args[1] + "/temp/freq/", args[1] + "/data/frequency.txt");
+		Frequency.runJob(args[0], clusterNum, args[1] + "/cluster/clusters.txt", args[1] + "/temp/freq/", args[1] + "/data/frequency.txt");
 		//create configuration xml
-//		XMLUtil.createConfiguration(args[1] + "/conf.xml", args[1] + "/data/frequency.txt", args[1] + "/cluster/clusters.txt", clusterNum);
+		XMLUtil.createConfiguration(args[1] + "/conf.xml", args[1] + "/data/frequency.txt", args[1] + "/cluster/clusters.txt", clusterNum);
 		
 		//topdown frequency
-		TopDownFrequency.runJob(args[0], topclusterNum, botclusterNum, args[1] + "/cluster/clusters/", args[1] + "/temp/tdfreq/", args[1] + "/data/frequency_new.txt");
-		XMLUtil.createConfiguration(args[1] + "/conf_new.xml", args[1] + "/data/frequency_new.txt", args[1] + "/cluster/clusters", 
-				topclusterNum, botclusterNum);
+//		TopDownFrequency.runJob(args[0], topclusterNum, botclusterNum, args[1] + "/cluster/clusters/", args[1] + "/temp/tdfreq/", args[1] + "/data/frequency_new.txt");
+//		XMLUtil.createConfiguration(args[1] + "/conf_new.xml", args[1] + "/data/frequency_new.txt", args[1] + "/cluster/clusters", 
+//				topclusterNum, botclusterNum);
 		
 		
 		long EndTime2 = new Date().getTime();

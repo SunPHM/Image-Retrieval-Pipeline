@@ -22,7 +22,7 @@ import org.apache.hadoop.fs.Path;
 public class KDTreeForest {
 	public static final int num_trees = 8;
 	public static final int num_dimensions = 5; 
-	public static double max_comparison = 0.5;// suggestion: should set this to about 5% to 15 % of of the total nodes???
+	public static double max_comparison = 0.05;// suggestion: should set this to about 5% to 15 % of of the total nodes???
 	
 	public Node[] roots = null;
 	

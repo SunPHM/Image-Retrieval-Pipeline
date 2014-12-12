@@ -37,7 +37,7 @@ public class Pipeline_FE_seq{
 			throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException, InterruptedException{
 		long N = 1000 * 60;
 		long startTime = new Date().getTime();
-		HadoopUtil.delete(dst);
+//		HadoopUtil.delete(dst);
 		
 		RecordTime rt=new RecordTime("recordtime.txt");
 		rt.writeMsg("#Task: "+src+" "+dst+" "+topK+" "+botK+" "+botlvlcluster_type);
@@ -51,7 +51,7 @@ public class Pipeline_FE_seq{
 		//TODO: call the main entry point of the Feature Extraction
 		System.out.println("\n\nFeature Extraction");
 		String features = dst + "/data/features";// the feature folder
-		FeatureExtraction_seq.extractFeatures(src, features);
+//		FeatureExtraction_seq.extractFeatures(src, features);
 		System.out.println("Features folder:" + features);
 
 		rt.writeMsg("$FEEnd$ "+new Date().getTime());
@@ -63,7 +63,8 @@ public class Pipeline_FE_seq{
 		//vocabulary construction and frequency generation
 		System.out.println("\n\nvocabulary construction and frequency generation");
 		String[] args = {features, dst, "" + topK, "" + botK};
-		String s = VWDriver.run(args, botlvlcluster_type,true);
+		//!!
+		String s = VWDriver.run(args, botlvlcluster_type,false);
 		rt.writeMsg("$VWEnd$ "+new Date().getTime());
 		long EndTime2 = new Date().getTime();
 		
@@ -73,15 +74,20 @@ public class Pipeline_FE_seq{
 		//before run indexing, need to copy the frequency.txt file to local filesystem(index part reads from localfilesystem)---done 
 		int clusterNum = topK * botK;
 		
-	//	Search.init(dst + "/data/frequency.txt", clusterNum, dst + "/cluster/clusters.txt", topK, botK);
-	//	Search.runIndexing(dst + "/data/frequency.txt");
+		Search.init(dst + "/data/frequency.txt", clusterNum, dst + "/cluster/clusters.txt", topK, botK);
+		Search.runIndexing(dst + "/data/frequency.txt");
 		
-		Search.init(dst + "/data/frequency_new.txt", clusterNum, dst + "/cluster/clusters", topK, botK);
-		Search.runIndexing(dst + "/data/frequency_new.txt");
+	//	Search.init(dst + "/data/frequency_new.txt", clusterNum, dst + "/cluster/clusters", topK, botK);
+	//	Search.runIndexing(dst + "/data/frequency_new.txt");
 		
 		long EndTime3 = new Date().getTime();
 		//to test or evaluate here
-		Search.search_topdown("data/images/all_souls_000001.jpg");
+		String[] results = Search.search("data/images/all_souls_000001.jpg");
+		
+		for(String result : results){
+			System.out.println(result);
+		}
+		
 		long EndTime4 = new Date().getTime();
 		
 		rt.writeMsg("$ISEnd$ " + new Date().getTime());
