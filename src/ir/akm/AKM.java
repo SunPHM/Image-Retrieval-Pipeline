@@ -30,8 +30,8 @@ import org.apache.mahout.math.VectorWritable;
 public class AKM {
 	public static final int dim = 128;
 	int maxIterations = 100;
-	int cluster_num = 100*100;
-	double ConvergenceDelta = 0.1;
+	int cluster_num = 100*10;
+	double ConvergenceDelta = 0.05;
 	DistanceMeasure dm = new EuclideanDistanceMeasure();
 	
 	//test main
@@ -79,6 +79,10 @@ public class AKM {
 		writer.close();
 	}
 
+	public void setParam(int k, double cd){
+		this.cluster_num = k;
+		this.ConvergenceDelta = cd;
+	}
 	/*entry point of AKM clustering
 	 *@PARAM input_dataset: input folder of extracted features
 	 *@PARAM output: the cluster result output folder
@@ -220,6 +224,11 @@ public class AKM {
 		static boolean isConverged = true;
 		static double cd = 0;
 		static String clusters_out = null;
+		//used for calculating rss
+		//static double rss = 0;
+		static double squredsum = 0;
+		static double[] normalsum = new double[dim];
+		static ArrayList<Double> rss_list= null;
 		
 		@Override
 		public void setup( Context context) throws IOException {
@@ -230,6 +239,9 @@ public class AKM {
 			cd = Double.parseDouble(conf.get("cd"));
 			isConverged = true;
 			processed_clusters = new ArrayList<Integer>();
+			
+			rss_list = new ArrayList<Double>();
+
 			
 			//TODO
 			//read in the clusters and store then in the varry
@@ -252,10 +264,21 @@ public class AKM {
 			for(int i = 0; i < dim; i ++){
 				new_cluster[i] = 0;
 			}
+			
+			// for this cluster, need to reset the squredsuma and normalsum
+			squredsum = 0;
+			for(int i = 0; i < 128; i ++){
+				
+				normalsum[i] = 0;
+			}
+			
+			
 			for(VectorWritable vw : values){
 				num_values ++;
 				for(int i = 0; i < dim; i ++){
 					new_cluster[i] += vw.get().get(i) ;
+					normalsum[i]   += vw.get().get(i);
+					squredsum      += vw.get().get(i) * vw.get().get(i);
 				}
 			}
 			for(int i = 0; i < dim; i ++){
@@ -267,6 +290,16 @@ public class AKM {
 			
 			//check if the cluster have converged or not
 			//and add the cluster id to the processed_clusters 
+			// calculate rss for cluster id = key
+			double dot_result = 0;
+			double squared_cluster = 0;
+			for(int i = 0; i < dim; i ++){
+				dot_result      += new_cluster[i] * normalsum[i];
+				squared_cluster += new_cluster[i] * new_cluster[i];
+			}
+			double rss = squredsum + num_values * squared_cluster - 2 * dot_result;
+			rss_list.add(rss);
+			
 			processed_clusters.add(key.get());
 			try {
 				if(RandomizedKDtree.getDistance(new_cluster, old_clusters[key.get()]) > cd){
@@ -281,20 +314,26 @@ public class AKM {
 		// output the isConverge value to output/isConverged---
 		//only output if false, i.e. there are unconverged clusters in this clusters processed by this reducer
 		// output the processed_clusters to output/processed_clusters
+		// output the sum rss of the processed clusters
 		@Override
 		protected void cleanup(Context context) throws IOException {
 			if(processed_clusters.size() > 0){
 				Configuration conf = context.getConfiguration();
 				FileSystem fs =FileSystem.get(conf);
+				
 				String isConverged_path = clusters_out + "/isConverged/";
 				String processed_clusters_path = clusters_out + "/processed_clusters/";
+				String rss_path = clusters_out + "/rss/";
 				HadoopUtil.mkdir(isConverged_path);
 				HadoopUtil.mkdir(processed_clusters_path);
+				HadoopUtil.mkdir(rss_path);
+				
 				if(isConverged == false){
 					FSDataOutputStream writer = fs.create(new Path(isConverged_path + "/" + processed_clusters.get(0)));
 					writer.writeChars("false");
 					writer.close();
 				}
+				
 				SequenceFile.Writer writer = new SequenceFile.Writer(fs, conf, new Path(processed_clusters_path + "/" + processed_clusters.get(0)), 
 						IntWritable.class,IntWritable.class);
 				IntWritable clusterId = new IntWritable();
@@ -303,6 +342,17 @@ public class AKM {
 					writer.append(clusterId, clusterId);
 				}
 				writer.close();
+				
+				//rss
+				double sum_rss = 0;
+				for(double rss : rss_list)
+					sum_rss += rss;
+				FSDataOutputStream writer_rss = fs.create(new Path(rss_path + processed_clusters.get(0)));
+				StringBuilder sb=new StringBuilder();
+				sb.append("" + sum_rss);
+				byte[] byt=sb.toString().getBytes();
+				writer_rss.write(byt);
+				writer_rss.close();
 				
 			}
 		}
