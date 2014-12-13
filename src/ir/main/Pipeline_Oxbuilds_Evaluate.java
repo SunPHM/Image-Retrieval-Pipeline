@@ -93,11 +93,12 @@ public class Pipeline_Oxbuilds_Evaluate {
 		int clusterNum = topK * botK;
 		
 		//old frequency approach
-		//Search.init(dst + "/data/frequency.txt", clusterNum, dst + "/cluster/clusters.txt", topK, botK);
-		//long total_images = Search.runIndexing(dst + "/data/frequency.txt");
+		Search.init(dst + "/data/frequency.txt", clusterNum, dst + "/cluster/clusters.txt", topK, botK);
+		long total_images = Search.runIndexing(dst + "/data/frequency.txt");
 		
-		Search.init(dst + "/data/frequency_new.txt", clusterNum, dst + "/cluster/clusters", topK, botK);
-		long total_images = Search.runIndexing(dst + "/data/frequency_new.txt");
+		// topdown frequecy approach
+		//Search.init(dst + "/data/frequency_new.txt", clusterNum, dst + "/cluster/clusters", topK, botK);
+		//long total_images = Search.runIndexing(dst + "/data/frequency_new.txt");
 		
 		long EndTime3 = new Date().getTime();
 		//to test or evaluate here

@@ -52,7 +52,13 @@ public class GetMAP {
 				try {
 					// get features and create query
 					String[] features = getFeatures(file, images);
-					String query = Search.createQuery_topdown(features);
+					
+					//create the query -- choose one approach
+					//topdown approach
+					//String query = Search.createQuery_topdown(features);
+					// normal frequency approach
+					String query = Search.createQuery(features);
+					
 					// run query
 					String[] files_search_results = null;
 					files_search_results = Search.query(query,(int)total_images);	
