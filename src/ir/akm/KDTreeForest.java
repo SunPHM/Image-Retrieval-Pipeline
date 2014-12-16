@@ -213,13 +213,11 @@ public class KDTreeForest {
 								nn.minDistance = distance;
 							}
 							nn.comparisons ++;
-							if(visited[point] == true) {
-							}
 							visited[point] = true;
 							// if reached maximum comparisons, need to terminate search
 							if (nn.comparisons > max_comparison * varray.length){
-//								System.out.println("number of comparisons : " + nn.comparisons  + ""
-//										+ " wasted calculations " + wasted_calculation);
+								//	System.out.println("number of comparisons : " + nn.comparisons  + ""
+								//		+ " wasted calculations " + wasted_calculation);
 								return nn.nnId;
 							}
 						}
@@ -227,13 +225,11 @@ public class KDTreeForest {
 					//setting null to exit while loop
 					node = null;
 				}
-			//	System.out.println(node + " " + node.split_axis +node.split_value + node.left + node.right + node.points[0]);
-				
-				
+			//	System.out.println(node + " " + node.split_axis +node.split_value + node.left + node.right + node.points[0]);				
 			}
 		}
 		
-//s		System.out.println("number of comparisons : " + nn.comparisons  + " wasted calculations " + wasted_calculation);
+		// System.out.println("number of comparisons : " + nn.comparisons  + " wasted calculations " + wasted_calculation);
 		return nn.nnId;
 	}
 
@@ -303,14 +299,15 @@ public class KDTreeForest {
 		}
 	}
 
-
 }
+
 //used in priority queue
 class Node_p{
 	public Node node;
 	public double distance;
 	public Node_p(Node n, double d){this.node = n; this.distance = d;}
 }
+
 class NodeComparator implements Comparator<Node_p>{
 
 	@Override
