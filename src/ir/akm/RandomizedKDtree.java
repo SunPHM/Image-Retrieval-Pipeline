@@ -147,8 +147,6 @@ public class RandomizedKDtree{
 		return n;
 	}
 
-
-
 	// get the mean of points in the varray of the split_axis
 	private double getMean(ArrayList<double[]> varray, int[] points, int split_axis) {
 		// TODO Auto-generated method stub
@@ -159,71 +157,7 @@ public class RandomizedKDtree{
 		return sum / points.length;
 		
 	}
-
-
-
-	/*
-	 * get the neareast neighbor Id
-	 * keep it for test use only
-	 * */
-	public  int getNearestNeighborId(Node root, double[][] varray, double[] q_vector) throws Exception{
-		//initialize global variables --  vector[0] as the current nearest neighbor
-		NNS nn = new NNS();
-		nn.nnId = 0;
-		nn.minDistance = getDistance(varray[nn.nnId], q_vector);
-		nn.comparisons = 0;
-		
-		nn_recursive(root, varray, q_vector, nn);
-		
-		System.out.println("comparisons: " + nn.comparisons);
-		return nn.nnId;
-	};
 	
-	//recursive method to get the nearest neighbor Id
-	public  void nn_recursive(Node node, double[][] varray, double[] q_vector, NNS nn) throws Exception{
-		if(node == null){
-			return ;
-		}
-		// leaf node
-		if(node.left == null && node.right == null){
-			for(int i : node.points){
-				nn.comparisons ++;
-				//get the distance of the query vector and the new element in the array
-				double dist = getDistance(q_vector, varray[i]);
-				
-				if( dist < nn.minDistance){
-					nn.nnId = i;
-					nn.minDistance = dist;
-					System.out.println(nn.nnId + "\t" + nn.minDistance);
-				}
-			}
-		}
-		//internal node
-		else {
-			// examine if query node position to the hyperplane of the node 
-			boolean left_searched = true;
-			if(q_vector[node.split_axis] < node.split_value){
-				// recursively search the left sub-tree
-				nn_recursive(node.left, varray, q_vector, nn);
-				left_searched = true;
-				
-			}
-			else {
-				nn_recursive(node.right, varray, q_vector, nn);
-				left_searched = false;
-			}
-			//examine the other sub-tree if necessarry
-			if(Math.abs(q_vector[node.split_axis] - node.split_value) < nn.minDistance){
-				if(left_searched == true){
-					nn_recursive(node.right, varray, q_vector, nn);
-				}
-				else{
-					nn_recursive(node.left, varray, q_vector, nn);
-				}
-			}
-			
-		}
-	}
 	//get the Euclidean distance of two vectors
 	static double getDistance(double[] v1, double[] v2) throws Exception {
 		// TODO Auto-generated method stub
@@ -277,65 +211,7 @@ public class RandomizedKDtree{
 	}
 
 	public static void main(String args[]) throws Exception{
-		int dim = 128;
 		
-		Random rand = new Random();
-		ArrayList<double[]> varray = new ArrayList<double[]>();
-		//double[][] marks={{1.0,2,3,4,5},{10.0,9,8,7,6},{5.0,5,5,5,5}};
-		for(int i = 0; i < 100; i ++){
-			double[] arr = new double[dim];
-			for (int j = 0; j < arr.length; j ++){
-				arr[j] = rand.nextDouble() * (rand.nextInt(100) + 1);
-			}
-			varray.add(arr);
-		}
-		
-	/*	int[] points =  {0, 1, 2};
-		double median = getApproximateMedian(varray, points, 0);
-		System.out.println(median);
-		*/
-		RandomizedKDtree rt = new RandomizedKDtree();
-		int[] points = new int[varray.size()];
-		for(int i = 0; i < points.length; i ++){
-			points[i] = i;
-		}
-		double[][] dataset = new double[varray.size()][dim];
-		for(int i = 0; i < varray.size(); i ++){
-			dataset[i] = varray.get(i);
-		}
-		
-		int[] dims = KDTreeForest.getTopDimensionsWithLargestVariance(10,points, dataset);
-		Node root = rt.buildTree(dims, dataset);
-		
-		double[] arr = new double[dim];
-		
-		for (int j = 0; j < arr.length; j ++){
-			arr[j] = rand.nextDouble() * (rand.nextInt(10) + 1);
-		}
-		
-		double[]  q_vector = arr;
-		
-		long startTime = System.nanoTime();
-		int id = rt.getNearestNeighborId(root, dataset, q_vector );
-		long endTime = System.nanoTime();
-		System.out.println("Kdtree nns finished in " + ((double)( endTime - startTime )/(1000 * 1000 * 1000)) + "secs \n distance " + getDistance(q_vector, varray.get(id)));
-		
-		
-		//serial way to find the nearest vector
-		long startTime1 = System.nanoTime();
-		double min_dist = Double.MAX_VALUE;
-		int nnId = -1;
-		for(int i = 0; i < dataset.length; i ++){
-			double dist = getDistance(dataset[i], q_vector);
-			
-			if(dist < min_dist){
-				nnId = i;
-				min_dist = dist;
-			}
-		}
-		long endTime1 = System.nanoTime();
-		System.out.println("serial nns finished in " + ((double)( endTime1 - startTime1)/(1000 * 1000 * 1000)) + "secs ,\n nnID : " +  nnId + "   distance: " + min_dist );
-		System.out.println(root.toString() + "   " + id);
 	}
 }
 //used for neareast neigbor search -- used as "global variables" to store the currently nearest neighbor found
