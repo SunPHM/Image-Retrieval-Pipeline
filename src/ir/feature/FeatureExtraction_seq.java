@@ -9,15 +9,19 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.Reducer.Context;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -68,6 +72,7 @@ public class FeatureExtraction_seq {
 		job.setJobName("FeatureExtractionSeqFile");
 		job.setJarByClass(FeatureExtraction_seq.class);
 		job.setMapperClass(FeatureExtraction_seq.FEMap.class);
+		job.setReducerClass(FeatureExtraction_seq.FEReducer.class);
 		
 		job.setInputFormatClass(SequenceFileInputFormat.class);
 		job.setOutputFormatClass(SequenceFileOutputFormat.class);
@@ -185,8 +190,50 @@ public class FeatureExtraction_seq {
 		}
 	}
 
+	//reducer to count the number of features
+	public static class FEReducer extends  Reducer<Text, VectorWritable, Text, VectorWritable> {
+		static  String feature_folder = null;
+		static Path feature_count_path = null;
+		static long feature_count = 0;
+		static String file_name = null;
+			@Override
+			public void setup( Context context) throws IOException {
+				Configuration conf = context.getConfiguration();
+				feature_folder = conf.get("feature_folder");
+				Path p = new Path(feature_folder);
+				Path parent = p.getParent();
+				feature_count_path = new Path(parent, "feature_count");
+				
+				feature_count = 0;
+				
+			}
+			//use key as output file name so that it should be distinct from each other
+			public void reduce(Text key, Iterable<VectorWritable> values, Context context) 
+					throws IOException, InterruptedException {
+				for(VectorWritable vw : values){
+					context.write(key, vw);
+					feature_count ++;
+				}
+				file_name = new Path( key.toString()).getName();
+				
+			}
+			//write the file to the feature_count_path/file_name
+			protected void cleanup(Context context) throws IOException {
+				Configuration conf = context.getConfiguration();
+				FileSystem fs =FileSystem.get(conf);
+				FSDataOutputStream writer = fs.create(new Path(feature_count_path, file_name));
+				StringBuilder sb=new StringBuilder();
+				sb.append("" + feature_count);
+				byte[] byt=sb.toString().getBytes();
+				writer.write(byt);
+				writer.close();
+			}
+			
+		}
+
 
 }
+
 
 class testCopyMerge {
 	public static void test(String seqfile){

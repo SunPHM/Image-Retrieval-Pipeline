@@ -22,7 +22,7 @@ import org.apache.hadoop.fs.Path;
 public class KDTreeForest {
 	public static final int num_trees = 8;
 	public static final int num_dimensions = 5; 
-	public static double max_comparison = 0.05;// suggestion: should set this to about 5% to 15 % of of the total nodes???
+	public static double max_comparison = 500;// suggestion: should set this to about 5% to 15 % of of the total nodes???
 	
 	public Node[] roots = null;
 	
@@ -213,11 +213,12 @@ public class KDTreeForest {
 								nn.minDistance = distance;
 							}
 							nn.comparisons ++;
-							if(visited[point] == true) {
-							}
+					//		if(visited[point] == true) {
+					//		}
 							visited[point] = true;
 							// if reached maximum comparisons, need to terminate search
-							if (nn.comparisons > max_comparison * varray.length){
+							//need to change this
+							if (nn.comparisons > max_comparison){
 //								System.out.println("number of comparisons : " + nn.comparisons  + ""
 //										+ " wasted calculations " + wasted_calculation);
 								return nn.nnId;
