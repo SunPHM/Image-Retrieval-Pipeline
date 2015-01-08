@@ -95,8 +95,13 @@ public class AKM {
 			throws Exception{
 		Configuration conf = new Configuration();
 		// get the inital clusters
-		Path initial_cluster_path = new Path(output + "/0/0");
-		akm_local.clusters_init_random(input_dataset, initial_cluster_path, cluster_num, conf , true);
+		String initial_cluster_path = new String(output + "/0/");
+		
+//
+		
+		//akm_local.clusters_init_random(input_dataset, initial_cluster_path, cluster_num, conf , true);
+		kmeans_init.random_init(input_dataset, initial_cluster_path, cluster_num, conf);
+		
 		ArrayList<Double> rss_list = new ArrayList<Double>();
 		// run iterations
 		// run akm iteraterations until maximam iterations reached or cd reached
@@ -210,8 +215,10 @@ public class AKM {
 		public static int K = 0; //number of clusters 
 		public static String clusters_in= null; // input folder of clusters
 		
-		public static double[][] varray = null; // clusters array
-		public static double[] q_vector = new double[AKM.dim];
+		public static float[][] varray = null; // clusters array
+		public static float[] q_vector = new float[AKM.dim];
+		public static double[] q_vector_double = new double[AKM.dim];
+		
 		static IntWritable out_key = new IntWritable();
 		static VectorWritable out_value = new VectorWritable();
 		static int nnid = 0;
@@ -245,7 +252,8 @@ public class AKM {
 				throws IOException, InterruptedException {	
 			// for each feature in the dataset, assign to the nearest neighbor using kdtree forest
 			for(int i = 0; i < dim; i ++){
-				q_vector[i] = value.get().get(i);
+				q_vector_double[i] = value.get().get(i);
+				q_vector[i] = (float) value.get().get(i);
 			}
 			try {
 				 nnid= kdtf.nns_BBF(varray, q_vector);
@@ -255,7 +263,7 @@ public class AKM {
 				e.printStackTrace();
 			}
 			out_key.set(nnid);
-			Vector v = new DenseVector(q_vector);
+			Vector v = new DenseVector(q_vector_double);
 			out_value.set(v);
 			context.write(out_key, out_value);
 		}
@@ -270,7 +278,7 @@ public class AKM {
 		static Vector vector = new DenseVector(new double[dim]);
 		static int K = 0;
 		static String clusters_in = null;
-		static double[][] old_clusters = null; // clusters array
+		static float[][] old_clusters = null; // clusters array
 		static ArrayList<Integer> processed_clusters = null;
 		static boolean isConverged = true;
 		static double cd = 0;
@@ -312,6 +320,8 @@ public class AKM {
 				throws IOException, InterruptedException {
 			int num_values = 0;
 			double[] new_cluster = new double[dim];
+			float[] new_cluster_float = new float[dim];
+			
 			for(int i = 0; i < dim; i ++){
 				new_cluster[i] = 0;
 			}
@@ -335,6 +345,9 @@ public class AKM {
 			for(int i = 0; i < dim; i ++){
 				new_cluster[i] = new_cluster[i] / num_values;
 			}
+			for(int i = 0; i < dim; i ++){
+				new_cluster_float[i] = (float) new_cluster[i];
+			}
 			vector.assign(new_cluster);
 			out_value.set(vector);
 			context.write(key, out_value);
@@ -353,7 +366,7 @@ public class AKM {
 			
 			processed_clusters.add(key.get());
 			try {
-				if(RandomizedKDtree.getDistance(new_cluster, old_clusters[key.get()]) > cd){
+				if(RandomizedKDtree.getDistance(new_cluster_float, old_clusters[key.get()]) > cd){
 					isConverged = false;
 				}
 			} catch (Exception e) {
@@ -452,12 +465,16 @@ public class AKM {
 		}
 		else {
 			System.out.println("empty_clusters exist  " + empty_clusterIds.size());
-			double[][] old_clusters =getClustersFromPath( conf, clusters_in, cluster_num) ;
+			float[][] old_clusters =getClustersFromPath( conf, clusters_in, cluster_num) ;
 			//
 			SequenceFile.Writer writer = new SequenceFile.Writer(FileSystem.get(conf), conf, new Path(clusters_out + "/emptyclusters"),
 					IntWritable.class,VectorWritable.class);
 			for(int i : empty_clusterIds){
-				writer.append(new IntWritable(i), new VectorWritable(new DenseVector(old_clusters[i])));
+				double temp_cluster[] = new double[dim];
+				for(int j = 0; j < dim; j ++){
+					temp_cluster[j] = old_clusters[i][j];
+				}
+				writer.append(new IntWritable(i), new VectorWritable(new DenseVector(temp_cluster)));
 			}
 			writer.close();
 		}
@@ -482,11 +499,19 @@ public class AKM {
 		// TODO Auto-generated method stub
 		FileSystem fs =FileSystem.get(conf);
 		//get the clusters in to mem.
-		double[][] clusters = getClustersFromPath(conf, inputfolder, cluster_num);
+		float[][] clusters = getClustersFromPath(conf, inputfolder, cluster_num);
 		FSDataOutputStream writer = fs.create(new Path(outputfile));
+		
+		
+		double[] temp_cluster = new double[dim];
+		
 		for(int i = 0; i < clusters.length; i ++){
 			StringBuilder sb=new StringBuilder();
-			sb.append("" + i + "\t" + new DenseVector(clusters[i]).toString() + "\n");
+			
+			for(int j = 0; j < dim; j ++){
+				temp_cluster[j] = clusters[i][j];
+			}
+			sb.append("" + i + "\t" + new DenseVector(temp_cluster).toString() + "\n");
 			byte[] byt=sb.toString().getBytes();
 			writer.write(byt);
 		}
@@ -498,10 +523,10 @@ public class AKM {
 	// read in the clusters into double[][] from a folder of sequencefile
 	// the sequencefile should have the key/value = IntWritable/VectorWritable, where the key is the cluster ID
 	// will check for duplicate cluster ID and empty cluster ID
-	private static double[][] getClustersFromPath(Configuration conf, String clusters_in2, int k2) 
+	private static float[][] getClustersFromPath(Configuration conf, String clusters_in2, int k2) 
 			throws IOException, InstantiationException, IllegalAccessException {
 		// TODO Auto-generated method stub
-		double[][] dataset = new double[k2][dim];
+		float[][] dataset = new float[k2][dim];
 		String[] files = HadoopUtil.getListOfFiles(clusters_in2);
 		
 		boolean[] flag = new boolean[k2];
@@ -527,10 +552,10 @@ public class AKM {
 					throw new IOException("duplicate cluster ID");
 				}
 				//
-				dataset[index] = new double[128];
+				dataset[index] = new float[128];
 				Vector v = value.get();
 				for(int i = 0; i < 128; i ++){
-					dataset[index][i] = v.get(i);
+					dataset[index][i] = (float) v.get(i);
 				}
 			}
 			reader.close();

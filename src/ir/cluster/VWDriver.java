@@ -1,7 +1,6 @@
 package ir.cluster;
 
 import ir.akm.AKM;
-import ir.akm.akm_local;
 import ir.util.XMLUtil;
 
 import java.io.IOException;
@@ -79,7 +78,7 @@ public class VWDriver {
 		int clusterNum = Integer.parseInt(args[2]) * Integer.parseInt(args[3]);
 		
 		//old frequency job 
-		Frequency.runJob(args[0], clusterNum, args[1] + "/cluster/clusters.txt", args[1] + "/temp/freq/", args[1] + "/data/frequency.txt");
+		Frequency_float.runJob(args[0], clusterNum, args[1] + "/cluster/clusters.txt", args[1] + "/temp/freq/", args[1] + "/data/frequency.txt");
 		//create configuration xml
 		XMLUtil.createConfiguration(args[1] + "/conf.xml", args[1] + "/data/frequency.txt", args[1] + "/cluster/clusters.txt", clusterNum);
 		

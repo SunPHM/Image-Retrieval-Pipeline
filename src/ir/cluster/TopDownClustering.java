@@ -30,7 +30,7 @@ import org.apache.mahout.clustering.iterator.ClusterWritable;
 public class TopDownClustering {
 	
 	private  static int cluster_capacity = 15; // in number of containers, change this 
-	private  static int num_jobs_botlevelclustering = 25;
+	private  static int num_jobs_botlevelclustering = 200;
 	
 	private static int topK = 0;
 	private static int botK = 0;
@@ -130,7 +130,7 @@ public class TopDownClustering {
 				+ "\nExpected maximum number of jobs parallelly run : " + num_jobs_botlevelclustering);
 		
 		//using fixed number of setting
-		num_jobs_botlevelclustering = 100;
+		num_jobs_botlevelclustering = 200;
 		System.out.println("\nset number of concurrent jobs = " + num_jobs_botlevelclustering);
 	}
 	

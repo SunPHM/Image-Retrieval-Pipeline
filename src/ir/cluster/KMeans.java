@@ -24,9 +24,11 @@ import org.apache.mahout.math.VectorWritable;
 
 public class KMeans {
 	
-	private static double delta = 0.001; //0.0001; // need to vary this to explore
-	private static int maxIterations = 100;
+	private static double delta = 0.02; //0.0001; // need to vary this to explore
+	
+	private static int maxIterations = 2;//for testing
 	private static int clusterInitType = 0;
+	
 	protected static int dmType = 0;
 	private static final CosineDistanceMeasure cdm = new CosineDistanceMeasure();
 	private static final EuclideanDistanceMeasure edm = new EuclideanDistanceMeasure();

@@ -22,7 +22,7 @@ import org.apache.hadoop.fs.Path;
 public class KDTreeForest {
 	public static final int num_trees = 8;
 	public static final int num_dimensions = 5; 
-	public static double max_comparison = 0.05;// suggestion: should set this to about 5% to 15 % of of the total nodes???
+	public static double max_comparison = 0.25;// suggestion: should set this to about 5% to 15 % of of the total nodes???
 	
 	public Node[] roots = null;
 	
@@ -35,27 +35,28 @@ public class KDTreeForest {
 	//	get_features();
 		
 		//read features from file
-		ArrayList<double[]> q_vectors = new ArrayList<double[]>();
-		ArrayList<double[]> varray = new ArrayList<double[]>();
-		BufferedReader br = new BufferedReader(new FileReader(new File("data/features_images.txt")));
+		ArrayList<float[]> q_vectors = new ArrayList<float[]>();
+		ArrayList<float[]> varray = new ArrayList<float[]>();
+/*		BufferedReader br = new BufferedReader(new FileReader(new File("data/features_images.txt")));
 		String inline = null;
 		while((inline = br.readLine()) != null){
 			String[] splits = inline.split(" ");
-			double[] vector = new double[128];
+			float[] vector = new float[128];
 			for(int i = 0; i < 128; i ++ ){
-				vector[i] = Double.parseDouble(splits[i]);
+				vector[i] = Float.parseFloat(splits[i]);
 			}
 			
 			//normalize the vector -- euclidean norm
-			double sq_sum = 0;
+			float sq_sum = 0;
 			for(int i = 0; i < vector.length; i ++){
 				sq_sum += vector[i]*vector[i];
 			}
-			sq_sum = Math.sqrt(sq_sum);
+			sq_sum = (float) Math.sqrt(sq_sum);
 //			System.out.println(sq_sum);
 			for(int i = 0; i < vector.length; i ++){
 				vector[i] = vector[i] / sq_sum;
 			}
+			
 			//use first 2000 as query, the rest as cluster data to build trees upon
 			if(q_vectors.size() < 2000){
 				q_vectors.add(vector);
@@ -67,10 +68,34 @@ public class KDTreeForest {
 			
 		}
 		br.close();
+*
+*/
+		String inline = null;
+		BufferedReader br = new BufferedReader(new FileReader(new File("data/ImageNet_test_AKM/clusters.txt")));
+		while((inline = br.readLine()) != null){
+			String[] splits = inline.split(" ");
+			float[] vector = new float[128];
+			for(int i = 0; i < 128; i ++ ){
+				vector[i] = Float.parseFloat(splits[i]);
+			}
+			varray.add(vector);
+		}
+		br.close();
+		br = new BufferedReader(new FileReader(new File("data/ImageNet_test_AKM/query.txt")));
+		while((inline = br.readLine()) != null){
+			String[] splits = inline.split(" ");
+			float[] vector = new float[128];
+			for(int i = 0; i < 128; i ++ ){
+				vector[i] = Float.parseFloat(splits[i]);
+			}
+			q_vectors.add(vector);
+		}
 		
-		System.out.println("varray size:" + varray.size());
 		
-		double[][] dataset = new double[varray.size()][128];
+		
+		System.out.println("clusters size:" + varray.size() + "\nqueries size: " + q_vectors.size());
+		
+		float[][] dataset = new float[varray.size()][128];
 		for(int i = 0; i < varray.size(); i ++){
 			dataset[i] = varray.get(i);
 		}
@@ -87,14 +112,14 @@ public class KDTreeForest {
 		//test the precision and the avg speed up
 		//run all the queries
 		System.out.println("query starts, can take a little bit of time...");
-		for(double[] q_vector : q_vectors){
+		for(float[] q_vector : q_vectors){
 			long startTime = System.nanoTime();
 			
 			//get the approximate nearest neighbor  with BBF method
 			int id = kdtf.nns_BBF(dataset, q_vector);
 			
 			long endTime = System.nanoTime();
-			time_kdtf += ((double)( endTime - startTime )/(1000 * 1000 * 1000));
+			time_kdtf += ((float)( endTime - startTime )/(1000 * 1000 * 1000));
 
 			
 			//serial way to find the nearest vector
@@ -133,7 +158,7 @@ public class KDTreeForest {
 	 * build num_trees of trees
 	 * 
 	 * */
-	public void build_forest(double[][]  varray){
+	public void build_forest(float[][]  varray){
 		this.roots = new Node[num_trees];
 		int[] points = new int[varray.length];
 		for(int i = 0; i < points.length; i ++){
@@ -150,7 +175,7 @@ public class KDTreeForest {
 	/* nearest neighbor search -- best bin first
 	 * 
 	 */
-	public int nns_BBF(double[][] varray, double[] q_vector) throws Exception{
+	public int nns_BBF(float[][] varray, float[] q_vector) throws Exception{
 		Comparator<Node_p> nc = new NodeComparator();
 		PriorityQueue<Node_p> queue = new PriorityQueue<Node_p>(100, nc);
 		
@@ -207,7 +232,7 @@ public class KDTreeForest {
 				else{
 					for(int point : node.points){
 						if( visited[point] == false){
-							double distance = RandomizedKDtree.getDistance(q_vector, varray[point]);
+							float distance = RandomizedKDtree.getDistance(q_vector, varray[point]);
 							if(distance < nn.minDistance){
 								nn.nnId = point;
 								nn.minDistance = distance;
@@ -235,12 +260,12 @@ public class KDTreeForest {
 
 	//get the top num_d dimensions with the largest variance for splitting the space
 	//the points will contain the indexes of the valid data points in varray.
-	public static int[] getTopDimensionsWithLargestVariance(int num_d, int[] points, double[][] varray) {
+	public static int[] getTopDimensionsWithLargestVariance(int num_d, int[] points, float[][] varray) {
 		// TODO Auto-generated method stub
 		int[] dims = new int[num_d];
-		double[] variance_num_d = new double[num_d];
+		float[] variance_num_d = new float[num_d];
 		
-		double[] all_variances = new double[varray[0].length];
+		float[] all_variances = new float[varray[0].length];
 		
 		for(int k = 0; k < num_d; k ++){
 			variance_num_d[k] = 0;
@@ -249,8 +274,8 @@ public class KDTreeForest {
 		for(int i = 0; i < varray[0].length; i ++){
 			
 			//calc variance for dim = i
-			double variance = 0;
-			double mean = 0;
+			float variance = 0;
+			float mean = 0;
 			for(int j = 0; j < points.length; j++){
 				variance = variance + varray[points[j]][i] * varray[points[j]][i];
 				mean = mean + varray[points[j]][i];
@@ -304,8 +329,8 @@ public class KDTreeForest {
 //used in priority queue
 class Node_p{
 	public Node node;
-	public double distance;
-	public Node_p(Node n, double d){this.node = n; this.distance = d;}
+	public float distance;
+	public Node_p(Node n, float d){this.node = n; this.distance = d;}
 }
 
 class NodeComparator implements Comparator<Node_p>{

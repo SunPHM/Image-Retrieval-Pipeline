@@ -23,7 +23,7 @@ public class RandomizedKDtree{
 	 * split axis will be chosen from top random num_d dimensions that have the largest variance.s (currently it's not random though)
 	 * each level of split dimension will be chosen randomly from those top dimensions
 	 * */
-	public Node buildTree( int[] dimensions, double[][] varray){
+	public Node buildTree( int[] dimensions, float[][] varray){
 		
 		int[] points = new int[varray.length];
 		for(int i = 0; i < varray.length; i++)
@@ -50,7 +50,7 @@ public class RandomizedKDtree{
 	 * internal nodes should not contain actual points though
 	 * 
 	 * */
-	private Node buildKDTree(int[] dim, int level, double[][] varray, int[] points) {
+	private Node buildKDTree(int[] dim, int level, float[][] varray, int[] points) {
 		// TODO Auto-generated method stub
 		
 		
@@ -159,7 +159,7 @@ public class RandomizedKDtree{
 	}
 	
 	//get the Euclidean distance of two vectors
-	static double getDistance(double[] v1, double[] v2) throws Exception {
+	static float getDistance(float[] v1, float[] v2) throws Exception {
 		// TODO Auto-generated method stub
 		if(v1 == null || v2 == null){
 			throw new Exception("null node distance error");
@@ -169,11 +169,11 @@ public class RandomizedKDtree{
 			throw new Exception("vector not of the same size distance error");
 		}
 		//get eclidean distance
-		double sum = 0;
+		float sum = 0;
 		for(int i = 0; i < v1.length; i ++){
 			sum = sum + (v1[i] - v2[i]) * (v1[i] - v2[i]);
 		}
-		return Math.sqrt(sum);
+		return (float) Math.sqrt(sum);
 	}
 
 	//get the approximate median point by getting the median of the median of the 5-element sub arrays
@@ -199,9 +199,9 @@ public class RandomizedKDtree{
 		
 		
 	}
-	private double getExactMedian(double[][] varray, int[] points, int split_axis) {
+	private float getExactMedian(float[][] varray, int[] points, int split_axis) {
 		// TODO Auto-generated method stub
-		double[] temp_array = new double[points.length];
+		float[] temp_array = new float[points.length];
 		for(int i = 0; i < temp_array.length; i ++){
 			temp_array[i] = varray[points[i]][split_axis];
 		}
@@ -216,7 +216,7 @@ public class RandomizedKDtree{
 }
 //used for neareast neigbor search -- used as "global variables" to store the currently nearest neighbor found
 class NNS{
-	public  double minDistance = Double.MAX_VALUE;
+	public  Float minDistance = Float.MAX_VALUE;
 	public  int nnId = -1;
 	
 	//test to check the number of comparisons 
@@ -227,7 +227,7 @@ class NNS{
 class Node {
 	
 public	int split_axis =-1;
-public	double split_value = Double.MIN_VALUE;
+public	float split_value = Float.MIN_VALUE;
 public	Node left = null;
 public	Node right = null;
 public	int[] points = null;
@@ -235,8 +235,8 @@ public	int[] points = null;
 }
 class Index_Value{
 	public int index;
-	public double value;
-	public Index_Value(int i, double v){
+	public float value;
+	public Index_Value(int i, float v){
 		this.index = i;
 		this.value = v;
 	}

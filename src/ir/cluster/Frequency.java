@@ -28,7 +28,7 @@ import ir.util.HadoopUtil;
 public class Frequency {
 	//input: clusters.txt, feature texts
 	//output: a file containing both the name of file and the cluster id
-	private static  boolean Use_Cosine_distance = true;
+	private static  boolean Use_Cosine_distance = false;
 	public static int featureSize = 128;
 	public static int clusterNum = 100;
 	public static String clusters = "";
