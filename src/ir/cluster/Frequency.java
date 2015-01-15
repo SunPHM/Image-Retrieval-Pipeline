@@ -47,7 +47,7 @@ public class Frequency {
 	}
 	
 	public static void runJob (String features, int clusterNum, String clusters, String temp, String output){
-		Frequency.init(features, clusterNum, clusters);
+		init(features, clusterNum, clusters);
 		HadoopUtil.delete(temp);
 		HadoopUtil.delete(output);
 		runFreMR(features, temp);

@@ -24,7 +24,7 @@ public class VWDriver {
 			// run cluster serial
 			KMeans.init(deltas[i], 0, 0);
 			String[] fixedArgs = {args[0], args[1] + "0" + i, 100 + "", 100 + ""};
-			run(fixedArgs, 2, true);
+			run(fixedArgs, 2, 0);
 			HashMap<String, String> map = new HashMap<String, String>();
 			map.put("delta", "" + deltas[i]); map.put("dmType", "0"); map.put("clusterInitType", "0");
 			XMLUtil.storeParameters(args[1] + "0" + i + "/parameters.xml", map);
@@ -32,14 +32,14 @@ public class VWDriver {
 			// run cluster random
 			KMeans.init(deltas[i], 0, 1);
 			String[] fixedArgs2 = {args[0], args[1] + "1" + i, 100 + "", 100 + ""};
-			run(fixedArgs2, 2, true);
+			run(fixedArgs2, 2, 0);
 			HashMap<String, String> map2 = new HashMap<String, String>();
 			map2.put("delta", "" + deltas[i]); map2.put("dmType", "0"); map2.put("clusterInitType", "1");
 			XMLUtil.storeParameters(args[1] + "1" + i + "/parameters.xml", map2);
 		}
 	}
 	
-	public static String run(String[] args, int botlvlcluster_type, boolean runTopdownClustering) 
+	public static String run(String[] args, int botlvlcluster_type, int  clustering_type) 
 			throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException, InterruptedException{
 		// args[0]: the features folder
 		// args[1]: the result folder
@@ -51,13 +51,14 @@ public class VWDriver {
 		String[] args1 = {args[0], args[1] + "/cluster/", args[2], args[3]};
 		
 		String t = null;
-		if(runTopdownClustering){//topdown clustering
+		if(clustering_type == 0){//topdown clustering
 				t = TopDownClustering.run(args1, botlvlcluster_type);
 		}
-		else{//kmeans clustering
-		//	int k = Integer.parseInt(args[2])*Integer.parseInt(args[3]);
-		//	t = NormalKmeansClustering.runKmeansClustering(args[0], args[1]+"/cluster/", k);
-			
+		else if(clustering_type == 1){// //kmeans clustering
+			int k = Integer.parseInt(args[2])*Integer.parseInt(args[3]);
+				t = NormalKmeansClustering.runKmeansClustering(args[0], args[1]+"/cluster/", k);
+		}
+		else{
 			//akm clustering
 			int k = Integer.parseInt(args[2])*Integer.parseInt(args[3]);
 			AKM akm = new AKM();
@@ -78,9 +79,16 @@ public class VWDriver {
 		int clusterNum = Integer.parseInt(args[2]) * Integer.parseInt(args[3]);
 		
 		//old frequency job 
+		//Frequency.runJob(args[0], clusterNum, args[1] + "/cluster/clusters.txt", args[1] + "/temp/freq/", args[1] + "/data/frequency.txt");
+		
+		//old frequency job using float 
 		Frequency_float.runJob(args[0], clusterNum, args[1] + "/cluster/clusters.txt", args[1] + "/temp/freq/", args[1] + "/data/frequency.txt");
+		
 		//create configuration xml
 		XMLUtil.createConfiguration(args[1] + "/conf.xml", args[1] + "/data/frequency.txt", args[1] + "/cluster/clusters.txt", clusterNum);
+		
+		
+		
 		
 		//topdown frequency
 //		TopDownFrequency.runJob(args[0], topclusterNum, botclusterNum, args[1] + "/cluster/clusters/", args[1] + "/temp/tdfreq/", args[1] + "/data/frequency_new.txt");
