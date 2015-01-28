@@ -19,10 +19,10 @@ public class Analyze {
 
 	public static void main(String args[]){
 	//	String logfile = args[0];
-		long startTime = Long.parseLong("1413142635609"); 
-		long endTime = Long.parseLong("1413154651880");
-		String logfile = "AWB_benchmarking_oct_10/ImageNet_1st/ImageNetEvaluate_ImageNet-47GB-456567.seq_topK_100botK_500_botlvlcluster_type_2recordcontainers.txt";
-		String result_file = "ImageNetEvaluate_ImageNet-47GB-456567.seq_topK_100botK_500_botlvlcluster_type_2.csv";
+		long startTime = Long.parseLong("1421390476475"); 
+		long endTime = Long.parseLong("1421391829277");
+		String logfile = "/home/xiaofeng/Documents/image_retrieval/Benchmark_Jan/AKM/OxbuildEvaluate_AKMoxbuild_images.seqK_4000_botlvlcluster_type_2recordcontainers.txt";
+		String result_file = "OxbuildEvaluate_AKMoxbuild_images.seqK_4000_botlvlcluster_type_2.csv";
 		
 		
 		List<snapshot> snapshots = getSnapshots(logfile);
@@ -77,7 +77,7 @@ public class Analyze {
 							String splits[] = line.split("\\s+");
 							
 							//3 or 4 here!!!??
-							int w = 0;
+							int w = 1;
 							if(splits[w + 3].trim().equals("ypeng")){
 								String s = splits[w + 8].trim();
 								s  = s.substring(0, s.length() - 1);

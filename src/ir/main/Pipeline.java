@@ -59,7 +59,7 @@ public class Pipeline {
 		rt.writeMsg("$VWStart$ "+new Date().getTime());
 		System.out.println("\n\nvocabulary construction and frequency generation");
 		String[] args = {features, dst, "" + topK, "" + botK};
-		String s = VWDriver.run(args, botlvlcluster_type, true);
+		String s = VWDriver.run(args, botlvlcluster_type, 0);
 		rt.writeMsg("$VWEnd$ " + new Date().getTime());
 		long EndTime2 = new Date().getTime();
 		

@@ -51,7 +51,7 @@ public class Pipeline_FE_seq{
 		//TODO: call the main entry point of the Feature Extraction
 		System.out.println("\n\nFeature Extraction");
 		String features = dst + "/data/features";// the feature folder
-//		FeatureExtraction_seq.extractFeatures(src, features);
+		FeatureExtraction_seq.extractFeatures(src, features);
 		System.out.println("Features folder:" + features);
 
 		rt.writeMsg("$FEEnd$ "+new Date().getTime());
@@ -64,7 +64,7 @@ public class Pipeline_FE_seq{
 		System.out.println("\n\nvocabulary construction and frequency generation");
 		String[] args = {features, dst, "" + topK, "" + botK};
 		//!!
-		String s = VWDriver.run(args, botlvlcluster_type,false);
+		String s = VWDriver.run(args, botlvlcluster_type,1);
 		rt.writeMsg("$VWEnd$ "+new Date().getTime());
 		long EndTime2 = new Date().getTime();
 		

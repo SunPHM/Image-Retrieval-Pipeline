@@ -32,34 +32,45 @@ public class Pipeline_Oxbuilds_Evaluate {
 		//args[1]: the path of the output on HDFS or local file system
 		//args[2]: the number of top-level clusters
 		//args[3]: the number of bot-level clusters
-		//args[4]=0|1|2, the botlevel clustering method to choose, 0: serial; 1: MR job based, 2:  multi-thread
+		//args[4]=0|1|2, the botlevel clustering method to choose, 0: serial; 1: MR job based, 2:  multi-thread (valid only using topdown clustering)
 		//args[5]: the ground truth folder
 		//args[6]: the folder containing the images (not the seqfile input)
-		//args[7]:optional 0=false,1=true for topdownclustering
+		//args[7]: clustering_type : 0 - Hierachical; 1 - Mahoutkmeans; 2 - AKM.
 		// test arguments: data/images/ test/ 10 10 1
-		boolean runTopdownClustering = true;
+		int  runTopdownClustering = 0;
 		if(args.length >= 8){
 			if(args[7].equals("0")){
 				System.out.println("\n\n\nUsing Kmeans clustering instead of Topdownclustering!!!!");
-				runTopdownClustering = false;
+				runTopdownClustering = 0;
 			}
 		}
 		run(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]), args[5],args[6],runTopdownClustering);
 	}
 	
-	public static String run(String src, String dst, int topK, int botK, int botlvlcluster_type, String gt, String testImgFolder,boolean runTopdownClustering) 
+	         //args[0]: the path to the images on HDFS or local file system
+			//args[1]: the path of the output on HDFS or local file system
+			//args[2]: the number of top-level clusters
+			//args[3]: the number of bot-level clusters
+			//args[4]=0|1|2, the botlevel clustering method to choose, 0: serial; 1: MR job based, 2:  multi-thread (valid only using topdown clustering)
+			//args[5]: the ground truth folder
+			//args[6]: the folder containing the images (not the seqfile input)
+			//args[7]: clustering_type : 0 - Hierachical; 1 - Mahoutkmeans; 2 - AKM.
+	public static String run(String src, String dst, int topK, int botK, int botlvlcluster_type, String gt, String testImgFolder,int clustering_type) 
 			throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException, InterruptedException{
 		long N = 1000 * 60;
 		long startTime = new Date().getTime();
 		HadoopUtil.delete(dst);
 		Path srcPath = new Path(src);
 		String rt_mc_filename_prefix = null;
-		if(runTopdownClustering) {
-			rt_mc_filename_prefix  = "OxbuildEvaluate_"+ srcPath.getName()+"_topK_"+topK+"botK_"+botK+"_botlvlcluster_type_"+botlvlcluster_type;
+		if(clustering_type == 0) {
+			rt_mc_filename_prefix  = "OxbuildEvaluate_Hierachical"+ srcPath.getName()+"_topK_"+topK+"botK_"+botK+"_botlvlcluster_type_"+botlvlcluster_type;
 			
 		}
+		else if(clustering_type == 1){
+			rt_mc_filename_prefix  = "OxbuildEvaluate_Mkmeans"+ srcPath.getName()+"K_"+topK*botK+"_botlvlcluster_type_"+botlvlcluster_type;
+		}
 		else{
-			rt_mc_filename_prefix  = "OxbuildEvaluate_"+ srcPath.getName()+"K_"+topK*botK+"_botlvlcluster_type_"+botlvlcluster_type;
+			rt_mc_filename_prefix  = "OxbuildEvaluate_AKM"+ srcPath.getName()+"K_"+topK*botK+"_botlvlcluster_type_"+botlvlcluster_type;
 		}
 		//record time of each phase to a file
 		RecordTime rt = new RecordTime(rt_mc_filename_prefix+"record_timestamp.txt");
@@ -82,7 +93,7 @@ public class Pipeline_Oxbuilds_Evaluate {
 		rt.writeMsg("$VWStart$ "+new Date().getTime());
 		System.out.println("\n\nvocabulary construction and frequency generation");
 		String[] args = {features, dst, "" + topK, "" + botK};
-		String s = VWDriver.run(args, botlvlcluster_type,runTopdownClustering);
+		String s = VWDriver.run(args, botlvlcluster_type,clustering_type);
 		rt.writeMsg("$VWEnd$ "+new Date().getTime());
 		long EndTime2 = new Date().getTime();
 		

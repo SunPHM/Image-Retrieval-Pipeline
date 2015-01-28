@@ -17,7 +17,7 @@ public class runTestonOxbuilds {
 		String output=args[1];
 		String gt=args[2];
 		String testImgFolder=args[3];
-		boolean runTopdownClustering=false;
+		int clustering_type = 2;
 		
 		BufferedReader br=new BufferedReader(new FileReader("topk_botK.txt"));
 		ArrayList<topkbotk> list_topkbotk=new ArrayList<topkbotk>();
@@ -33,7 +33,7 @@ public class runTestonOxbuilds {
 		for(topkbotk topbot:list_topkbotk){
 			String output_suffix="topk_"+topbot.topk+"_botk"+topbot.botk;
 			
-			Pipeline_Oxbuilds_Evaluate.run(input, output+"/"+output_suffix, topbot.topk, topbot.botk, 2, gt, testImgFolder, runTopdownClustering);
+			Pipeline_Oxbuilds_Evaluate.run(input, output+"/"+output_suffix, topbot.topk, topbot.botk, 2, gt, testImgFolder, clustering_type);
 		}
 		
 	}

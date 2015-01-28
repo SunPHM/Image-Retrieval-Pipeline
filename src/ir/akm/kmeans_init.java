@@ -168,7 +168,7 @@ public class kmeans_init {
 		
 	}
 
-	private static long getFeatureCount(String input_dataset, Configuration conf) throws IOException {
+	public static long getFeatureCount(String input_dataset, Configuration conf) throws IOException {
 		// TODO Auto-generated method stub
 		long num = 0;
 		FileSystem fs = FileSystem.get(conf);

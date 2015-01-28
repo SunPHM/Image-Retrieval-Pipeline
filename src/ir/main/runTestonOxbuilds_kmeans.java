@@ -12,7 +12,7 @@ public class runTestonOxbuilds_kmeans {
 		String output=args[1];
 		String gt=args[2];
 		String testImgFolder=args[3];
-		boolean runTopdownClustering=false;
+//		boolean runTopdownClustering=false;
 		
 		BufferedReader br=new BufferedReader(new FileReader("kmeans_k.txt"));
 		ArrayList<Integer> list_topkbotk=new ArrayList<Integer>();
@@ -24,7 +24,7 @@ public class runTestonOxbuilds_kmeans {
 		};
 		for(Integer k:list_topkbotk){
 			String output_suffix="kmeans_K_"+k;
-			Pipeline_Oxbuilds_Evaluate.run(input, output+"/"+output_suffix, k, 1, 1, gt, testImgFolder, runTopdownClustering);
+			Pipeline_Oxbuilds_Evaluate.run(input, output+"/"+output_suffix, k, 1, 1, gt, testImgFolder, 1);
 		}
 		
 	}

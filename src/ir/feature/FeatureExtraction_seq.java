@@ -1,5 +1,6 @@
 package ir.feature;
 //input and output are seqfiles
+import ir.akm.kmeans_init;
 import ir.util.HadoopUtil;
 
 import java.awt.image.BufferedImage;
@@ -9,23 +10,20 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.Reducer.Context;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.Vector;
@@ -36,8 +34,9 @@ public class FeatureExtraction_seq {
 	public static String feature_folder = "test/data/features.txt";
 	public static final Integer split_size = (int) (1024*1024*10);//30MB
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		extractFeatures(args[0], args[1]);
+		long feature_num = kmeans_init.getFeatureCount( args[1], new Configuration());
 	}
 	
 	public static void extractFeatures(String in_seqfile,  String features){ // the main entry point for Feature Extraction to be called
@@ -47,6 +46,7 @@ public class FeatureExtraction_seq {
 		HadoopUtil.delete(features);
 		extractMR(seqfile, features);
 		System.out.println("feature extraction is done, featres output to " + features);
+		
 	}
 	
 	// extract features using Map-Reduce
@@ -72,7 +72,8 @@ public class FeatureExtraction_seq {
 		job.setJobName("FeatureExtractionSeqFile");
 		job.setJarByClass(FeatureExtraction_seq.class);
 		job.setMapperClass(FeatureExtraction_seq.FEMap.class);
-		job.setReducerClass(FeatureExtraction_seq.FEReducer.class);
+		
+//		job.setReducerClass(FeatureExtraction_seq.FEReducer.class);
 		
 		job.setInputFormatClass(SequenceFileInputFormat.class);
 		job.setOutputFormatClass(SequenceFileOutputFormat.class);
@@ -80,7 +81,22 @@ public class FeatureExtraction_seq {
 		job.setOutputValueClass(VectorWritable.class);
 		
 		///debug
-//		job.setNumReduceTasks(0);
+		//job.setNumReduceTasks(0);
+		System.out.println("\nInfo Kmeans: !!!!Setting number of reducer adaptively!!!");
+	    int default_num_reducer = 100;
+	    try {
+				FileSystem fs = FileSystem.get(conf);
+				ContentSummary cs =fs.getContentSummary(new Path(infile));
+				long input_size=cs.getLength();//cs.getSpaceConsumed();
+				default_num_reducer=(int)(Math.ceil( ((double)input_size)/(1024*1024*64d) ));//50MB PER REducer
+				System.out.println("Path: "+infile+" size "+input_size+", will use "+default_num_reducer+" reducer(s)\n\n");
+		} catch (IOException e3) {
+				// TODO Auto-generated catch block
+				e3.printStackTrace();
+		}
+		job.setNumReduceTasks(default_num_reducer);
+		
+		
 
 		try {
 			FileInputFormat.setInputPaths(job, new Path(infile));
@@ -117,9 +133,13 @@ public class FeatureExtraction_seq {
 		public static String feature_folder =null;
 		private static final int feature_length=128;
 		public static String outfile=null;
+		//used for feature count
+		static Path feature_count_path = null;
+		static long feature_count = 0;
+		static String featurecount_filename = null;
 
 		
-		private MultipleOutputs<Text, VectorWritable> mos;
+//		private MultipleOutputs<Text, VectorWritable> mos;
 		@Override
 		public void setup( Context context) {
 			Configuration conf=context.getConfiguration();
@@ -127,6 +147,12 @@ public class FeatureExtraction_seq {
 		//   fn=job.get("fn");
 		   feature_folder=conf.get("feature_folder");
 		   //outfile=conf.get("outfile");
+		   
+		   //used for feature count
+		   Path p = new Path(feature_folder);
+		   Path parent = p.getParent();
+		   feature_count_path = new Path(parent, "feature_count");	
+		   feature_count = 0;
 		}
 
 		@Override
@@ -136,6 +162,11 @@ public class FeatureExtraction_seq {
 			String file = img_folder + "/" + key.toString();
 			// extract the SIFT features
 			//FileSystem fs = FileSystem.get(new Configuration());
+			
+			//assuming each pic has a different name
+			if(featurecount_filename == null){
+				featurecount_filename = new Path( key.toString()).getName();
+			}
 			try{
 				byte[] image_bytes=value.getBytes();
 				if(image_bytes.length>0){
@@ -150,6 +181,7 @@ public class FeatureExtraction_seq {
 						vec.assign(feature);
 						vw.set(vec);
 						context.write(new Text(file), vw);
+						feature_count ++;
 						//mos.write("seq",new Text(file), vw, outfile);
 					}
 				}
@@ -185,6 +217,20 @@ public class FeatureExtraction_seq {
 			}
 		}
 		*/
+		//write the feature_count to the feature_count_path/file_name
+		protected void cleanup(Context context) throws IOException {
+			if(feature_count == 0){
+				return;
+			}
+			Configuration conf = context.getConfiguration();
+			FileSystem fs =FileSystem.get(conf);
+			FSDataOutputStream writer = fs.create(new Path(feature_count_path, featurecount_filename));
+			StringBuilder sb=new StringBuilder();
+			sb.append("" + feature_count);
+			byte[] byt=sb.toString().getBytes();
+			writer.write(byt);
+			writer.close();
+		}
 
 		public static double[] getPoints(String[] args, int size){// get the feature vector from the 
 			//System.out.println(args.length);
@@ -194,49 +240,6 @@ public class FeatureExtraction_seq {
 			return points;
 		}
 	}
-
-	//reducer to count the number of features
-	public static class FEReducer extends  Reducer<Text, VectorWritable, Text, VectorWritable> {
-		static  String feature_folder = null;
-		static Path feature_count_path = null;
-		static long feature_count = 0;
-		static String file_name = null;
-			@Override
-			public void setup( Context context) throws IOException {
-				Configuration conf = context.getConfiguration();
-				feature_folder = conf.get("feature_folder");
-				Path p = new Path(feature_folder);
-				Path parent = p.getParent();
-				feature_count_path = new Path(parent, "feature_count");
-				
-				feature_count = 0;
-				
-			}
-			//use key as output file name so that it should be distinct from each other
-			public void reduce(Text key, Iterable<VectorWritable> values, Context context) 
-					throws IOException, InterruptedException {
-				for(VectorWritable vw : values){
-					context.write(key, vw);
-					feature_count ++;
-				}
-				file_name = new Path( key.toString()).getName();
-				
-			}
-			//write the file to the feature_count_path/file_name
-			protected void cleanup(Context context) throws IOException {
-				Configuration conf = context.getConfiguration();
-				FileSystem fs =FileSystem.get(conf);
-				FSDataOutputStream writer = fs.create(new Path(feature_count_path, file_name));
-				StringBuilder sb=new StringBuilder();
-				sb.append("" + feature_count);
-				byte[] byt=sb.toString().getBytes();
-				writer.write(byt);
-				writer.close();
-			}
-			
-		}
-
-
 }
 
 
@@ -270,4 +273,3 @@ class testCopyMerge {
 		
 	}
 }
-

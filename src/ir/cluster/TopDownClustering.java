@@ -29,7 +29,7 @@ import org.apache.mahout.clustering.iterator.ClusterWritable;
 
 public class TopDownClustering {
 	
-	private  static int cluster_capacity = 15; // in number of containers, change this 
+	private  static int cluster_capacity = 1000; // in number of containers, change this 
 	private  static int num_jobs_botlevelclustering = 200;
 	
 	private static int topK = 0;
