@@ -30,7 +30,11 @@ public class RandomizedKDtree{
 			points[i] = i;
 		
 		long startTime1 = System.nanoTime();
-		root = buildKDTree(dimensions, 0,  varray, points);
+		root = buildKDTree(dimensions, 0,  varray, points, 0,  varray.length - 1);
+
+		points = null;
+//to release mem
+		points = null;
 		long endTime1 = System.nanoTime();
 		System.out.println("building tree took " + ((double)( endTime1 - startTime1 )/(1000 * 1000 * 1000)) + "secs");
 		return root;
@@ -50,112 +54,97 @@ public class RandomizedKDtree{
 	 * internal nodes should not contain actual points though
 	 * 
 	 * */
-	private Node buildKDTree(int[] dim, int level, float[][] varray, int[] points) {
+	private Node buildKDTree(int[] dim, int level, float[][] varray, int[] points, int startIndex, int endIndex) {
 		// TODO Auto-generated method stub
 		
 		
 		//no data points for this node, should be null and return;
-		if(points == null || points.length == 0){
+		if(startIndex > endIndex){
 			return null;
 		}
 		
 		Node n = new Node();
 		
 		// if poins.length <= partitions_size, reach leaf node
-		if(points.length <= partition_size){
-			n.points = points;
+		if(endIndex - startIndex + 1 <= partition_size){
+			n.points = new int [endIndex - startIndex + 1];
+			for(int i = startIndex; i <= endIndex; i ++){
+				n.points[i - startIndex] = points[i];
+			}
+//			n.points[0] = startIndex; n.points[1] = endIndex;
 			n.left = null;
 			n.right = null;
 			n.split_axis = -1;
 			n.split_value = Integer.MIN_VALUE;
 		}
-		//else need to split further into smaller partitions
+		
+		//else need to split further into smaller partitions -- internal node
 		else{
 			
 			//choose split axis randomly here
 			int s_a = new Random().nextInt(dim.length);
 			n.split_axis = dim[s_a];
 //			System.out.println("split axis " + s_a);
-			
-			/*TODO change here to decide split on median or mean
-			 * */
-			/*use median for splitting	
-			 */
-			n.split_value = getExactMedian( varray, points, n.split_axis);
-			
-			/*test use mean as splitting value
-			 */
-		//	n.split_value = getMean( varray, points, n.split_axis);
-			
-			//get count of points not greater than the split value
-			int num_not_greater_than_median = 0;
-			for(int point : points){
-				if(varray[point][n.split_axis] <= n.split_value){
-					num_not_greater_than_median ++;
-				}
-					
-			}
-			int[] left_p = null;
-			int[] right_p = null;
-			// ----rare possibility that num_not_greater_than_median = points.length, i.e. all data points not greater than median
-			///to prevent infinite recursion, 
-			// need to force split both array into at least one element
-			if(num_not_greater_than_median == points.length){
-				boolean filled = false;
-				 left_p = new int[points.length - 1];
-				 right_p = new int[1];
-				 // iterate thought the points, and assign just one element equal to median to right array, the rest to left array
-				for(int i = 0; i < points.length; i ++){
-					if(filled == false && varray[points[i]][n.split_axis] == n.split_value ){
-						right_p[0] = points[i];
-						filled = true;
-					}
-					else{
-						int k = i;
-						if(filled == true){
-							k--;
-						}
-						left_p[k] = points[k];
-					}
-				}
-			}
-			//normal case where left_p and right_p would both have elements
-			else{
 
-				left_p = new int[num_not_greater_than_median];
-				right_p = new int[points.length - num_not_greater_than_median];
-				int left_i = 0;
-				int right_i = 0;
-				for(int point : points){
-					if(varray[point][n.split_axis] <= n.split_value){
-						left_p[left_i ++] = point;
-					}
-					else{
-						right_p[right_i ++] = point;
-					}
-						
-				}
-			}
-			int[] dim_left = KDTreeForest.getTopDimensionsWithLargestVariance(5, left_p, varray);
-			int[] dim_right = KDTreeForest.getTopDimensionsWithLargestVariance(5, right_p, varray);
+			//according to the split axis, sort points from startIndex to endIndex according to the values of axis they point to, 
+			//return the split value
+			n.split_value = sortPoints(n.split_axis, varray, points, startIndex, endIndex);
+			int left_start = startIndex;
+			int left_end = startIndex + (endIndex - startIndex)/2;
+			int right_start = left_end +1;
+			int right_end = endIndex;
+			
+			int[] dim_left = KDTreeForest.getTopDimensionsWithLargestVariance(dim.length, points, left_start, left_end,  varray);
+			int[] dim_right = KDTreeForest.getTopDimensionsWithLargestVariance(dim.length, points, right_start, right_end, varray);
 			//recursive build the left tree and right tree
-			n.left = buildKDTree(dim_left, level + 1, varray, left_p);
-			n.right = buildKDTree(dim_right, level + 1, varray, right_p);
+			n.left = buildKDTree(dim_left, level + 1, varray, points, left_start, left_end);
+// release if possible(internal node will have a pointer to the points' array and will thus keep it
+			n.right = buildKDTree(dim_right, level + 1, varray, points, right_start, right_end);
+			n.points = null;
+			
+			dim_left = null;
+			dim_right = null;
 			
 		}
-		
+		points = null;
 		return n;
 	}
 
-	// get the mean of points in the varray of the split_axis
-	private double getMean(ArrayList<double[]> varray, int[] points, int split_axis) {
+	//sort the points from startIndex to endIndex of varry of the specified split_axis
+	// start and end index inclusive!!!!
+	private float sortPoints(int split_axis, float[][] varray, int[] points, int startIndex, int endIndex) {
 		// TODO Auto-generated method stub
-		double sum = 0;
-		for(int i = 0; i < points.length; i ++){
-			sum += varray.get(points[i])[split_axis];
-		}
-		return sum / points.length;
+		float split_value = 0;
+		Index_Value[] list = new Index_Value[endIndex - startIndex + 1];
 		
+		for(int i = startIndex; i <= endIndex; i ++){
+			list[i - startIndex] = new Index_Value(points[i], varray[points[i]][split_axis]);
+		}
+		
+		Arrays.sort(list, new Comparator<Index_Value>(){
+			@Override
+			public int compare(Index_Value arg0, Index_Value arg1) {
+				// TODO Auto-generated method stub
+				if( arg0.value - arg1.value > 0)
+					return 1;
+				else if(arg0.value - arg1.value <0)
+					return -1;
+				else return 0;
+			}
+			});
+		
+		if(list.length % 2 == 0)
+			split_value = (list[list.length / 2].value + list[list.length / 2 - 1].value) / 2;
+		else{
+			split_value = list[list.length / 2].value;
+		}
+		//get the sorted points 
+		for(int i = startIndex; i <= endIndex; i++){
+			points[i] = list[i - startIndex].index;
+		}
+//release mem.
+		list = null;
+		return split_value;
 	}
 	
 	//get the Euclidean distance of two vectors
@@ -174,40 +163,6 @@ public class RandomizedKDtree{
 			sum = sum + (v1[i] - v2[i]) * (v1[i] - v2[i]);
 		}
 		return (float) Math.sqrt(sum);
-	}
-
-	//get the approximate median point by getting the median of the median of the 5-element sub arrays
-	private static double getApproximateMedian(ArrayList<double[]> varray, int[] points, int split_axis) {
-		// TODO Auto-generated method stub
-		int k = (int) Math.ceil((double) points.length / 5);
-		ArrayList<Double> medians = new ArrayList<Double>();
-		
-		ArrayList<Double> find_m = new ArrayList<Double>();
-		for (int i = 0; i < k; i ++){
-			//find the median in the 5-element array
-			find_m.clear();
-			for (int j = i * 5; j < points.length && j < i * 5 + 5; j++){
-				find_m.add( varray.get(points[j])[split_axis] );
-			}
-			Collections.sort(find_m);
-			double median = find_m.get( (find_m.size())/ 2 );
-			medians.add(median);
-		}
-		
-		Collections.sort(medians);
-		return medians.get( (medians.size())/ 2 );
-		
-		
-	}
-	private float getExactMedian(float[][] varray, int[] points, int split_axis) {
-		// TODO Auto-generated method stub
-		float[] temp_array = new float[points.length];
-		for(int i = 0; i < temp_array.length; i ++){
-			temp_array[i] = varray[points[i]][split_axis];
-		}
-		Arrays.sort(temp_array);
-		
-		return temp_array[(temp_array.length)/2];
 	}
 
 	public static void main(String args[]) throws Exception{

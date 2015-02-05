@@ -33,7 +33,7 @@ import org.apache.mahout.math.VectorWritable;
 public class AKM {
 	public static final int dim = 128;
 	int maxIterations = 20;
-	int cluster_num = 1000;
+	int cluster_num = 1000*750;
 	double ConvergenceDelta = 0.01;
 	double rss_threshold = 0.001;
 	DistanceMeasure dm = new EuclideanDistanceMeasure();
@@ -41,12 +41,14 @@ public class AKM {
 	//test main
 	public static void main(String args[]) throws Exception{
 		///test use
-		HadoopUtil.delete("test_akm_MR");
+		String input_features = args[0];
+		String output = args[1];
+		HadoopUtil.delete(output);
 		//normalize the features
 	//	normalize("test_fe_seq2seq_100images/data/features", "test_akm_MR/normalizedfeatures/seq");
 		
 		AKM akm = new AKM();
-		akm.runClustering("test_fe_seq2seq_100images/data/features", "test_akm_MR");
+		akm.runClustering(input_features, output);
 		
 	}
 	

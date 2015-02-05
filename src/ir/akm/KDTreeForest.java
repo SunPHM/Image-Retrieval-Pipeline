@@ -324,6 +324,53 @@ public class KDTreeForest {
 		}
 	}
 
+
+	public static int[] getTopDimensionsWithLargestVariance(int num_d,	int[] points, int start, int end, float[][] varray) {
+		// TODO Auto-generated method stub
+		int length = end - start +1;
+		int[] dims = new int[num_d];
+		float[] variance_num_d = new float[num_d];
+		
+		float[] all_variances = new float[varray[0].length];
+		
+		for(int k = 0; k < num_d; k ++){
+			variance_num_d[k] = 0;
+		}
+		//for each dimensions, calculate the variances of the points from start to end
+		for(int i = 0; i < varray[0].length; i ++){
+			
+			//calc variance for dim = i
+			float variance = 0;
+			float mean = 0;
+			for(int j = 0; j < length; j++){
+				variance = variance + varray[points[start + j]][i] * varray[points[start + j]][i];
+				mean = mean + varray[points[start + j]][i];
+			}
+			mean = mean / length;
+			variance = variance - length * mean * mean;
+			
+			all_variances[i] = variance;
+			//update the dims array
+			int k = 0;
+			for(k = 0 ; k < dims.length; k ++){
+				if(variance > variance_num_d[k])
+					break;
+			}
+			for(int s = dims.length - 1; s > k; s --){
+				dims[s] = dims[s - 1];
+				variance_num_d[s] = variance_num_d[s - 1];
+			}
+			if(k < dims.length){
+				dims[k] = i;
+				variance_num_d[k] = variance;
+			}
+			
+		}
+		
+		
+		return dims;
+	}
+
 }
 
 //used in priority queue
