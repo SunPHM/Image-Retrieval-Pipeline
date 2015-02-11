@@ -1,6 +1,7 @@
 package ir.cluster;
 
 import ir.akm.AKM;
+import ir.akmbyte.AKM_byte;
 import ir.util.XMLUtil;
 
 import java.io.IOException;
@@ -11,7 +12,7 @@ import java.util.HashMap;
  * The driver class for transformation, top-down clustering, and visual word frequency extraction
  * The input is features folder, topK, botK, result folder, output is a text file containing all the cluster centroids
  */
-public class VWDriver {
+public class VWDriver_byte {
 	
 	public static void main(String[] args) throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException, InterruptedException{
 		// args[0] feature folder
@@ -61,7 +62,7 @@ public class VWDriver {
 		else{
 			//akm clustering
 			int k = Integer.parseInt(args[2])*Integer.parseInt(args[3]);
-			AKM akm = new AKM();
+			AKM_byte akm = new AKM_byte();
 			akm.setParam(k, 0.001);
 			try {
 			//	al.run_akm(args[0], args[1] + "/cluster/");
@@ -79,10 +80,10 @@ public class VWDriver {
 		int clusterNum = Integer.parseInt(args[2]) * Integer.parseInt(args[3]);
 		
 		//old frequency job 
-		Frequency.runJob(args[0], clusterNum, args[1] + "/cluster/clusters.txt", args[1] + "/temp/freq/", args[1] + "/data/frequency.txt");
+		//Frequency.runJob(args[0], clusterNum, args[1] + "/cluster/clusters.txt", args[1] + "/temp/freq/", args[1] + "/data/frequency.txt");
 		
 		//old frequency job using float 
-		//Frequency_float.runJob(args[0], clusterNum, args[1] + "/cluster/clusters.txt", args[1] + "/temp/freq/", args[1] + "/data/frequency.txt");
+		Frequency_float.runJob(args[0], clusterNum, args[1] + "/cluster/clusters.txt", args[1] + "/temp/freq/", args[1] + "/data/frequency.txt");
 		
 		//create configuration xml
 		XMLUtil.createConfiguration(args[1] + "/conf.xml", args[1] + "/data/frequency.txt", args[1] + "/cluster/clusters.txt", clusterNum);

@@ -2,7 +2,11 @@ package ir.cluster;
 
 import ir.util.HadoopUtil;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -30,7 +34,7 @@ import org.apache.mahout.clustering.iterator.ClusterWritable;
 public class TopDownClustering {
 	
 	private  static int cluster_capacity = 1000; // in number of containers, change this 
-	private  static int num_jobs_botlevelclustering = 200;
+	private  static int num_jobs_botlevelclustering = 50;
 	
 	private static int topK = 0;
 	private static int botK = 0;
@@ -130,7 +134,7 @@ public class TopDownClustering {
 				+ "\nExpected maximum number of jobs parallelly run : " + num_jobs_botlevelclustering);
 		
 		//using fixed number of setting
-		num_jobs_botlevelclustering = 200;
+		num_jobs_botlevelclustering = 50;
 		System.out.println("\nset number of concurrent jobs = " + num_jobs_botlevelclustering);
 	}
 	
@@ -254,7 +258,23 @@ public class TopDownClustering {
 		String[] inputs_clusterdump = new String[inputs_files.size()];
 		inputs_clusterdump = inputs_files.toArray(inputs_clusterdump);
 		ClusterDump.run_clusterdump(inputs_clusterdump, temp);
-		HadoopUtil.copyMerge(temp, dst + "/clusters.txt");
+		HadoopUtil.copyMerge(temp, dst + "/clusters_temp.txt");
+		
+		//TODO need to reassign cluster ID to be consistent with readcluster in frequency job
+		Configuration conf = new Configuration();
+		FileSystem fs = FileSystem.get(conf);
+		BufferedReader br=new BufferedReader(new InputStreamReader(fs.open(new Path(dst + "/clusters_temp.txt"))));
+		 BufferedWriter bw=new BufferedWriter(new OutputStreamWriter(fs.create(new Path(dst + "/clusters.txt"),true)));
+		String inline = null;
+		int clusterId = 0;
+		while((inline = br.readLine()) != null){
+			String cluster = inline.split("\t")[1];
+			bw.write("" + clusterId + "\t" + cluster + "\n");
+			clusterId ++;
+		}
+		br.close();
+		bw.flush();bw.close();
+		
 		
 	}
 	
