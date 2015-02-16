@@ -1,11 +1,17 @@
 package ir.img2seqfile;
 import ir.util.HadoopUtil;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.DirectoryFileFilter;
+import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -18,7 +24,7 @@ import org.apache.hadoop.io.Text;
 
 
 
-//args0: input images folder
+//args0: input images folder (including subfolders)
 //args1: output seqfile 
 	
 
@@ -39,9 +45,20 @@ public class Img2seqfile_localfs {
 	        	FileSystem fs = FileSystem.get(URI.create( output), conf);
 		        Path outfile=new Path(output);
 		        
-		        String[] allfiles=HadoopUtil.getListOfFiles(args[0]);
-		       
-		       
+		      //  String[] allfiles=HadoopUtil.getListOfFiles(args[0]);
+		        //get all picture files in the dir to the collections
+		        Collection<File> files = FileUtils.listFiles(
+		        		  new File(args[0]), 
+		        		  new RegexFileFilter("([^\\s]+(\\.(?i)(jpg|JPG|png|gif|bmp))$)"), 
+		        		  DirectoryFileFilter.DIRECTORY
+		        		);
+		       ArrayList<String> allfiles = new ArrayList<String>();
+		       for(File f : files){
+		    	  allfiles.add( f.getAbsolutePath() );
+		    	  
+		    	  //debug
+		    	  System.out.println(f.getAbsolutePath());
+		       }
 	        	writer = SequenceFile.createWriter( fs, conf, outfile, key.getClass(), value.getClass());
 
 	            int files_processed=0;
@@ -50,14 +67,17 @@ public class Img2seqfile_localfs {
 		            	FSDataInputStream fileIn = fs.open(new Path(file));
 		    			int bytes_read=fileIn.read(images_raw_bytes);
 		    			
-		    			key.set(file);
+		    			File f = new File(file);
+		    			String parentfolder = getParentName(f);
+		    			key.set(parentfolder + "/" + f.getName());
+		    			System.out.println(f.getAbsolutePath() + "\t" + key);
 		    		//	System.out.println("file:"+file+"\nbytes_read"+bytes_read);
 		    			value.set(images_raw_bytes, 0, bytes_read);
 		    			writer.append(key, value);
 		    			fileIn.close();
 		    			files_processed++;
 		    			if(files_processed%1000==0){
-		    				System.out.println(files_processed+"/"+allfiles.length+ "  have been processed");
+		    				System.out.println(files_processed+"/"+allfiles.size()+ "  have been processed");
 		    				
 		    				try {
 		    					System.out.println("Sleepting for 3 secs");
@@ -92,4 +112,13 @@ public class Img2seqfile_localfs {
 			} //the true will append the new data
 			
 	    } 
+	    
+	    public static String getParentName(File file) {
+	        if(file == null || file.isDirectory()) {
+	                return null;
+	        }
+	        String parent = file.getParent();
+	        parent = parent.substring(parent.lastIndexOf("/") + 1, parent.length());
+	        return parent;      
+	    }
 }

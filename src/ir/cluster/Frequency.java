@@ -122,9 +122,11 @@ public class Frequency {
 			double[][] cs = new double[clusterNum][featureSize];
 			String line;
 			//System.out.println(clusters);
+			
+			int i = 0;
 			while((line = input.readLine()) != null){
 				//System.out.println("the start of processing one line");
-				int i = Integer.parseInt(line.split("\t")[0]);
+//debug!!!				int i = Integer.parseInt(line.split("\t")[0]);
 				//System.out.println("id = " + i);
 				String center = line.split("\\}")[0].split("\\{")[1];
 				//System.out.println(center);
@@ -150,6 +152,7 @@ public class Frequency {
 						cs[i][j] = Double.parseDouble(result_array[j]);
 					}
 				}
+				i ++;
 			}
 			return cs;
 		}

@@ -258,10 +258,10 @@ public class TopDownClustering {
 		String[] inputs_clusterdump = new String[inputs_files.size()];
 		inputs_clusterdump = inputs_files.toArray(inputs_clusterdump);
 		ClusterDump.run_clusterdump(inputs_clusterdump, temp);
-		HadoopUtil.copyMerge(temp, dst + "/clusters_temp.txt");
+		HadoopUtil.copyMerge(temp, dst + "/clusters.txt");
 		
 		//TODO need to reassign cluster ID to be consistent with readcluster in frequency job
-		Configuration conf = new Configuration();
+/*		Configuration conf = new Configuration();
 		FileSystem fs = FileSystem.get(conf);
 		BufferedReader br=new BufferedReader(new InputStreamReader(fs.open(new Path(dst + "/clusters_temp.txt"))));
 		 BufferedWriter bw=new BufferedWriter(new OutputStreamWriter(fs.create(new Path(dst + "/clusters.txt"),true)));
@@ -274,6 +274,7 @@ public class TopDownClustering {
 		}
 		br.close();
 		bw.flush();bw.close();
+*/
 		
 		
 	}
