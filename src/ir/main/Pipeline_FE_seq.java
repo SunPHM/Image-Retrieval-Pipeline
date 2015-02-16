@@ -53,7 +53,7 @@ public class Pipeline_FE_seq{
 		//TODO: call the main entry point of the Feature Extraction
 		System.out.println("\n\nFeature Extraction");
 		String features = dst + "/data/features";// the feature folder
-		FeatureExtraction.extractFeatures(src, features);
+		FeatureExtraction_seq.extractFeatures(src, features);
 		System.out.println("Features folder:" + features);
 
 		rt.writeMsg("$FEEnd$ "+new Date().getTime());
