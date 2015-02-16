@@ -5,8 +5,8 @@ import java.util.ArrayList;
 public class runTestonOxbuilds {
 	
 	public static void main(String[] args) throws Exception{
-		for(int i =0; i <= 2; i++){
-			args[1] = args[1] + "/run_1";
+		for(int i =0; i <= 1; i++){
+			args[1] = args[1] + "/run_" + i;
 			run(args);
 		}
 	//	runTestonOxbuilds_kmeans.run(args);
@@ -17,7 +17,7 @@ public class runTestonOxbuilds {
 		String output=args[1];
 		String gt=args[2];
 		String testImgFolder=args[3];
-		int clustering_type = 2;
+		int clustering_type = 1;
 		
 		BufferedReader br=new BufferedReader(new FileReader("topk_botK.txt"));
 		ArrayList<topkbotk> list_topkbotk=new ArrayList<topkbotk>();

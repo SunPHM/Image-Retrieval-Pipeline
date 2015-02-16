@@ -19,14 +19,16 @@ public class Analyze {
 
 	public static void main(String args[]){
 	//	String logfile = args[0];
-		long startTime = Long.parseLong("1421390476475"); 
-		long endTime = Long.parseLong("1421391829277");
-		String logfile = "/home/xiaofeng/Documents/image_retrieval/Benchmark_Jan/AKM/OxbuildEvaluate_AKMoxbuild_images.seqK_4000_botlvlcluster_type_2recordcontainers.txt";
-		String result_file = "OxbuildEvaluate_AKMoxbuild_images.seqK_4000_botlvlcluster_type_2.csv";
+		long startTime = Long.parseLong("1422632966154"); 
+		long endTime = Long.parseLong("1422653396627");
+		String parentdir = "/home/xiaofeng/Documents/image_retrieval/Benchmark_Jan/Benchmark_for_papers_Jan/HKM_accuracy";
+		
+		    String logfile = "OxbuildEvaluate_Hierachicaloxbuild_images.seq_topK_500botK_500_botlvlcluster_type_2recordcontainers.txt";
+		String result_file = "OxbuildEvaluate_Hierachicaloxbuild_images.seq_topK_500botK_500_botlvlcluster_type_2recordcontainers.csv";
 		
 		
-		List<snapshot> snapshots = getSnapshots(logfile);
-		WriteResults(result_file,snapshots,startTime,endTime);
+		List<snapshot> snapshots = getSnapshots(parentdir + "/" + logfile);
+		WriteResults(parentdir + "/" + result_file,snapshots,startTime,endTime);
 		
 	}
 
@@ -34,6 +36,7 @@ public class Analyze {
 		// TODO Auto-generated method stub
 		try {
 			BufferedWriter bw = new BufferedWriter(new FileWriter(new File(result_file)));
+			bw.write("time(sec),numcontainers,mem(mb)\n");
 			for(snapshot s:snapshots){
 				if(s.timestamp >= startTime && s.timestamp <= endTime){
 					String a_record=(s.timestamp-startTime)/1000+","+s.num_containers+","+s.usedmem/1024+"\n";
@@ -77,7 +80,7 @@ public class Analyze {
 							String splits[] = line.split("\\s+");
 							
 							//3 or 4 here!!!??
-							int w = 1;
+							int w = 0;
 							if(splits[w + 3].trim().equals("ypeng")){
 								String s = splits[w + 8].trim();
 								s  = s.substring(0, s.length() - 1);

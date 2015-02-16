@@ -5,6 +5,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -20,10 +21,11 @@ import ir.util.HadoopUtil;
 public class AddTextWords {
 	public static void main(String[] args) throws IOException{
 		addtw("output/amazondata/run_1/topk_100_botk10/data/frequency.txt", "/media/windows_data/Academic/ImageRetrieval/Dihongs_dataset/1030-objects/",
-				"output/amazondata/run_1/topk_100_botk10/data/frequency_tw.txt");
+				"output/amazondata/run_1/topk_100_botk10/data/frequency_tw.txt", new ArrayList<String>());
 	}
 
-	public static void addtw(String frequencytext, String input_dir, String output) throws IOException{
+	public static void addtw(String frequencytext, String input_dir, String output, ArrayList<String> exclusionlist ) 
+			throws IOException{
 		String[] folders = HadoopUtil.getListOfFolders(input_dir);
 		
 		Path freqfile=new Path(frequencytext);
@@ -35,11 +37,11 @@ public class AddTextWords {
 		
 		while((inline = br.readLine()) != null){
 			String splits[] = inline.split("\\s+");
-			String foldername = splits[0].substring(0, splits[0].length() - 6).substring(16);
+			String foldername = splits[0].split("/")[2];
 			String textwords = null;
 			//find where the text words are for this picture
 			for(String f :  folders){
-				if(f.endsWith(foldername)){
+				if(f.endsWith(foldername) && exclusionlist.contains(foldername) == false){
 					BufferedReader breader=new BufferedReader(new InputStreamReader(fs.open(new Path(f + "/title.txt"))));
 					textwords = breader.readLine();
 					breader.close();

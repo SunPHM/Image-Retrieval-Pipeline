@@ -1,6 +1,4 @@
 package ir.feature;
-//input and output are seqfiles
-import ir.akm.kmeans_init;
 import ir.util.HadoopUtil;
 
 import java.awt.image.BufferedImage;
@@ -29,15 +27,14 @@ import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.VectorWritable;
 
-public class FeatureExtraction_seq {
+public class FeatureExtraction_byte {
 	public static String seqfile = "data/images";
 	public static String feature_folder = "test/data/features.txt";
-	public static final Integer split_size = (int) (1024*1024*20);//30MB
+	public static final Integer split_size = (int) (1024*1024*10);//30MB
 	
 	public static void main(String[] args) throws IOException {
 		extractFeatures(args[0], args[1]);
-		long feature_num = kmeans_init.getFeatureCount( args[1], new Configuration());
-		System.out.println(feature_num);
+	//	long feature_num = kmeans_init.getFeatureCount( args[1], new Configuration());
 	}
 	
 	public static void extractFeatures(String in_seqfile,  String features){ // the main entry point for Feature Extraction to be called
@@ -71,8 +68,8 @@ public class FeatureExtraction_seq {
 		}
 		
 		job.setJobName("FeatureExtractionSeqFile");
-		job.setJarByClass(FeatureExtraction_seq.class);
-		job.setMapperClass(FeatureExtraction_seq.FEMap.class);
+		job.setJarByClass(FeatureExtraction_byte.class);
+		job.setMapperClass(FeatureExtraction_byte.FEMap.class);
 		
 //		job.setReducerClass(FeatureExtraction_seq.FEReducer.class);
 		
@@ -82,8 +79,7 @@ public class FeatureExtraction_seq {
 		job.setOutputValueClass(VectorWritable.class);
 		
 		///debug
-//		job.setNumReduceTasks(0);
-	
+		//job.setNumReduceTasks(0);
 		System.out.println("\nInfo Kmeans: !!!!Setting number of reducer adaptively!!!");
 	    int default_num_reducer = 100;
 	    try {
@@ -97,7 +93,7 @@ public class FeatureExtraction_seq {
 				e3.printStackTrace();
 		}
 		job.setNumReduceTasks(default_num_reducer);
-
+		
 		
 
 		try {
@@ -180,10 +176,9 @@ public class FeatureExtraction_seq {
 					BufferedImage img = ImageIO.read(new ByteArrayInputStream(value.getBytes()));
 					String[] features = SIFTExtraction.getFeatures(img);
 					for(int i = 0; i < features.length; i++){
-						///TODO change here to choose if use byte representation
-						double[]  feature = getPoints(features[i].split(" "), feature_length);
+						double[]  feature = getPoints_bytes(features[i].split(" "), feature_length);
 						
-				//		System.out.println(features[i]);
+//						System.out.println(features[i]);
 //						normalize(feature);
 
 						VectorWritable vw = new VectorWritable();
@@ -242,13 +237,6 @@ public class FeatureExtraction_seq {
 			writer.close();
 		}
 
-		public static double[] getPoints(String[] args, int size){// get the feature vector from the 
-			//System.out.println(args.length);
-			double[] points = new double[size];
-			for (int i = 0; i < size; i++)
-				points[i] = Double.parseDouble(args[i+4]);
-			return points;
-		}
 		public static double[] getPoints_bytes(String[] args, int size){// get the feature vector from the 
 			//System.out.println(args.length);
 			double[] points = new double[size];
@@ -268,37 +256,5 @@ public class FeatureExtraction_seq {
 			}
 			return points;
 		}
-	}
-}
-
-
-class testCopyMerge {
-	public static void test(String seqfile){
-		Configuration config = new Configuration();
-		Path path = new Path(seqfile);
-		WritableComparable key=null;
-		Writable value =null;
-		try{
-			SequenceFile.Reader reader = new SequenceFile.Reader(FileSystem.get(config), path, config);
-			 key = (WritableComparable) reader.getKeyClass().newInstance();
-			 value = (Writable) reader.getValueClass().newInstance();
-			while (reader.next(key, value)){
-				//do nothing
-				System.out.print("\t"+key.toString());
-			}
-			reader.close();
-		}catch(IOException e){
-			System.out.println(key.toString()+"\t"+value.toString());
-			e.printStackTrace();
-		}
-		catch(InstantiationException e){
-			System.out.println(key.toString()+"\t"+value.toString());
-			e.printStackTrace();
-		}
-		catch(IllegalAccessException e){
-			System.out.println(key.toString()+"\t"+value.toString());
-			e.printStackTrace();
-		}
-		
 	}
 }

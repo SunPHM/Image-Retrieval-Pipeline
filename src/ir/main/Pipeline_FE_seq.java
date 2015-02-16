@@ -1,6 +1,7 @@
 package ir.main;
 
 import ir.cluster.VWDriver;
+import ir.feature.FeatureExtraction_byte;
 import ir.feature.FeatureExtraction_seq;
 import ir.index.Search;
 import ir.util.HadoopUtil;
@@ -51,7 +52,7 @@ public class Pipeline_FE_seq{
 		//TODO: call the main entry point of the Feature Extraction
 		System.out.println("\n\nFeature Extraction");
 		String features = dst + "/data/features";// the feature folder
-		FeatureExtraction_seq.extractFeatures(src, features);
+		FeatureExtraction_byte.extractFeatures(src, features);
 		System.out.println("Features folder:" + features);
 
 		rt.writeMsg("$FEEnd$ "+new Date().getTime());

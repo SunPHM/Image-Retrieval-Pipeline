@@ -18,7 +18,7 @@ import org.apache.solr.common.SolrInputDocument;
  */
 
 public class Indexing {
-	private static long doc_buffer_size=5*5000;
+	public static long doc_buffer_size=5*5000;
 	
 	public static void main(String[] args) throws IOException, SolrServerException{
 		//index("data/index/visual-word-frequency.txt");		

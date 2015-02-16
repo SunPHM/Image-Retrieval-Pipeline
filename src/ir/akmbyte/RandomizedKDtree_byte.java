@@ -2,13 +2,13 @@
  * build a randomized kd tree upon and
  * 
  * */
-package ir.akm;
+package ir.akmbyte;
 
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Random;
 
-public class RandomizedKDtree{
+public class RandomizedKDtree_byte{
 
 	
 	public static final int partition_size = 5;// the maximum number of points a leaf node can hold
@@ -19,7 +19,7 @@ public class RandomizedKDtree{
 	 * split axis will be chosen from top random num_d dimensions that have the largest variance.s (currently it's not random though)
 	 * each level of split dimension will be chosen randomly from those top dimensions
 	 * */
-	public Node buildTree( int[] dimensions, float[][] varray){
+	public Node buildTree( int[] dimensions, byte[][] varray){
 		
 		int[] points = new int[varray.length];
 		for(int i = 0; i < varray.length; i++)
@@ -50,7 +50,7 @@ public class RandomizedKDtree{
 	 * internal nodes should not contain actual points though
 	 * 
 	 * */
-	private Node buildKDTree(int[] dim, int level, float[][] varray, int[] points, int startIndex, int endIndex) {
+	private Node buildKDTree(int[] dim, int level, byte[][] varray, int[] points, int startIndex, int endIndex) {
 		// TODO Auto-generated method stub
 		
 		
@@ -90,8 +90,8 @@ public class RandomizedKDtree{
 			int right_start = left_end +1;
 			int right_end = endIndex;
 			
-			int[] dim_left = KDTreeForest.getTopDimensionsWithLargestVariance(dim.length, points, left_start, left_end,  varray);
-			int[] dim_right = KDTreeForest.getTopDimensionsWithLargestVariance(dim.length, points, right_start, right_end, varray);
+			int[] dim_left = KDTreeForest_byte.getTopDimensionsWithLargestVariance(dim.length, points, left_start, left_end,  varray);
+			int[] dim_right = KDTreeForest_byte.getTopDimensionsWithLargestVariance(dim.length, points, right_start, right_end, varray);
 			//recursive build the left tree and right tree
 			n.left = buildKDTree(dim_left, level + 1, varray, points, left_start, left_end);
 // release if possible(internal node will have a pointer to the points' array and will thus keep it
@@ -108,7 +108,7 @@ public class RandomizedKDtree{
 
 	//sort the points from startIndex to endIndex of varry of the specified split_axis
 	// start and end index inclusive!!!!
-	private float sortPoints(int split_axis, float[][] varray, int[] points, int startIndex, int endIndex) {
+	private float sortPoints(int split_axis, byte[][] varray, int[] points, int startIndex, int endIndex) {
 		// TODO Auto-generated method stub
 		float split_value = 0;
 		Index_Value[] list = new Index_Value[endIndex - startIndex + 1];
@@ -144,7 +144,7 @@ public class RandomizedKDtree{
 	}
 	
 	//get the Euclidean distance of two vectors
-	static float getDistance(float[] v1, float[] v2) throws Exception {
+	static float getDistance(byte[] v1, float[] v2) throws Exception {
 		// TODO Auto-generated method stub
 		if(v1 == null || v2 == null){
 			throw new Exception("null node distance error");
@@ -164,7 +164,30 @@ public class RandomizedKDtree{
 	public static void main(String args[]) throws Exception{
 		
 	}
+
+
+
+	public static float getDistance(float[] v1, byte[] v2) throws Exception {
+		// TODO Auto-generated method stub
+		// TODO Auto-generated method stub
+		if(v1 == null || v2 == null){
+			throw new Exception("null node distance error");
+			
+		}
+		else if (v1.length != v2.length){
+			throw new Exception("vector not of the same size distance error");
+		}
+		//get eclidean distance
+		float sum = 0;
+		for(int i = 0; i < v1.length; i ++){
+			sum = sum + (v1[i] - v2[i]) * (v1[i] - v2[i]);
+		}
+		return (float) Math.sqrt(sum);
+		//return 0;
+	}
 }
+
+
 //used for neareast neigbor search -- used as "global variables" to store the currently nearest neighbor found
 class NNS{
 	public  Float minDistance = Float.MAX_VALUE;

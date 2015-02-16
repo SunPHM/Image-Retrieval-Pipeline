@@ -24,7 +24,7 @@ public class SIFTExtraction {
 	
 	public static void main(String[] args) throws IOException {
 		FileSystem fs = FileSystem.get(new Configuration());
-		BufferedImage img = ImageIO.read(fs.open(new Path("test.jpg")));
+		BufferedImage img = ImageIO.read(fs.open(new Path("data/images/all_souls_000073.jpg")));
 		getFeatures(img);
 	}	
 	
@@ -37,6 +37,10 @@ public class SIFTExtraction {
 					" " + features.get(i).location[1] + " " + features.get(i).toString(); 
 			//System.out.println(s);
 			results[i] = s;
+			
+			//test debug
+			//byte[] temp = features.get(i).getByteArrayRepresentation();
+			//System.out.println(temp.length);
 		}
 		//System.out.println("the number of features = " + features.size());
 		return results;
