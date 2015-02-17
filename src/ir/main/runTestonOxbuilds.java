@@ -5,7 +5,7 @@ import java.util.ArrayList;
 public class runTestonOxbuilds {
 	
 	public static void main(String[] args) throws Exception{
-		for(int i =0; i <= 1; i++){
+		for(int i =0; i < 1; i++){
 			args[1] = args[1] + "/run_" + i;
 			run(args);
 		}

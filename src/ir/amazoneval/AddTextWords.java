@@ -21,17 +21,23 @@ import ir.util.HadoopUtil;
 public class AddTextWords {
 	public static void main(String[] args) throws IOException{
 		addtw("output/amazondata/run_1/topk_100_botk10/data/frequency.txt", "/media/windows_data/Academic/ImageRetrieval/Dihongs_dataset/1030-objects/",
-				"output/amazondata/run_1/topk_100_botk10/data/frequency_tw.txt", new ArrayList<String>());
+				"output/amazondata/run_1/topk_100_botk10/data/frequency_tw.txt",
+				"output/amazondata/run_1/topk_100_botk10/data/freq.txt",
+				"output/amazondata/run_1/topk_100_botk10/data/textwords.txt",
+				new ArrayList<String>());
 	}
 
-	public static void addtw(String frequencytext, String input_dir, String output, ArrayList<String> exclusionlist ) 
+	//add text words to frequency.txt
+	//generate text words file in textwords.txt in the same folder as frequency.txt
+	public static void addtw(String frequencytext, String input_dir, String output_freqtw,String output_freq, String output_tw, ArrayList<String> exclusionlist ) 
 			throws IOException{
 		String[] folders = HadoopUtil.getListOfFolders(input_dir);
 		
-		Path freqfile=new Path(frequencytext);
+		Path freqfile = new Path(frequencytext);
 		FileSystem fs = FileSystem.get(new Configuration());
-		BufferedReader br=new BufferedReader(new InputStreamReader(fs.open(freqfile)));
-		BufferedWriter bw=new BufferedWriter(new OutputStreamWriter(fs.create(new Path(output),true)));
+		BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(freqfile)));
+		BufferedWriter bw_freqtw = new BufferedWriter(new OutputStreamWriter(fs.create(new Path(output_freqtw),true)));
+		BufferedWriter bw_freq = new BufferedWriter(new OutputStreamWriter(fs.create(new Path(output_freq),true)));
 		
 		String inline = null;
 		
@@ -53,15 +59,41 @@ public class AddTextWords {
 				continue;
 			}
 			int wordscount = Integer.parseInt(splits[1]) + textwords.split("\\s+").length;
+			String visualwords = "";
 			for(int i = 2; i< splits.length; i ++){
+				visualwords += " vw" + splits[i];
 				textwords = textwords + " vw" + splits[i];
 			}
-			
-			bw.write(splits[0] + "\t " + wordscount + " \t" + textwords + "\n");
+			bw_freq.write(splits[0] + "\t" + splits[1] + "\t" + visualwords + "\n");
+			bw_freqtw.write(splits[0] + "\t " + wordscount + "\t" + textwords + "\n");
 		}
-		bw.flush();bw.close();
+		bw_freqtw.flush();
+		bw_freqtw.close();
+		bw_freq.flush();
+		bw_freq.close();
 		br.close();
 		
+		
+		
+		//generate text words only -- also excluding images without vw to compare
+		BufferedWriter bw_tw=new BufferedWriter(new OutputStreamWriter(fs.create(new Path(output_tw),true)));
+		for(String str : folders){
+			BufferedReader br_title=new BufferedReader(new InputStreamReader(fs.open(new Path(str + "/title.txt"))));
+			String line = br_title.readLine();
+			String[] parts = line.split("\\s+");
+			String[] pathsplits = str.split("/");
+			String id = pathsplits[pathsplits.length - 1];
+			// rule out the images in the exclusion list
+			if(exclusionlist.contains(id) == false){
+				String record1 = id + "/1.JPG\t"  + parts.length + "\t" + line;
+				String record2 = id + "/2.JPG\t"  + parts.length + "\t" + line;
+				bw_tw.write(record1 + "\n");
+				bw_tw.write(record2 + "\n");
+			}
+			br_title.close();
+		}
+		bw_tw.flush();
+		bw_tw.close();
 	}
 	
 }

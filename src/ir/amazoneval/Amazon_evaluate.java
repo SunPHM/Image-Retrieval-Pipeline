@@ -26,6 +26,7 @@ import org.apache.solr.common.SolrInputDocument;
 //evaluate on amazon data
 //args[0] : the output root directory of IR pipeline (contains cluster, data ... dir)
 //args[1] : the root directory of dihong's amazon dataset (contains "10-folder-partition" and "1030-objects")
+//args[2] : the type of indexing and searching : 0 vw + tw; 1 vw only; 2 tw only
 
 //note: use ir.img2seqfile.Img2seqfile_localfs.java to convert all the imagse in 1030-objects to a single seqfile before run IR pipeline
 
@@ -36,10 +37,17 @@ public class Amazon_evaluate {
 	
 	public static void main(String[] args) throws IOException, Exception{
 		//change the two input parameters here
-		String IRoutput = "output/amazondata/run_1/topk_100_botk10/";//args[0]
+		String IRoutput = "output/amazondata/run_0/topk_10_botk10/";//args[0]
 		String amazon_root = "/media/windows_data/Academic/ImageRetrieval/Dihongs_dataset/";// args[1];
+		int type = 1;
 		
 		
+		getAccuracy(IRoutput, amazon_root, type);
+		
+
+	}
+	//@PARAM type : 0 - vw + tw;  1 - vw only; 2 tw only
+	public static String getAccuracy (String IRoutput, String amazon_root, int type) throws Exception{
 		
 		
 		String evaluate = amazon_root + "/10-fold-partition";
@@ -51,18 +59,32 @@ public class Amazon_evaluate {
 		String[] evaluate_folders = HadoopUtil.getListOfFolders(evaluate);
 		
 		//add text words and output to frequency_tw.txt, excluding the list
-		AddTextWords.addtw(IRoutput + "/data/frequency.txt", amazondata, IRoutput + "/data/frequency_tw.txt", exclusionlist);
+		AddTextWords.addtw(IRoutput + "/data/frequency.txt", amazondata, 
+				IRoutput + "/data/frequency_tw.txt",
+				IRoutput + "/data/freq.txt",
+				IRoutput + "/data/textwords.txt", 
+				exclusionlist);
 		
 		// run evaluation on each of the sub folder of "10-fold-partition"
 		String all_results = "";
+		int total_correct = 0;
+		int total_query = 0;
 		for(int i = 0; i < evaluate_folders.length; i ++){
-			String result = evaluate(IRoutput, evaluate_folders[i], amazondata, exclusionlist);
+			String result = evaluate(IRoutput, evaluate_folders[i], amazondata, exclusionlist, type);
+			String results[] = result.split(":")[1].split("/"); 
+			int num_correct  = Integer.parseInt(results[0].trim());
+			int num_query    = Integer.parseInt(results[1].trim());
+			total_correct    += num_correct;
+			total_query      += num_query;
 			all_results = all_results + evaluate_folders[i] + "\t" + result + "\n";
 		}
 
-		System.out.println(all_results);
+		all_results = all_results + "\nAvg accuracy = " + (double)total_correct/total_query;
+		System.out.println(all_results + "\nAvg accuracy = " + (double)total_correct/total_query);
+		return all_results;
 	}
 	
+	//exclusionlist contains obeject ids without both the 2 images vw words
 	private static ArrayList<String> getExclustionlist(String amazondata,
 			String frequency) throws IOException {
 		// TODO Auto-generated method stub
@@ -102,7 +124,7 @@ public class Amazon_evaluate {
 	}
 
 	//per run of evaluate
-	public static String evaluate(String IRoutput, String evalfolder, String amazondata, ArrayList<String> exclusionlist) 
+	public static String evaluate(String IRoutput, String evalfolder, String amazondata, ArrayList<String> exclusionlist, int type) 
 			throws IOException, Exception{
 			
 		
@@ -125,20 +147,30 @@ public class Amazon_evaluate {
 		}
 		br_gallery.close();
 		
-		//index the new frequency_tw.txt excluding pictures from the probelist
-		index(IRoutput + "/data/frequency_tw.txt", probelist);
+		
+		// Different index files to index for different types
+		if(type == 0){
+			//index the new frequency_tw.txt excluding pictures from the probelist
+			index(IRoutput + "/data/frequency_tw.txt", probelist);
+		}
+		else if(type == 1){
+			index(IRoutput + "/data/freq.txt", probelist);
+		}
+		else{
+			index(IRoutput + "/data/textwords.txt", probelist);
+		}
 		
 		//search the results
 		Search.loadConfiguration(IRoutput + "/conf.xml");
 		Search.terms = IRoutput + "/data/frequency_tw.txt";
-		String result = search(probelist, gallery, Search.clusters, amazondata,  exclusionlist);
+		String result = search(probelist, gallery, Search.clusters, amazondata,  exclusionlist, type);
 		return result;
 		
 	}
 	
 	//search the using the queries and compare with the gallery to determine if the search result is right, exclude pics in exclusion list from searching
 	public static  String search(ArrayList<String> queries, ArrayList<String> gallery, String clusters,
-			String amazondata, ArrayList<String> exclusionlist)
+			String amazondata, ArrayList<String> exclusionlist, int type)
 			throws IOException, SolrServerException{
 		ArrayList<Integer> results = new ArrayList<Integer>();
 		
@@ -149,17 +181,32 @@ public class Amazon_evaluate {
 		for(String query : queries){
 			String splits[] = query.split("\\s+");
 			
-			//query if only the objec ids are not in the exclusionlist
+			//query if only the object ids are not in the exclusionlist
 			if(exclusionlist.contains(splits[0].split("/")[0]) == false){
-				//create query with VW 
-				String features[] = Search.getImageFeatures(amazondata + "/" + splits[0]);
-				String qs = createQuery(features);
-				//add text words to the query string
-				for(int j = 1; j < splits.length; j ++ ){
-					qs = qs + " " +  splits[j];
+			
+				//create query with VW
+				String qs_vw = null;
+				if(type == 0 || type == 1){
+					String features[] = Search.getImageFeatures(amazondata + "/" + splits[0]);
+					qs_vw = createQuery(features);
 				}
-				
-				System.out.println("Search String: " + qs);
+				// create query with TW
+				String qs_tw = "";
+				for(int j = 1; j < splits.length; j ++ ){
+					qs_tw = qs_tw + " " +  splits[j];
+				}
+				//composite query string depending on the type
+				String qs = null;
+				if(type == 0){
+					qs = qs_vw + qs_tw;
+				}
+				else if(type == 1){
+					qs = qs_vw;
+				}
+				else{
+					qs = qs_tw;
+				}
+				System.out.println("For type : " + type + ", search picture: " + splits[0] + "; Search String: " + qs);
 				
 				String[] searchresults = Search.query(qs, num_search);
 				String correct_result = gallery.get(i/3);
@@ -236,8 +283,9 @@ public class Amazon_evaluate {
 		int count_skipped = 0;
 		while((line = br.readLine()) != null){
 			boolean excluded = false;
+			String[] querypic_parts = line.split("\\s+")[0].split("/");
+			String querypic = querypic_parts[querypic_parts.length - 2] + "/" +querypic_parts[querypic_parts.length - 1];
 			for(String str : probelist){
-				String querypic = line.split("\\s+")[0].substring(16);
 				if(querypic.equals(str.split("\\s+")[0]) == true){
 					excluded = true;
 					break;
@@ -265,7 +313,7 @@ public class Amazon_evaluate {
 		server.add(docs);
 	    server.commit();
 	    docs_total_size=docs_total_size+docs.size();
-	    System.out.println("indexing is done, total docs indexed: "+docs_total_size + "\n skipped :" + count_skipped);
+	    System.out.println("indexing is done, total docs indexed: "+docs_total_size + "\nSkipped total :" + count_skipped);
 	    
 	    return docs_total_size;
 	}
