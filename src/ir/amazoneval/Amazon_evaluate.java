@@ -33,14 +33,16 @@ import org.apache.solr.common.SolrInputDocument;
 
 public class Amazon_evaluate {
 	
-	static final int num_search = 5;
+	static final int num_search = 1;
+	static  boolean use_opencv = true;
+	static boolean use_oid = true;
 	//static ArrayList<String> exclusionlist = new ArrayList<String>();
 	
 	public static void main(String[] args) throws IOException, Exception{
 		//change the two input parameters here
 		String IRoutput = "data/amazoncluster_100_5k/topk_200_botk10";//args[0]
 		String amazon_root = "/media/windows_data/Academic/ImageRetrieval/Dihongs_dataset/";// args[1];
-		int type = 0;
+		int type = 1;
 		
 		
 		getAccuracy(IRoutput, amazon_root, type);
@@ -63,7 +65,10 @@ public class Amazon_evaluate {
 		AddTextWords.addtw(IRoutput + "/data/frequency.txt", amazondata, 
 				IRoutput + "/data/frequency_tw.txt",
 				IRoutput + "/data/freq.txt",
+				
 				IRoutput + "/data/textwords.txt", 
+				IRoutput + "/data/freq_oid.txt",
+				IRoutput + "/data/freq_oid_tw.txt",
 				exclusionlist);
 		
 		// run evaluation on each of the sub folder of "10-fold-partition"
@@ -155,14 +160,25 @@ public class Amazon_evaluate {
 		
 		
 		// Different index files to index for different types
-		if(type == 0){
-			//index the new frequency_tw.txt excluding pictures from the probelist
-			index(IRoutput + "/data/frequency_tw.txt", probelist);
-		}
-		else if(type == 1){
-			index(IRoutput + "/data/freq.txt", probelist);
+		if(use_oid == false){
+			if(type == 0){
+				//index the new frequency_tw.txt excluding pictures from the probelist
+				index(IRoutput + "/data/frequency_tw.txt", probelist);
+			}
+			else if(type == 1){
+				index(IRoutput + "/data/freq.txt", probelist);
+			}
 		}
 		else{
+			if(type == 0){
+				//index the new frequency_tw.txt excluding pictures from the probelist
+				index(IRoutput + "/data/freq_oid_tw.txt", probelist);
+			}
+			else if(type == 1){
+				index(IRoutput + "/data/freq_oid.txt", probelist);
+			}
+		}
+		if(type == 2){
 			index(IRoutput + "/data/textwords.txt", probelist);
 		}
 		
@@ -197,7 +213,7 @@ public class Amazon_evaluate {
 				String qs_vw = null;
 				if(type == 0 || type == 1){
 //					String features[] = Search.getImageFeatures(amazondata + "/" + splits[0]);
-					qs_vw = createQuery_opencv(amazondata + "/" + splits[0]);
+					qs_vw = createQuery(amazondata + "/" + splits[0]);
 				}
 				// create query with TW
 				String qs_tw = "";
@@ -224,9 +240,19 @@ public class Amazon_evaluate {
 				
 				//check if the search results contain the picture in the correct result
 				for(String str : searchresults){
-					if(str.endsWith(correct_result.split("\\s+")[0])){
-						correct = true;
+					if(use_oid == false){
+						if(str.endsWith(correct_result.split("\\s+")[0])){
+								correct = true;
+						}
 					}
+					else{
+						String correct_img = correct_result.split("\\s+")[0];
+						String parts[] = correct_img.split("/");
+						if(str.endsWith(parts[parts.length - 2])){
+							correct = true;
+					}
+					}
+					
 				}
 				
 				if(correct == true){
@@ -251,17 +277,40 @@ public class Amazon_evaluate {
 		return result_str;
 		
 	}
-	public static String createQuery_opencv(String img_path) throws IOException{//transform an image into a Solr document or a field
-
-		double[][] clusters = Frequency.FreMap.readClusters(Search.clusters, Search.clusterNum);
+	
+	static HashMap<String, String> query_cache = new HashMap<String, String>();
+	static double[][] clusters = null;
+	public static String createQuery(String img_path) throws IOException{//transform an image into a Solr document or a field
+		//return the query if the we have already stored it
+		if(query_cache.containsKey(img_path)){
+			return query_cache.get(img_path);
+		}
+		
+		if(clusters == null){
+			clusters = Frequency.FreMap.readClusters(Search.clusters, Search.clusterNum);
+		}
+		
 		int[] marks = new int[Search.clusterNum];
-		double [][] all_features = SIFTExtraction_OpenCV.extractSIFT(img_path);
+		double [][] all_features = null;
+		
+		//get features into double array all_features
+		if(use_opencv == true){
+			all_features = SIFTExtraction_OpenCV.extractSIFT(img_path);
+		}
+		//else use lire
+		else{
+			String features[] = Search.getImageFeatures(img_path);
+			all_features = new double[features.length][Search.featureSize];
+			for(int i = 0; i < all_features.length; i++){
+				String[] args = features[i].split(" ");
+				for (int j = 0; j < Search.featureSize; j++){
+					all_features[i][j] = Double.parseDouble(args[j + 4]);
+				}
+			}						
+		}
+		
+		
 		for(int i = 0; i < all_features.length; i++){
-/*			double[] feature = new double[Search.featureSize];
-			String[] args = features[i].split(" ");
-			for (int j = 0; j < Search.featureSize; j++)
-				feature[j] = Double.parseDouble(args[j + 4]);
-*/
 //			int index = Frequency.FreMap.findBestCluster(feature, clusters);
 			int index = Frequency.FreMap.findBestCluster(all_features[i], clusters);
 			marks[index]++;
@@ -275,6 +324,7 @@ public class Amazon_evaluate {
 			}	
 		}
 		//System.out.println("query string: " + result);
+		query_cache.put(img_path, result);
 		return result;
 	}
 	
