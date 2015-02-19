@@ -1,6 +1,7 @@
 package ir.amazoneval;
 
 import ir.cluster.Frequency;
+import ir.feature.SIFTExtraction_OpenCV;
 import ir.index.Indexing;
 import ir.index.Search;
 import ir.util.HadoopUtil;
@@ -37,9 +38,9 @@ public class Amazon_evaluate {
 	
 	public static void main(String[] args) throws IOException, Exception{
 		//change the two input parameters here
-		String IRoutput = "output/amazondata/run_0/topk_10_botk10/";//args[0]
+		String IRoutput = "data/amazoncluster_100_5k/topk_200_botk10";//args[0]
 		String amazon_root = "/media/windows_data/Academic/ImageRetrieval/Dihongs_dataset/";// args[1];
-		int type = 1;
+		int type = 0;
 		
 		
 		getAccuracy(IRoutput, amazon_root, type);
@@ -76,7 +77,9 @@ public class Amazon_evaluate {
 			int num_query    = Integer.parseInt(results[1].trim());
 			total_correct    += num_correct;
 			total_query      += num_query;
-			all_results = all_results + evaluate_folders[i] + "\t" + result + "\n";
+			String[] splits = evaluate_folders[i].split("/");
+			
+			all_results = all_results + splits[splits.length - 1] + "\t" + result + "\n";
 		}
 
 		all_results = all_results + "\nAvg accuracy = " + (double)total_correct/total_query;
@@ -102,7 +105,10 @@ public class Amazon_evaluate {
 		String inline = null;
 		while ((inline = br.readLine()) != null){
 			String parts[] = inline.split("/");
-			String id = parts[2]; 
+			
+//			System.out.println(inline);
+			
+			String id = parts[parts.length -2]; 
 			if(hm.containsKey(id) == false){
 				hm.put(id, 1);
 			}
@@ -162,7 +168,10 @@ public class Amazon_evaluate {
 		
 		//search the results
 		Search.loadConfiguration(IRoutput + "/conf.xml");
-		Search.terms = IRoutput + "/data/frequency_tw.txt";
+		
+		//use this only to get the cluster number, still need to set clusters.txt(output path can change), no need to use terms anymore here
+		Search.terms = null;//IRoutput + "/data/frequency_tw.txt";
+		Search.clusters = IRoutput + "/cluster/clusters.txt";
 		String result = search(probelist, gallery, Search.clusters, amazondata,  exclusionlist, type);
 		return result;
 		
@@ -187,8 +196,8 @@ public class Amazon_evaluate {
 				//create query with VW
 				String qs_vw = null;
 				if(type == 0 || type == 1){
-					String features[] = Search.getImageFeatures(amazondata + "/" + splits[0]);
-					qs_vw = createQuery(features);
+//					String features[] = Search.getImageFeatures(amazondata + "/" + splits[0]);
+					qs_vw = createQuery_opencv(amazondata + "/" + splits[0]);
 				}
 				// create query with TW
 				String qs_tw = "";
@@ -242,17 +251,19 @@ public class Amazon_evaluate {
 		return result_str;
 		
 	}
-	public static String createQuery(String[] features) throws IOException{//transform an image into a Solr document or a field
+	public static String createQuery_opencv(String img_path) throws IOException{//transform an image into a Solr document or a field
 
 		double[][] clusters = Frequency.FreMap.readClusters(Search.clusters, Search.clusterNum);
 		int[] marks = new int[Search.clusterNum];
-			
-		for(int i = 0; i < features.length; i++){
-			double[] feature = new double[Search.featureSize];
+		double [][] all_features = SIFTExtraction_OpenCV.extractSIFT(img_path);
+		for(int i = 0; i < all_features.length; i++){
+/*			double[] feature = new double[Search.featureSize];
 			String[] args = features[i].split(" ");
 			for (int j = 0; j < Search.featureSize; j++)
 				feature[j] = Double.parseDouble(args[j + 4]);
-			int index = Frequency.FreMap.findBestCluster(feature, clusters);
+*/
+//			int index = Frequency.FreMap.findBestCluster(feature, clusters);
+			int index = Frequency.FreMap.findBestCluster(all_features[i], clusters);
 			marks[index]++;
 		}
 			

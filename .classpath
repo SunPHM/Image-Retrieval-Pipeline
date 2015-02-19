@@ -31,5 +31,10 @@
 	<classpathentry kind="lib" path="libs/hadoop-core-1.2.1.jar"/>
 	<classpathentry kind="lib" path="libs/dom4j-2.0.0-ALPHA-2.jar"/>
 	<classpathentry kind="lib" path="libs/commons-compress-1.9.jar"/>
+	<classpathentry kind="lib" path="libs/opencv-2410.jar">
+		<attributes>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="Image-Retrieval-Pipeline/libs/native"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

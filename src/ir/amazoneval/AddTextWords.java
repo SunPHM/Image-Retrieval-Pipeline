@@ -29,6 +29,7 @@ public class AddTextWords {
 
 	//add text words to frequency.txt
 	//generate text words file in textwords.txt in the same folder as frequency.txt
+	
 	public static void addtw(String frequencytext, String input_dir, String output_freqtw,String output_freq, String output_tw, ArrayList<String> exclusionlist ) 
 			throws IOException{
 		String[] folders = HadoopUtil.getListOfFolders(input_dir);
@@ -43,7 +44,10 @@ public class AddTextWords {
 		
 		while((inline = br.readLine()) != null){
 			String splits[] = inline.split("\\s+");
-			String foldername = splits[0].split("/")[2];
+			//System.out.println(splits[0]);
+			String parts[] = splits[0].split("/");
+			String foldername = parts[parts.length - 2];
+			
 			String textwords = null;
 			//find where the text words are for this picture
 			for(String f :  folders){
