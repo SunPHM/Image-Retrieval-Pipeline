@@ -26,7 +26,7 @@ public class KMeans {
 	
 	private static double delta = 0.001; //0.0001; // need to vary this to explore
 	
-	private static int maxIterations = 100;//for testing
+	private static int maxIterations = 20;//for testing
 	private static int clusterInitType = 0;
 	
 	protected static int dmType = 0;

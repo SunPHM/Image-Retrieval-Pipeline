@@ -17,7 +17,7 @@ public class runTestonOxbuilds {
 		String output=args[1];
 		String gt=args[2];
 		String testImgFolder=args[3];
-		int clustering_type = 1;
+		int clustering_type = 0;
 		
 		BufferedReader br=new BufferedReader(new FileReader("topk_botK.txt"));
 		ArrayList<topkbotk> list_topkbotk=new ArrayList<topkbotk>();

@@ -33,16 +33,17 @@ import org.apache.solr.common.SolrInputDocument;
 
 public class Amazon_evaluate {
 	
-	static final int num_search = 1;
+	static final int num_search = 5;
 	static  boolean use_opencv = true;
-	static boolean use_oid = true;
+	static boolean use_oid = false;
+	static boolean index_only_1jpg = true;
 	//static ArrayList<String> exclusionlist = new ArrayList<String>();
 	
 	public static void main(String[] args) throws IOException, Exception{
 		//change the two input parameters here
-		String IRoutput = "data/amazoncluster_100_5k/topk_200_botk10";//args[0]
+		String IRoutput = "data/amazon_opencv/topk_50_botk10";//args[0]
 		String amazon_root = "/media/windows_data/Academic/ImageRetrieval/Dihongs_dataset/";// args[1];
-		int type = 1;
+		int type = 0;
 		
 		
 		getAccuracy(IRoutput, amazon_root, type);
@@ -357,6 +358,13 @@ public class Amazon_evaluate {
 				System.out.println("skipped from probe.txt:" + line);
 				count_skipped ++;
 				continue;
+			}
+			if(index_only_1jpg == true){
+				if(querypic.endsWith("2.JPG")){
+					System.out.println("skipped 2.JPG:" + line);
+					count_skipped ++;
+					continue;
+				}
 			}
 			
 			SolrInputDocument doc = Indexing.getDocument(line);
