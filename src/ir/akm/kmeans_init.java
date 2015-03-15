@@ -179,7 +179,7 @@ public class kmeans_init {
 			String line;
 			line=br.readLine();
 			while (line != null){
-				System.out.println("count for a file  " + line);
+//				System.out.println("count for a file  " + line);
 				num += Long.parseLong(line);
 			    // be sure to read the next line otherwise you'll get an infinite loop
 				line = br.readLine();

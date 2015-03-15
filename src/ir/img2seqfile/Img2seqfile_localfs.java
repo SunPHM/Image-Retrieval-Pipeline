@@ -32,11 +32,12 @@ public class Img2seqfile_localfs {
 	
 	private static BytesWritable value=new BytesWritable();
 	private static Text key = new Text();
-	private static int max_length=1024*1024*20;
+	private static int max_length=1024*1024*40;
 	private static byte[] images_raw_bytes=new byte[max_length];
 
 	    public static void main( String[] args)  { 
 	    	long startTime = new Date().getTime();
+	    	String input = args[0];
 	        String output = args[1];
 	        Configuration conf = new Configuration();
 	        
@@ -48,8 +49,8 @@ public class Img2seqfile_localfs {
 		      //  String[] allfiles=HadoopUtil.getListOfFiles(args[0]);
 		        //get all picture files in the dir to the collections
 		        Collection<File> files = FileUtils.listFiles(
-		        		  new File(args[0]), 
-		        		  new RegexFileFilter("([^\\s]+(\\.(?i)(jpg|JPG|png|gif|bmp))$)"), 
+		        		  new File(input), 
+		        		  new RegexFileFilter("([^\\s]+(\\.(?i)(jpg|JPG|JPEG|png|PNG|gif|GIF|bmp|BMP))$)"), 
 		        		  DirectoryFileFilter.DIRECTORY
 		        		);
 		       ArrayList<String> allfiles = new ArrayList<String>();
@@ -57,8 +58,9 @@ public class Img2seqfile_localfs {
 		    	  allfiles.add( f.getAbsolutePath() );
 		    	  
 		    	  //debug
-		    	  System.out.println(f.getAbsolutePath());
+		    	  //System.out.println(f.getAbsolutePath());
 		       }
+		       System.out.println("# images: " + allfiles.size());
 	        	writer = SequenceFile.createWriter( fs, conf, outfile, key.getClass(), value.getClass());
 
 	            int files_processed=0;
@@ -70,13 +72,16 @@ public class Img2seqfile_localfs {
 		    			File f = new File(file);
 		    			String parentfolder = getParentName(f);
 		    			key.set(parentfolder + "/" + f.getName());
-		    			System.out.println(f.getAbsolutePath() + "\t" + key);
+//		    			System.out.println(f.getAbsolutePath() + "\t" + key);
 		    		//	System.out.println("file:"+file+"\nbytes_read"+bytes_read);
+		    			System.out.println(bytes_read);
+		    			if(bytes_read == -1)
+		    				continue;
 		    			value.set(images_raw_bytes, 0, bytes_read);
 		    			writer.append(key, value);
 		    			fileIn.close();
 		    			files_processed++;
-		    			if(files_processed%1000==0){
+		    			if(files_processed%3000==0){
 		    				System.out.println(files_processed+"/"+allfiles.size()+ "  have been processed");
 		    				
 		    				try {

@@ -1,5 +1,8 @@
 package ir.util;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -7,16 +10,115 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.BytesWritable;
+import org.apache.hadoop.io.SequenceFile;
+import org.apache.hadoop.io.Text;
 
 //parttion the 47GB data to 5GB, 10GB and 20GB and 30GB filtering out files that does not end with .jpg or .jpeg
 //input_folder, output_folder
 public class partitionData {
-	static long GB1=1024*1024*1024;
-	
-	
-	public static void main(String args[]) throws IOException{
-		String[] files=HadoopUtil.getListOfFiles(args[0]);
+	static final long GB = 1024*1024*1024;
+	static int [] sizes = {80, 100, 120, 140, 160};
+	private static BytesWritable value=new BytesWritable();
+	private static Text key = new Text();
+	public static void partition(String args[]) 
+			throws IOException, InstantiationException, IllegalAccessException{
+		String input = args[0];
+		String output = args[1];
+		
+	//partition the data from 138 seqfile into 20GB, 40GB, 60GB, 80GB, 100GB, 120GB
+
+		//create output dir
+		File output_folder = new File(output);
+		if(!output_folder.mkdir()){
+			System.out.println("failed to create dir: " + output + ", exit");
+			return;
+		}
+		
+		Configuration conf = new Configuration();
+		FileSystem fs = FileSystem.get(conf);
+
+		//create a list of writers to write the output
+		String[] outputseqfiles = new String[sizes.length];
+		SequenceFile.Writer[] writers = new SequenceFile.Writer[sizes.length];
+		for(int i = 0; i < sizes.length; i ++){
+			outputseqfiles[i] = output + "/" + sizes[i] + ".seq";
+			writers[i] = SequenceFile.createWriter(fs, conf,new Path(outputseqfiles[i]), key.getClass(), value.getClass());
+		}
+		//output log file
+		BufferedWriter  bw = new BufferedWriter(new FileWriter(new File("convert.log")));
+		
+		//go through all the seqfiles in the input directory
+		String tarseqfiles[] = HadoopUtil.getListOfFiles(input);
+		
+		
+		int start_index = 0;
+		long bytes_processed = 0;
+		int images_processed = 0;
+		for(String seqfile : tarseqfiles){
+			System.out.println("reading from file: " + seqfile);
+			Path path = new Path(seqfile);
+			SequenceFile.Reader reader = new SequenceFile.Reader(fs, path, conf);
+			key = (Text) reader.getKeyClass().newInstance();
+			value = (BytesWritable) reader.getValueClass().newInstance();
+			while (reader.next(key, value)){
+				//System.out.println(value.getLength());
+				//add this picture to the output list
+				for(int i = start_index; i < sizes.length; i ++){
+					writers[i].append(key, value);
+				}
+				
+				images_processed ++;
+				bytes_processed += value.getLength();
+				
+				//need to check if reached the limit
+				if(bytes_processed > sizes[start_index] * GB){//exceeds the minumum of the start_index file
+					writers[start_index].close();
+					start_index ++;
+					bw.write("finished " + sizes[start_index - 1] + "GB, number of images processed" + images_processed + "\n");
+					bw.flush();
+					if(start_index == sizes.length){
+						reader.close();
+						bw.close();
+						return;
+					}
+				}
+				//for the 47GB file, stop at 40GB and end this while loop
+				if(seqfile.endsWith("ImageNet-47GB-456567.seq")){
+					if(bytes_processed >= 40 * GB ){
+						reader.close();
+						System.out.println("stopping at 40GB of 47GB file");
+						break;
+					}
+				}
+				//sleep to avoid 100% use of disk;
+				if(images_processed % (5 * 1000) == 0){
+					try {
+						System.out.println("Sleepting for 1 secs, test info" + key.toString());
+						Thread.sleep(1000*1);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}
+			reader.close();
+		}
+		bw.write("total bytes : " + bytes_processed + ", number of images processed" + images_processed);
+		bw.close();
+	}
+	public static void main(String args[]) throws IOException, InstantiationException, IllegalAccessException{
+		
+//		args = new String[2];
+//		args[0] = "/home/xiaofeng/Downloads/test/test_out" ;
+//		args[1] = "/home/xiaofeng/Downloads/test/test_test";
+		partition(args);
+		
+
+/*		String[] files=HadoopUtil.getListOfFiles(args[0]);
 		HashMap<String, Integer> map=new HashMap<String, Integer>();
 		int count=0;
 		for(String file:files){
@@ -51,7 +153,7 @@ public class partitionData {
 		
 	//	Configuration conf=new Configuration();
 		//FileSystem fs =new FileSystem(conf);
-/*		String[] files=HadoopUtil.getListOfFiles(args[0]);
+	String[] files=HadoopUtil.getListOfFiles(args[0]);
 		
 		ArrayList<String> allfiles=new ArrayList<String>();
 		for(String file:files){

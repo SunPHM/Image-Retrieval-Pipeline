@@ -34,7 +34,7 @@ import org.apache.mahout.clustering.iterator.ClusterWritable;
 public class TopDownClustering {
 	
 	private  static int cluster_capacity = 1000; // in number of containers, change this 
-	private  static int num_jobs_botlevelclustering = 35;
+	private  static int num_jobs_botlevelclustering = 100;
 	
 	private static int topK = 0;
 	private static int botK = 0;
@@ -102,7 +102,7 @@ public class TopDownClustering {
 	
 
 	//set the number of botlevel clustering job run in parallel
-	public static void setParallelDegree(String input_mid_folders, int topK, int botlevelclusteringtype) throws IOException{
+/*	public static void setParallelDegree(String input_mid_folders, int topK, int botlevelclusteringtype) throws IOException{
 		
 		Configuration conf = new Configuration();
 		FileSystem fs = FileSystem.get(conf);
@@ -137,7 +137,7 @@ public class TopDownClustering {
 		num_jobs_botlevelclustering = 50;
 		System.out.println("\nset number of concurrent jobs = " + num_jobs_botlevelclustering);
 	}
-	
+	*/
 	
 	public static void topLevelProcess(String input, String cls, String top, int topK)
 			throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException, InterruptedException {

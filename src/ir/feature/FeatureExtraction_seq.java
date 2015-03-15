@@ -4,8 +4,14 @@ import ir.akm.kmeans_init;
 import ir.util.HadoopUtil;
 
 import java.awt.image.BufferedImage;
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 
 import javax.imageio.ImageIO;
 
@@ -32,12 +38,41 @@ import org.apache.mahout.math.VectorWritable;
 public class FeatureExtraction_seq {
 	public static String seqfile = "data/images";
 	public static String feature_folder = "test/data/features.txt";
-	public static final Integer split_size = (int) (1024*1024*20);//30MB
+	public static final Integer split_size = (int) (1024*1024*64);//30MB
 	
 	public static void main(String[] args) throws IOException {
-		extractFeatures(args[0], args[1]);
-		long feature_num = kmeans_init.getFeatureCount( args[1], new Configuration());
-		System.out.println(feature_num);
+		String input = args[0]; // a folder of .seq files
+		String output = args[1]; // a path to out put features
+		ArrayList<Long> features_nums = new ArrayList<Long>();
+		
+		String input_seqfiles[] = HadoopUtil.getListOfFolders(input);
+		
+		BufferedWriter bw = new BufferedWriter(new FileWriter(new File("FE.log")));
+		for(String input_seqfile : input_seqfiles){
+		
+			long startTime = new Date().getTime();
+			
+			String output_path = output + "/" + new Path(input_seqfile).getName();
+			HadoopUtil.mkdir(output_path);
+			extractFeatures(input_seqfile, output_path + "/features" );
+			
+			long endTime = new Date().getTime();
+			
+			long feature_num = kmeans_init.getFeatureCount( output_path + "/features", new Configuration());
+			System.out.println(feature_num);
+			
+			features_nums.add(feature_num);
+			bw.write("For seqfile : " + input_seqfile + ", the output features folder: " + output_path + ", "
+					+ "number of features: " + feature_num + ", Time Spent : " + (double)(endTime - startTime) / (1000*60) );
+			bw.newLine();
+			bw.flush();
+		}
+		bw.flush();
+		bw.close();
+		
+		Collections.sort(features_nums);
+		for(Long num : features_nums)
+			System.out.println(num);
 	}
 	
 	public static void extractFeatures(String in_seqfile,  String features){ // the main entry point for Feature Extraction to be called
@@ -90,7 +125,7 @@ public class FeatureExtraction_seq {
 				FileSystem fs = FileSystem.get(conf);
 				ContentSummary cs =fs.getContentSummary(new Path(infile));
 				long input_size=cs.getLength();//cs.getSpaceConsumed();
-				default_num_reducer=(int)(Math.ceil( ((double)input_size)/(1024*1024*64d) ));//50MB PER REducer
+				default_num_reducer=(int)(Math.ceil( ((double)input_size)/(1024*1024*64) ));//50MB PER REducer
 				System.out.println("Path: "+infile+" size "+input_size+", will use "+default_num_reducer+" reducer(s)\n\n");
 		} catch (IOException e3) {
 				// TODO Auto-generated catch block
@@ -140,6 +175,9 @@ public class FeatureExtraction_seq {
 		static long feature_count = 0;
 		static String featurecount_filename = null;
 		
+		static VectorWritable vw = new VectorWritable();
+		static Vector vec = new DenseVector(feature_length);
+		
 		//debug test
 //		static float[] testarray = null;
 
@@ -186,8 +224,7 @@ public class FeatureExtraction_seq {
 				//		System.out.println(features[i]);
 //						normalize(feature);
 
-						VectorWritable vw = new VectorWritable();
-						Vector vec = new DenseVector(feature_length);
+
 						vec.assign(feature);
 						vw.set(vec);
 						context.write(new Text(file), vw);

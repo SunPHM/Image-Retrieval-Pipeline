@@ -17,7 +17,7 @@ public class runTestonOxbuilds {
 		String output=args[1];
 		String gt=args[2];
 		String testImgFolder=args[3];
-		int clustering_type = 0;
+		int clustering_type = 2;
 		
 		BufferedReader br=new BufferedReader(new FileReader("topk_botK.txt"));
 		ArrayList<topkbotk> list_topkbotk=new ArrayList<topkbotk>();
@@ -30,6 +30,7 @@ public class runTestonOxbuilds {
 			list_topkbotk.add(newk);
 			System.out.println("will run on "+newk.topk+"   "+newk.botk);
 		};
+		br.close();
 		for(topkbotk topbot:list_topkbotk){
 			String output_suffix="topk_"+topbot.topk+"_botk"+topbot.botk;
 			

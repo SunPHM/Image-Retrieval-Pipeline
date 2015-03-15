@@ -29,7 +29,7 @@ public class KMeans {
 	private static int maxIterations = 20;//for testing
 	private static int clusterInitType = 0;
 	
-	protected static int dmType = 0;
+	protected static int dmType = 1;
 	private static final CosineDistanceMeasure cdm = new CosineDistanceMeasure();
 	private static final EuclideanDistanceMeasure edm = new EuclideanDistanceMeasure();
 	private static DistanceMeasure dm = cdm;

@@ -22,20 +22,20 @@ import ir.util.HadoopUtil;
 public class GetMAP {
 
 	public static void main(String args[]) throws IOException{
-		String pipeline_output = "oxbuild_100_100_oct22";
+		String pipeline_output = "hkm_100_200";
 		int    topk = 100;
-		int    botk = 100;
+		int    botk = 200;
 		String images = "/home/xiaofeng/workspace/oxe/oxbuild_images";
 		String gt = "/home/xiaofeng/workspace/oxe/gt";
 		
 		String dst = pipeline_output;
-		Search.init(dst + "/data/frequency_new.txt", topk * botk, dst + "/cluster/clusters", topk, botk);
-		long num_docs = Search.runIndexing(dst + "/data/frequency_new.txt");
+		Search.init(dst + "/data/frequency.txt", topk * botk, dst + "/cluster/clusters.txt", topk, botk);
+		long num_docs = Search.runIndexing(dst + "/data/frequency.txt");
 		
-		String[] search_results = Search.search_topdown("all_souls_000000.jpg");
-		for(String str : search_results){
-			System.out.println(str);
-		}
+//		String[] search_results = Search.search_topdown("all_souls_000000.jpg");
+///		for(String str : search_results){
+//			System.out.println(str);
+//		}
 		
 		getmAP(images,gt, num_docs);
 	}
@@ -64,6 +64,7 @@ public class GetMAP {
 					files_search_results = Search.query(query,(int)total_images);	
 					System.out.println("bucket size: " + total_images +"\t actual searched result size: " + files_search_results.length);
 					double AP = calculateMAP(file, files_search_results);
+					System.out.println("AP : " + AP);
 					images_AP.put(file, AP);
 				} catch (SolrServerException e) {
 					// TODO Auto-generated catch block

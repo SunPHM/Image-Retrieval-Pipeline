@@ -1,11 +1,17 @@
 package ir.cluster;
 
 import ir.akm.AKM;
+import ir.util.HadoopUtil;
 import ir.util.XMLUtil;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
+
+import org.apache.hadoop.fs.Path;
 
 /**
  * The driver class for transformation, top-down clustering, and visual word frequency extraction
@@ -19,7 +25,7 @@ public class VWDriver {
 		// args[2] delta
 		// args[3] distance measure type, 0 cosine, 1 euclidean
 		// args[4] clusterInitType, 0 serial, 1 random
-		double[] deltas = {0.001, 0.0005, 0.0001, 0.00005, 0.00001, 0.000005, 0.000001};
+/*		double[] deltas = {0.001, 0.0005, 0.0001, 0.00005, 0.00001, 0.000005, 0.000001};
 		for(int i = 0; i < deltas.length; i++){
 			// run cluster serial
 			KMeans.init(deltas[i], 0, 0);
@@ -37,6 +43,26 @@ public class VWDriver {
 			map2.put("delta", "" + deltas[i]); map2.put("dmType", "0"); map2.put("clusterInitType", "1");
 			XMLUtil.storeParameters(args[1] + "1" + i + "/parameters.xml", map2);
 		}
+		*/
+		//args[0] = input features
+		//args[2] = output clustering and frequency folder
+
+		String inputs[] = HadoopUtil.getListOfFolders(args[0]);
+		String output_root = args[1];
+		int topk = 100;
+		int botk = 100;
+		BufferedWriter bw = new BufferedWriter(new FileWriter(new File("vw.log")));
+		
+		for(String input : inputs){
+			String output = new Path(input).getName();
+			String arg[] = {input + "/features", output_root + "/" + output, "" + topk, "" + botk};
+ 			String result = run(arg, 2, 2);
+ 			bw.write("Input: " + input + ", top K: " + topk + ", botk: " + botk + "\n" + result + "\n");
+ 			bw.flush();
+		}
+		
+		
+		bw.flush();bw.close();
 	}
 	
 	public static String run(String[] args, int botlvlcluster_type, int  clustering_type) 

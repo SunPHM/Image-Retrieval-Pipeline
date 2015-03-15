@@ -258,7 +258,13 @@ public class AKM {
 				q_vector[i] = (float) value.get().get(i);
 			}
 			try {
-				 nnid= kdtf.nns_BBF(varray, q_vector);
+//				switch here to switch to normal kmeans				
+//				TODO				 
+//				nnid= kdtf.nns_BBF(varray, q_vector);
+				//euclidean distance to find the exact best clusters
+				nnid = findBestCluster(q_vector, varray);
+				 
+				 
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				nnid = -1; //to cause errors to detect
@@ -269,7 +275,28 @@ public class AKM {
 			out_value.set(v);
 			context.write(out_key, out_value);
 		}
+		public static int findBestCluster(float[] feature, float[][] clusters){
+			
+				int index = -1;
+				double distance = Double.MAX_VALUE;
+				//feature = norm(feature);
+				for(int i = 0; i < clusters.length; i++){
+					double ds = 0;
+					for(int j = 0; j < clusters[i].length; j++){
+						ds += (feature[j] - clusters[i][j]) * (feature[j] - clusters[i][j]);
+					}
+					ds = Math.sqrt(ds);
+					
+					if(ds < distance){
+						distance = ds;
+						index = i;
+					}
+				}
+				return index;
+		}
+		
 	}
+
 	
 	// calculate the new clusters based on the newly assigned features
 	// will output to output/isConverged folder  if converged or not(if all the clusters have converged, no files will be output to this folder)
