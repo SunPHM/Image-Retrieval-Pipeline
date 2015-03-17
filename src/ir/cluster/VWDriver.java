@@ -56,7 +56,7 @@ public class VWDriver {
 		for(String input : inputs){
 			String output = new Path(input).getName();
 			String arg[] = {input + "/features", output_root + "/" + output, "" + topk, "" + botk};
- 			String result = run(arg, 2, 2);
+ 			String result = run(arg, 2, 0);
  			bw.write("Input: " + input + ", top K: " + topk + ", botk: " + botk + "\n" + result + "\n");
  			bw.flush();
 		}

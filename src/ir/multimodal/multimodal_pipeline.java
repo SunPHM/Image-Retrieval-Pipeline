@@ -2,9 +2,17 @@ package ir.multimodal;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import javax.imageio.ImageIO;
 
@@ -26,6 +34,11 @@ import ir.util.HadoopUtil;
 public class multimodal_pipeline {
 	static final boolean use_opencv = false;
 	
+	//type = 0 vw + tw,
+	//type = 1 vw only
+	//type = 2 tw only
+	static int type = 2;
+	
 	//store the relevant docs for each of the category
 	static HashMap<String, Integer> num_per_category = new HashMap<String, Integer>();
 
@@ -39,21 +52,21 @@ public class multimodal_pipeline {
 			IOException, InterruptedException, SolrServerException{
 		
 		//args[0]
-		String eval_data_root = "multimodal"; //args[0]; //root folder of the eval data
+		String eval_data_root = args[0]; //"multimodal_resized"; //args[0]; //root folder of the eval data
 		// eval_data_root -- mmd-1
 		//                        folders of categories each containing the map.txt
 		//                -- query 
 		//args[1]
-		String images_seqfile = "multimodal.seq"; //args[1]; //need to convert all the images in mmd-1 dir to a single seqfile first
+		String images_seqfile = args[1]; //"multimodal_resized/multimodal.seq"; //args[1]; //need to convert all the images in mmd-1 dir to a single seqfile first
 		
 		//args[2]
-		String topk = "10"; //args[2];
+		String topk = args[2]; //"100"; //args[2];
 		
 		//args[3]
-		String botk = "10"; //args[3];
+		String botk = args[3]; //"100"; //args[3];
 		
 		//args[4]
-		String output = "multimodal_output";
+		String output = args[4]; //"multimodal_resized_output";
 		
 		
 		
@@ -61,7 +74,7 @@ public class multimodal_pipeline {
 		
 		//FE
 		String features = output + "/data/features";
-		FeatureExtraction_seq.extractFeatures(images_seqfile, features);
+//		FeatureExtraction_seq.extractFeatures(images_seqfile, features);
 		
 		String[] arguments = {features, output, topk, botk, eval_data_root};
 		
@@ -89,15 +102,24 @@ public class multimodal_pipeline {
 		String eval_data_root = args[4];
 		//VW
 		String[] arguments = {features, dst, "" + topk, "" + botk};
-		String runningtime = VWDriver.run(arguments, 2,1);
+//		String runningtime = VWDriver.run(arguments, 2,1);
 		
 		//need to provide those map.txt in each subfolders accordingly to get text words
 		// will generate vw.txt, vw_tw.txt, tw.txt in dst/data dir
-		String images_root = eval_data_root +"/mmd-1/";
+		String images_root = eval_data_root +"/mmd-2/";
 		MultiFreq.run(images_root, dst, num_per_category);
 		
 		//indexing
-		String indexfile = dst + "/data/vw_tw.txt";
+		
+		String indexfile = "";
+		if(type ==0){
+			indexfile = dst + "/data/vw_tw.txt";
+		}else if(type ==1){
+			indexfile = dst + "/data/vw.txt";
+		}if(type ==2){
+			indexfile = dst + "/data/tw.txt";
+		}
+		
 		int clusterNum = Integer.parseInt(topk) * Integer.parseInt(botk);
 		Search.init(indexfile, clusterNum, dst + "/cluster/clusters.txt", Integer.parseInt(topk), Integer.parseInt(botk));
 		int indexedimages = (int) Search.runIndexing(indexfile);
@@ -126,16 +148,27 @@ public class multimodal_pipeline {
 			for(int i = 1; i < splits.length; i ++){
 				String search_tw = category;
 				String query_img = query_folder + "/" + splits[i];
-				double ap = 0;
 				try{
+					double ap = Integer.MIN_VALUE;
+				
 					ap = getAP(category, search_tw, query_img, indexed_images);
+					
+					all_aps.put(query_img, ap);
+					
 				}catch(java.lang.ArrayIndexOutOfBoundsException e){
 					System.out.println("Faile to get AP for image " + query_img);
 					e.printStackTrace();
-					continue;
+				}catch(javax.imageio.IIOException e){
+					System.out.println("Faile to get AP for image " + query_img);
+					e.printStackTrace();
+				}catch(java.io.EOFException e){
+					System.out.println("Faile to get AP for image " + query_img);
+					e.printStackTrace();
+				}catch(java.lang.NullPointerException e){
+					System.out.println("Faile to get AP for image " + query_img);
+					e.printStackTrace();
 				}
 				
-				all_aps.put(query_img, ap);
 			}
 		}
 		br.close();
@@ -145,6 +178,21 @@ public class multimodal_pipeline {
 			mAP += ap;
 		}
 		mAP = mAP / all_aps.size();
+		System.out.println("mAP is " + mAP + ", out of #of searched images: " + all_aps.size());
+		//write the mAPs to file
+		BufferedWriter bw = new BufferedWriter(new FileWriter(new File("mAPs_" + new Date().getTime() + ".txt")));
+		bw.write("Type: " + type + "\n");
+	    
+		SortedSet<String> keys = new TreeSet<String>(all_aps.keySet());
+		
+	    for(String key : keys) {
+	    	double value = all_aps.get(key);
+	    	System.out.println(key + "\t\t" + value);
+	        bw.write(key + "\t\t" + value + "\n");
+	    }
+	    bw.flush();
+	    bw.close();
+		
 		return mAP;
 	}
 
@@ -153,7 +201,17 @@ public class multimodal_pipeline {
 		//create the query (with only vw)
 		String qs_vw = createQuery(query_image);
 		//get the qs of vw + tx
-		String qs = qs_vw + " " + search_tw;
+		String qs = "";
+		
+		if(type ==0){
+			qs = qs_vw + " " + search_tw;
+		}else if(type == 1){
+			qs = qs_vw;
+		}else if(type == 2){
+			qs = search_tw;
+		}
+		
+		
 		System.out.println("QueryImage: " + query_image + ", query string: " + qs);
 		
 		//get the results from solr

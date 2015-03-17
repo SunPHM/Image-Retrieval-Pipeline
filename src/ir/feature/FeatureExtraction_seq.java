@@ -38,14 +38,14 @@ import org.apache.mahout.math.VectorWritable;
 public class FeatureExtraction_seq {
 	public static String seqfile = "data/images";
 	public static String feature_folder = "test/data/features.txt";
-	public static final Integer split_size = (int) (1024*1024*64);//30MB
+	public static final Integer split_size = (int) (1024*1024*10);//30MB
 	
 	public static void main(String[] args) throws IOException {
 		String input = args[0]; // a folder of .seq files
 		String output = args[1]; // a path to out put features
 		ArrayList<Long> features_nums = new ArrayList<Long>();
 		
-		String input_seqfiles[] = HadoopUtil.getListOfFolders(input);
+		String input_seqfiles[] = HadoopUtil.getListOfFiles(input);
 		
 		BufferedWriter bw = new BufferedWriter(new FileWriter(new File("FE.log")));
 		for(String input_seqfile : input_seqfiles){
@@ -131,8 +131,8 @@ public class FeatureExtraction_seq {
 				// TODO Auto-generated catch block
 				e3.printStackTrace();
 		}
-		job.setNumReduceTasks(default_num_reducer);
-
+		//job.setNumReduceTasks(default_num_reducer);
+	    job.setNumReduceTasks(0);
 		
 
 		try {

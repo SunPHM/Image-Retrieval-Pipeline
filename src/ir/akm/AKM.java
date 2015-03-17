@@ -260,9 +260,9 @@ public class AKM {
 			try {
 //				switch here to switch to normal kmeans				
 //				TODO				 
-//				nnid= kdtf.nns_BBF(varray, q_vector);
+				nnid= kdtf.nns_BBF(varray, q_vector);
 				//euclidean distance to find the exact best clusters
-				nnid = findBestCluster(q_vector, varray);
+//				nnid = findBestCluster(q_vector, varray);
 				 
 				 
 			} catch (Exception e) {
