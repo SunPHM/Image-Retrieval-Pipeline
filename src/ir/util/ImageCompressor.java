@@ -20,13 +20,13 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
 public class ImageCompressor {
-	private static final int Max_WIDTH = 1024;
-	private static final int Max_HEIGHT = 1024;
+	private static final int Max_WIDTH = 2048;
+	private static final int Max_HEIGHT = 2048;
  
 	
 	public static void main(String [] args) throws IOException{
-		String infolder ="multimodal";
-		String outfolder = "multimodal_resized";
+		String infolder ="multimodal_v3";
+		String outfolder = "multimodal_v3_resized";
 		
 		FileSystem fs = FileSystem.get(new Configuration());
 

@@ -35,8 +35,15 @@ public class MultiFreq {
 			String inline = null;
 			while((inline = br.readLine()) != null){
 				String[] splits = inline.split("---");
-				String value = splits[0];
-				String key = folder_path.getParent().getName() + "/" + lineno;
+				
+				//for mmd-2
+				//String value = splits[0];
+				//String key = folder_path.getParent().getName() + "/" + lineno;
+				
+				//for mmd-3
+				String value = splits[1].trim();
+				String key = folder_path.getParent().getName() + "/" + splits[0].trim().split("\\.")[0];
+				
 				lineno ++;
 				all_tw .put(key, value);
 			}

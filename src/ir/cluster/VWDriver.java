@@ -49,12 +49,14 @@ public class VWDriver {
 
 		String inputs[] = HadoopUtil.getListOfFolders(args[0]);
 		String output_root = args[1];
-		int topk = 100;
-		int botk = 100;
+		int topk = 200;
+		int botk = 200;
 		BufferedWriter bw = new BufferedWriter(new FileWriter(new File("vw.log")));
 		
 		for(String input : inputs){
 			String output = new Path(input).getName();
+			System.out.println(input);
+			
 			String arg[] = {input + "/features", output_root + "/" + output, "" + topk, "" + botk};
  			String result = run(arg, 2, 0);
  			bw.write("Input: " + input + ", top K: " + topk + ", botk: " + botk + "\n" + result + "\n");

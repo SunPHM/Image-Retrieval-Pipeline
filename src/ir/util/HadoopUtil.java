@@ -9,6 +9,16 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
 
 public class HadoopUtil {
+	public static void main(String[] args) throws IOException{
+		String input = args[0];
+		String suffix = args[1];
+		String[] files = HadoopUtil.getListOfFiles(input);
+		FileSystem fs = FileSystem.get(new Configuration());
+		
+		for(String file : files){
+			fs.rename(new Path(file), new Path(file + suffix));
+		}
+	}
 	
 	public static void copyMerge(String folder, String file){//copy files in an folder to form a big file
 		Path src = new Path(folder);
